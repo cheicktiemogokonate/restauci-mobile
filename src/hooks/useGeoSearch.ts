@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import { useState, useEffect } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface GeocodeResult {
   adresse: string;
@@ -25,12 +25,7 @@ function mapToSuggestion(r: GeocodeResult): Suggestion {
 }
 
 export function useGeoSearch(q: string) {
-  const [debouncedQ, setDebouncedQ] = useState(q);
-
-  useEffect(() => {
-    const id = setTimeout(() => setDebouncedQ(q), 400);
-    return () => clearTimeout(id);
-  }, [q]);
+  const debouncedQ = useDebounce(q, 400);
 
   return useQuery<Suggestion[]>({
     queryKey: ['geo-search', debouncedQ],
