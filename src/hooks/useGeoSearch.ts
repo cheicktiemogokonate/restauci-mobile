@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useDebounce } from "@/hooks/useDebounce";
+import { apiFetch } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 
 interface GeocodeResult {
   adresse: string;
@@ -18,7 +18,7 @@ interface Suggestion {
 
 function mapToSuggestion(r: GeocodeResult): Suggestion {
   return {
-    label: [r.adresse, r.ville, r.pays].filter(Boolean).join(', '),
+    label: [r.adresse, r.ville, r.pays].filter(Boolean).join(", "),
     lat: r.lat,
     lon: r.lng,
   };
@@ -28,10 +28,10 @@ export function useGeoSearch(q: string) {
   const debouncedQ = useDebounce(q, 400);
 
   return useQuery<Suggestion[]>({
-    queryKey: ['geo-search', debouncedQ],
+    queryKey: ["geo-search", debouncedQ],
     queryFn: async () => {
       const result = await apiFetch<GeocodeResult>(
-        `/api/v1/client/geo/geocode?q=${encodeURIComponent(debouncedQ)}`
+        `/api/v1/client/geo/geocode?q=${encodeURIComponent(debouncedQ)}`,
       );
       if (!result) return [];
       return [mapToSuggestion(result)];
