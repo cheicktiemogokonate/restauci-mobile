@@ -5,9 +5,9 @@ import { PanierFAB } from "@/components/menu/PanierFAB";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorView } from "@/components/ui/ErrorView";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
-import { useMenuRestaurant } from "@/hooks/useMenuRestaurant";
+import { useMenuRestaurant, useRestaurant } from "@/hooks/useMenuRestaurant";
 import { useStore } from "@/store";
-import type { CategorieAvecPlats, Plat } from "@/types";
+import type { Categorie, CreneauHoraire, Plat } from "@/types";
 import { isPlatDisponible } from "@/utils/creneaux";
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams } from "expo-router";
@@ -28,12 +28,29 @@ export default function RestaurantScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
 
   const {
-    data: menu,
-    isLoading,
-    isFetching,
-    refetch,
-    error,
+    data: categories = [],
+    isLoading: isMenuLoading,
+    isFetching: isMenuFetching,
+    refetch: refetchMenu,
+    error: menuError,
   } = useMenuRestaurant(slug ?? null);
+
+  const {
+    data: restaurant,
+    isLoading: isRestaurantLoading,
+    isFetching: isRestaurantFetching,
+    refetch: refetchRestaurant,
+    error: restaurantError,
+  } = useRestaurant(slug ?? null);
+
+  const isLoading = isMenuLoading || isRestaurantLoading;
+  const isFetching = isMenuFetching || isRestaurantFetching;
+  const error = menuError || restaurantError;
+
+  const refetch = async () => {
+    await refetchMenu();
+    await refetchRestaurant();
+  };
 
   const ajouterItem = useStore((s) => s.ajouterItem);
   const retirerItem = useStore((s) => s.retirerItem);
@@ -41,27 +58,43 @@ export default function RestaurantScreen() {
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const restaurant = menu?.restaurant ?? undefined;
-  const categories = useMemo(
-    () =>
-      (menu?.categories ?? []).filter((category) => category.visible !== false),
-    [menu?.categories],
-  );
-  const creneaux = menu?.creneaux ?? [];
+  // Le backend ne retourne pas encore de créneaux (feature en développement).
+  // Cette valeur reste toujours [] pour l'instant, ce qui fait que isPlatDisponible
+  // retombe sur son comportement par défaut : un plat est considéré disponible sauf
+  // si plat.disponible === false (les creneauId sont ignorés faute de données).
+  const creneaux: CreneauHoraire[] = [];
 
-  const categoryNames = useMemo(
-    () => categories.map((c) => ({ id: c.id, nom: c.nom })),
+  const visibleCategories = useMemo(
+    () => categories.filter((category) => category.visible !== false),
     [categories],
   );
 
+  const popularPlats = useMemo(() => {
+    const list: Plat[] = [];
+    for (const cat of visibleCategories) {
+      const plats = Array.isArray(cat.plats) ? cat.plats : [];
+      for (const p of plats) {
+        if (list.length < 3) list.push(p);
+        else break;
+      }
+      if (list.length >= 3) break;
+    }
+    return list;
+  }, [visibleCategories]);
+
+  const categoryNames = useMemo(
+    () => visibleCategories.map((c) => ({ id: c.id, nom: c.nom })),
+    [visibleCategories],
+  );
+
   const platsAffiches = useMemo(() => {
-    let source: CategorieAvecPlats[] = categories;
+    let source: Categorie[] = visibleCategories;
 
     if (selectedCategory) {
       source = source.filter((c) => c.id === selectedCategory);
     }
 
-    const result: Array<{ plat: Plat; categorie: CategorieAvecPlats }> = [];
+    const result: Array<{ plat: Plat; categorie: Categorie }> = [];
 
     for (const cat of source) {
       const plats = Array.isArray(cat.plats) ? cat.plats : [];
@@ -75,7 +108,7 @@ export default function RestaurantScreen() {
     }
 
     return result;
-  }, [categories, selectedCategory, creneaux]);
+  }, [visibleCategories, selectedCategory, creneaux]);
 
   const handleAjouter = useCallback(
     async (plat: Plat) => {
@@ -121,7 +154,7 @@ export default function RestaurantScreen() {
   }, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: { plat: Plat; categorie: CategorieAvecPlats } }) => (
+    ({ item }: { item: { plat: Plat; categorie: Categorie } }) => (
       <CartePlatMobile
         plat={item.plat}
         onAjouter={handleAjouter}
@@ -132,16 +165,13 @@ export default function RestaurantScreen() {
   );
 
   const keyExtractor = useCallback(
-    (_item: { plat: Plat; categorie: CategorieAvecPlats }) => _item.plat.id,
+    (_item: { plat: Plat; categorie: Categorie }) => _item.plat.id,
     [],
   );
 
   const getItemLayout = useCallback(
     (
-      _data:
-        | ArrayLike<{ plat: Plat; categorie: CategorieAvecPlats }>
-        | null
-        | undefined,
+      _data: ArrayLike<{ plat: Plat; categorie: Categorie }> | null | undefined,
       index: number,
     ) => ({
       length: CARD_HEIGHT,
@@ -158,6 +188,7 @@ export default function RestaurantScreen() {
           <HeaderRestaurant
             restaurant={restaurant}
             onItineraire={handleItineraire}
+            popularPlats={popularPlats}
           />
         )}
         {categoryNames.length > 0 && (
@@ -228,7 +259,7 @@ export default function RestaurantScreen() {
     );
   }
 
-  if (error || !menu) {
+  if (error || !categories.length || !restaurant) {
     return (
       <SafeAreaView style={styles.flex}>
         <ErrorView

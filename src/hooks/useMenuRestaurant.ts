@@ -1,68 +1,44 @@
 import { ENDPOINTS } from "@/constants/api";
 import { apiFetch } from "@/lib/api";
-import type { CategorieAvecPlats, CreneauHoraire, Restaurant } from "@/types";
+import type { Categorie, Restaurant } from "@/types";
 import { useQuery } from "@tanstack/react-query";
-
-interface MenuComplet {
-  restaurant?: Restaurant | null;
-  categories: CategorieAvecPlats[];
-  creneaux: CreneauHoraire[];
-}
 
 interface ApiResponse<T> {
   success: boolean;
   data: T;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === "object";
-}
-
-function normalizeMenuResponse(response: unknown): MenuComplet {
-  const payload =
-    isRecord(response) && "data" in response ? response.data : response;
-
-  if (!isRecord(payload) && !Array.isArray(payload)) {
-    return { restaurant: null, categories: [], creneaux: [] };
-  }
-
-  const rawCategories = Array.isArray(payload)
-    ? payload
-    : Array.isArray(payload.categories)
-      ? payload.categories
-      : [];
-
-  const categories = rawCategories.filter(isRecord).map((item) => ({
-    ...(item as Record<string, unknown>),
-    plats: Array.isArray(item.plats)
-      ? item.plats
-      : Array.isArray(item.items)
-        ? item.items
-        : [],
-    creneau: item.creneau ?? null,
-  })) as CategorieAvecPlats[];
-
-  return {
-    restaurant:
-      isRecord(payload) && isRecord(payload.restaurant)
-        ? (payload.restaurant as Restaurant)
-        : null,
-    categories,
-    creneaux: Array.isArray(payload.creneaux)
-      ? (payload.creneaux as CreneauHoraire[])
-      : [],
-  };
-}
-
+/**
+ * Récupère le menu d'un restaurant (catégories et plats).
+ * La réponse API est {success: true, data: Categorie[]}
+ * On retourne directement Categorie[] sans reconstruction.
+ */
 export function useMenuRestaurant(slug: string | null) {
-  return useQuery<MenuComplet>({
+  return useQuery({
     queryKey: ["menu-restaurant", slug],
     queryFn: async () => {
-      const response = await apiFetch<
-        ApiResponse<MenuComplet> | MenuComplet | unknown
-      >(ENDPOINTS.restaurantMenu(slug!));
+      const result = await apiFetch<ApiResponse<Categorie[]>>(
+        ENDPOINTS.restaurantMenu(slug!),
+      );
+      return result.data;
+    },
+    enabled: !!slug,
+  });
+}
 
-      return normalizeMenuResponse(response);
+/**
+ * Récupère les détails complets d'un restaurant (données statiques, horaires, etc.)
+ * Utilisé pour le deep linking et pour obtenir les données restaurant pas incluses dans /menu.
+ * La réponse API est {success: true, data: Restaurant}
+ */
+export function useRestaurant(slug: string | null) {
+  return useQuery({
+    queryKey: ["restaurant", slug],
+    queryFn: async () => {
+      const result = await apiFetch<ApiResponse<Restaurant>>(
+        ENDPOINTS.restaurantDetail(slug!),
+      );
+      return result.data;
     },
     enabled: !!slug,
   });
