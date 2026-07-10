@@ -30,11 +30,11 @@ export function useGeoSearch(q: string) {
   return useQuery<Suggestion[]>({
     queryKey: ["geo-search", debouncedQ],
     queryFn: async () => {
-      const result = await apiFetch<GeocodeResult>(
+      const response = await apiFetch<{ success: boolean; data?: GeocodeResult }>(
         `/api/v1/client/geo/geocode?q=${encodeURIComponent(debouncedQ)}`,
       );
-      if (!result) return [];
-      return [mapToSuggestion(result)];
+      if (!response || !response.data) return [];
+      return [mapToSuggestion(response.data)];
     },
     enabled: debouncedQ.trim().length > 2,
   });

@@ -1,24 +1,27 @@
-import { useEffect } from "react";
+import { useCommandeTracking } from "@/hooks/useCommandeTracking";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import {
+  AlertCircle,
+  Check,
+  ChevronLeft,
+  CircleCheckBig,
+  Headphones,
+  ShoppingBag,
+  Smile,
+  Truck
+} from "lucide-react-native";
+import React from "react";
 import {
   ActivityIndicator,
+  Image,
+  Linking,
+  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import { useCommandeTracking } from "@/hooks/useCommandeTracking";
-
-const ETAPES = ["recue", "en_preparation", "prete", "servie"] as const;
-
-const STATUT_ICONS: Record<string, string> = {
-  recue: "📨",
-  en_preparation: "👨‍🍳",
-  prete: "✅",
-  servie: "🎉",
-  annulee: "❌",
-};
 
 const STATUT_LABELS: Record<string, string> = {
   recue: "Commande reçue",
@@ -28,17 +31,26 @@ const STATUT_LABELS: Record<string, string> = {
   annulee: "Annulée",
 };
 
+const STATUT_ICONS: Record<string, typeof Check> = {
+  recue: Check,
+  en_preparation: ShoppingBag,
+  prete: Truck,
+  servie: CircleCheckBig,
+};
+
 export default function CommandeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { commande, statut, isLoading, error } = useCommandeTracking(id ?? null);
+  const { commande, statut, isLoading, error } = useCommandeTracking(
+    id ?? null,
+  );
 
-  const currentIndex = commande ? ETAPES.indexOf(commande.statut as typeof ETAPES[number]) : -1;
+  const appelerSupport = () => Linking.openURL("tel:+2250700000000");
 
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <ActivityIndicator size="large" color="#22c55e" />
+        <ActivityIndicator size="large" color="#1B4D1E" />
       </SafeAreaView>
     );
   }
@@ -46,15 +58,15 @@ export default function CommandeDetailScreen() {
   if (error || !commande) {
     return (
       <SafeAreaView className="flex-1 bg-white justify-center items-center px-8">
-        <Text className="text-4xl mb-4">❌</Text>
-        <Text className="text-lg font-bold text-gray-900 mb-2">
+        <AlertCircle size={40} color="#DC2626" />
+        <Text className="text-lg font-bold text-black mt-4 mb-2">
           Commande introuvable
         </Text>
         <Text className="text-gray-500 text-center mb-6">
           {error?.message ?? "Cette commande n'existe pas ou a été supprimée."}
         </Text>
         <TouchableOpacity
-          className="bg-brand-500 rounded-xl px-6 py-3"
+          className="bg-green-900 rounded-2xl px-6 py-4"
           onPress={() => router.back()}
         >
           <Text className="text-white font-bold">Retour</Text>
@@ -63,173 +75,220 @@ export default function CommandeDetailScreen() {
     );
   }
 
-  const totalFormate =
-    new Intl.NumberFormat("fr-FR").format(commande.total / 100) + " FCFA";
+  const estAnnulee = commande.estAnnulee;
+  const statutLabel = STATUT_LABELS[commande.statut] ?? commande.statut;
   const dateFormatee = new Date(commande.createdAt).toLocaleDateString(
     "fr-FR",
-    {
-      weekday: "long",
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }
+    { day: "2-digit", month: "long", year: "numeric" },
   );
+  const heureFormatee = new Date(commande.createdAt).toLocaleTimeString(
+    "fr-FR",
+    { hour: "2-digit", minute: "2-digit" },
+  );
+  const totalFormate =
+    new Intl.NumberFormat("fr-FR").format(commande.total / 100) + " FCFA";
 
-  const estAnnulee = commande.estAnnulee;
-  const statutIcon = STATUT_ICONS[commande.statut] ?? "📋";
-  const statutLabel = STATUT_LABELS[commande.statut] ?? commande.statut;
+  // Le livreur n'est présent que si le backend l'a assigné (mode livraison, commande prise en charge)
+  // const livreur = commande.livreur;
 
   return (
     <>
-      <Stack.Screen options={{ title: `Commande ${commande.numero}`, headerShown: true }} />
-      <SafeAreaView className="flex-1 bg-gray-50">
+      <Stack.Screen options={{ headerShown: false }} />
+      <SafeAreaView className="flex-1 bg-white pb-14">
+        {/* Header */}
+        <View className="flex-row items-center justify-between px-4 py-3">
+          <Pressable onPress={() => router.push("/(tabs)/commandes")} hitSlop={10} className="w-9">
+            <ChevronLeft size={26} color="#111111" />
+          </Pressable>
+
+          <View className="flex-row items-center">
+            <Text className="text-green-900 text-xl font-extrabold tracking-tight">
+              Restau
+            </Text>
+            <Text className="text-green-800 text-xl font-extrabold">C</Text>
+            <Text className="text-green-900 text-xl font-extrabold tracking-tight">
+              i
+            </Text>
+          </View>
+
+          <Pressable
+            className="flex-row items-center"
+            hitSlop={10}
+            onPress={appelerSupport}
+          >
+            <Headphones size={18} color="#1B4D1E" />
+            <Text className="text-green-800 font-medium ml-1">Aide</Text>
+          </Pressable>
+        </View>
+
         <ScrollView
           contentContainerStyle={{ paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
+          className="px-4"
         >
-          {/* Header Card */}
-          <View className="bg-white mx-4 mt-4 rounded-2xl p-5 shadow-sm border border-gray-100">
-            <View className="flex-row items-center justify-between mb-3">
-              <View className="flex-row items-center gap-3">
-                <Text className="text-3xl">{statutIcon}</Text>
-                <View>
-                  <Text className="text-lg font-bold text-gray-900">
-                    {commande.restaurant?.nom ?? "Restaurant"}
-                  </Text>
-                  <Text className="text-sm text-gray-500">
-                    {dateFormatee}
-                  </Text>
-                </View>
-              </View>
-              <View className="bg-gray-100 rounded-lg px-3 py-1.5">
-                <Text className="font-bold text-brand-600">
-                  #{commande.numero}
+          {/* Carte statut */}
+          {!estAnnulee ? (
+            <View className="bg-green-50 rounded-3xl p-5 mt-2 flex-row items-center justify-between overflow-hidden">
+              <View className="flex-1 pr-2">
+                <Text className="text-gray-600">
+                  {commande.restaurant?.nom ?? "Votre commande"}
+                </Text>
+                <Text className="text-green-900 text-2xl font-extrabold mt-1">
+                  {statutLabel}
+                </Text>
+                <Text className="text-black mt-3 leading-5">
+                  Commande #{commande.numero}
                 </Text>
               </View>
-            </View>
-
-            <View className="bg-gray-50 rounded-xl p-4 mt-2">
-              <Text className="font-bold text-gray-900 mb-1">{statutLabel}</Text>
-              {!estAnnulee && currentIndex >= 0 && (
-                <Text className="text-sm text-gray-500">
-                  {ETAPES.indexOf(commande.statut as typeof ETAPES[number]) <
-                  ETAPES.length - 1
-                    ? `${ETAPES.length - currentIndex - 1} étape${
-                        ETAPES.length - currentIndex - 1 > 1 ? "s" : ""
-                      } restante${ETAPES.length - currentIndex - 1 === 1 ? "" : "s"}`
-                    : "Dernière étape"}
-                </Text>
+              {commande.modeCommande === "livraison" && (
+                <Image
+                  source={require('@/assets/images/livreur-profile.png')}
+                  style={{ width: 110, height: 110, borderRadius: 999 }}
+                  resizeMode="contain"
+                />
               )}
             </View>
-          </View>
-
-          {/* Timeline */}
-          {!estAnnulee && commande.timeline.length > 0 && (
-            <View className="bg-white mx-4 mt-4 rounded-2xl p-5 shadow-sm border border-gray-100">
-              <Text className="font-bold text-gray-900 mb-5">
-                Suivi de commande
+          ) : (
+            <View className="bg-red-50 rounded-3xl p-5 mt-2 border border-red-100">
+              <AlertCircle size={28} color="#DC2626" />
+              <Text className="font-bold text-red-600 text-lg mt-2">
+                Commande annulée
               </Text>
+              <Text className="text-gray-500 mt-1">
+                Cette commande a été annulée. Contactez le restaurant pour
+                plus d'informations.
+              </Text>
+            </View>
+          )}
 
+          {/* Timeline horizontale, pilotée par les données réelles du hook */}
+          {!estAnnulee && commande.timeline.length > 0 && (
+            <View className="flex-row items-start mt-6 px-1">
               {commande.timeline.map((etape, index) => {
-                const isLast = index === commande.timeline.length - 1;
-                const icon = STATUT_ICONS[etape.etape] ?? "📋";
+                const Icon = STATUT_ICONS[etape.etape] ?? Check;
+                const estAtteinte = etape.fait || etape.actif;
 
                 return (
-                  <View key={etape.etape} className="flex-row">
-                    {/* Timeline connector */}
-                    <View className="items-center mr-3">
+                  <React.Fragment key={etape.etape}>
+                    <View className="items-center" style={{ width: 64 }}>
                       <View
-                        className={`w-10 h-10 rounded-full justify-center items-center ${
-                          etape.actif
-                            ? "bg-green-500"
-                            : etape.fait
-                            ? "bg-green-100"
-                            : "bg-gray-100"
-                        }`}
-                      >
-                        <Text className="text-lg">{icon}</Text>
-                      </View>
-                      {!isLast && (
-                        <View
-                          className={`w-0.5 flex-1 my-1 ${
-                            etape.fait ? "bg-green-300" : "bg-gray-200"
+                        className={`w-9 h-9 rounded-full items-center justify-center ${estAtteinte ? "bg-green-900" : "bg-gray-200"
                           }`}
+                      >
+                        <Icon
+                          size={16}
+                          color={estAtteinte ? "#FFFFFF" : "#9CA3AF"}
                         />
-                      )}
-                    </View>
-
-                    {/* Content */}
-                    <View className="flex-1 pb-6">
+                      </View>
                       <Text
-                        className={`font-semibold text-base ${
-                          etape.actif
-                            ? "text-green-600"
-                            : etape.fait
-                            ? "text-gray-900"
+                        className={`text-xs mt-2 text-center ${etape.actif
+                          ? "text-green-800 font-semibold"
+                          : etape.fait
+                            ? "text-black"
                             : "text-gray-400"
-                        }`}
+                          }`}
                       >
                         {etape.label}
                       </Text>
                       {etape.timestamp && (
-                        <Text className="text-sm text-gray-400 mt-0.5">
+                        <Text className="text-[11px] text-gray-400 mt-0.5">
                           {new Date(etape.timestamp).toLocaleTimeString(
                             "fr-FR",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
+                            { hour: "2-digit", minute: "2-digit" },
                           )}
                         </Text>
                       )}
                     </View>
-                  </View>
+                    {index < commande.timeline.length - 1 && (
+                      <View
+                        className={`flex-1 h-0.5 mt-[18px] ${etape.fait ? "bg-green-900" : "bg-gray-200"
+                          }`}
+                      />
+                    )}
+                  </React.Fragment>
                 );
               })}
             </View>
           )}
 
-          {/* Annulation */}
-          {estAnnulee && (
-            <View className="bg-white mx-4 mt-4 rounded-2xl p-5 shadow-sm border border-red-100">
-              <Text className="text-3xl mb-2">❌</Text>
-              <Text className="font-bold text-red-600 text-lg">
-                Commande annulée
+          {/* Livreur partenaire — uniquement si assigné par le backend */}
+          {/* {!estAnnulee && livreur && (
+            <View className="border border-gray-100 rounded-3xl p-5 mt-8">
+              <Text className="text-lg font-bold text-black mb-4">
+                Livreur partenaire
               </Text>
-              <Text className="text-gray-500 mt-1">
-                Cette commande a été annulée. Contactez le restaurant pour plus
-                d'informations.
+              <View className="flex-row items-center">
+                <Image
+                  source={{ uri: livreur.photo }}
+                  style={{ width: 56, height: 56, borderRadius: 28 }}
+                />
+                <View className="flex-1 ml-3">
+                  <Text className="text-black font-semibold text-base">
+                    {livreur.nom}
+                  </Text>
+                  <View className="flex-row items-center mt-1">
+                    <Star size={14} color="#F5A623" fill="#F5A623" />
+                    <Text className="text-black ml-1">{livreur.note}</Text>
+                    <Text className="text-gray-400 ml-1">
+                      ({livreur.avis} avis)
+                    </Text>
+                  </View>
+                  <Text className="text-gray-400 text-sm mt-0.5">
+                    ID : {livreur.id}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => Linking.openURL(`tel:${livreur.telephone}`)}
+                  className="w-11 h-11 rounded-full bg-green-50 items-center justify-center mr-2"
+                >
+                  <Phone size={18} color="#1B4D1E" />
+                </Pressable>
+                <Pressable
+                  onPress={() => router.push(`/`)}
+                  className="w-11 h-11 rounded-full bg-green-900 items-center justify-center"
+                >
+                  <MessageCircle size={18} color="#FFFFFF" />
+                </Pressable>
+              </View>
+            </View>
+          )} */}
+
+          {/* Détails de la commande */}
+          <View className="border border-gray-100 rounded-3xl p-5 mt-8">
+            <View className="flex-row items-center justify-between">
+              <Text className="text-lg font-bold text-black">
+                Détails de la commande
+              </Text>
+              <Text className="text-gray-400 text-sm">
+                {dateFormatee} • {heureFormatee}
               </Text>
             </View>
-          )}
-
-          {/* Order Details */}
-          <View className="bg-white mx-4 mt-4 rounded-2xl p-5 shadow-sm border border-gray-100">
-            <Text className="font-bold text-gray-900 mb-4">
-              Détails de la commande
+            <Text className="text-gray-400 text-sm mt-1">
+              Commande #{commande.numero}
             </Text>
 
-            {/* Mode */}
-            <View className="flex-row justify-between items-center mb-4 pb-4 border-b border-gray-100">
-              <Text className="text-gray-600">Mode</Text>
-              <Text className="font-medium text-gray-900">
+            <View className="h-px bg-gray-100 my-4" />
+
+            {/* Mode + adresse (conservés depuis la version précédente) */}
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="text-gray-500">Mode</Text>
+              <Text className="font-medium text-black">
                 {commande.modeCommande === "livraison"
-                  ? "🚚 Livraison"
-                  : "📦 Emporter"}
+                  ? "Livraison"
+                  : "À emporter"}
               </Text>
             </View>
-
             {commande.modeCommande === "livraison" &&
               commande.adresseLivraison && (
-                <View className="flex-row justify-between items-start mb-4 pb-4 border-b border-gray-100">
-                  <Text className="text-gray-600">Adresse</Text>
-                  <Text className="font-medium text-gray-900 text-right flex-1 ml-4">
+                <View className="flex-row justify-between items-start mb-3">
+                  <Text className="text-gray-500">Adresse</Text>
+                  <Text className="font-medium text-black text-right flex-1 ml-4">
                     {commande.adresseLivraison}
                   </Text>
                 </View>
               )}
+
+            <View className="h-px bg-gray-100 my-4" />
 
             {/* Items */}
             {commande.items.map((item, i) => (
@@ -238,75 +297,105 @@ export default function CommandeDetailScreen() {
                 className="flex-row justify-between items-center mb-3"
               >
                 <View className="flex-row items-center flex-1">
-                  <Text className="font-semibold text-gray-900 mr-2">
+                  <Text className="font-semibold text-black mr-2">
                     {item.quantite}×
                   </Text>
-                  <Text className="text-gray-800 flex-1" numberOfLines={2}>
+                  <Text className="text-black flex-1" numberOfLines={2}>
                     {item.nom}
                   </Text>
                 </View>
-                <Text className="font-medium text-gray-700">
-                  {new Intl.NumberFormat("fr-FR").format(item.prix * item.quantite)}{" "}
+                <Text className="font-medium text-gray-600">
+                  {new Intl.NumberFormat("fr-FR").format(
+                    item.prix * item.quantite,
+                  )}{" "}
                   FCFA
                 </Text>
               </View>
             ))}
 
-            {/* Totals */}
-            <View className="mt-4 pt-4 border-t border-gray-100">
-              <View className="flex-row justify-between items-center mb-2">
-                <Text className="text-gray-500">Sous-total</Text>
-                <Text className="text-gray-700">
-                  {new Intl.NumberFormat("fr-FR").format(
-                    commande.sousTotal / 100
-                  )}{" "}
-                  FCFA
-                </Text>
-              </View>
-              <View className="flex-row justify-between items-center mb-2">
-                <Text className="text-gray-500">Livraison</Text>
-                <Text className="text-gray-700">
-                  {new Intl.NumberFormat("fr-FR").format(
-                    commande.fraisLivraison / 100
-                  )}{" "}
-                  FCFA
-                </Text>
-              </View>
-              <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-gray-200">
-                <Text className="font-bold text-gray-900 text-base">Total</Text>
-                <Text className="font-bold text-green-600 text-lg">
-                  {totalFormate}
-                </Text>
-              </View>
+            <View className="h-px bg-gray-100 my-4" />
+
+            {/* Totaux */}
+            <View className="flex-row justify-between mb-2">
+              <Text className="text-gray-500">Sous-total</Text>
+              <Text className="text-black">
+                {new Intl.NumberFormat("fr-FR").format(
+                  commande.sousTotal / 100,
+                )}{" "}
+                FCFA
+              </Text>
+            </View>
+            <View className="flex-row justify-between mb-3">
+              <Text className="text-gray-500">Frais de livraison</Text>
+              <Text className="text-black">
+                {new Intl.NumberFormat("fr-FR").format(
+                  commande.fraisLivraison / 100,
+                )}{" "}
+                FCFA
+              </Text>
+            </View>
+            <View className="flex-row justify-between">
+              <Text className="text-black font-bold text-base">
+                Total à payer
+              </Text>
+              <Text className="text-green-800 font-bold text-base">
+                {totalFormate}
+              </Text>
             </View>
           </View>
 
-          {/* Notes */}
+          {/* Note du client */}
           {commande.noteClient && (
-            <View className="bg-white mx-4 mt-4 rounded-2xl p-5 shadow-sm border border-gray-100">
-              <Text className="font-bold text-gray-900 mb-2">Note</Text>
+            <View className="border border-gray-100 rounded-3xl p-5 mt-6">
+              <Text className="font-bold text-black mb-2">Note</Text>
               <Text className="text-gray-600">{commande.noteClient}</Text>
             </View>
           )}
 
+          {/* Bandeau avis — uniquement une fois la commande livrée */}
+          {commande.statut === "servie" && (
+            <Pressable
+              onPress={() => router.push(`/`)}
+              className="flex-row items-center bg-green-50 rounded-2xl p-4 mt-6"
+            >
+              <Smile size={26} color="#1B4D1E" />
+              <View className="flex-1 ml-3">
+                <Text className="text-black font-medium">
+                  Vous avez aimé notre service ?
+                </Text>
+                <Text className="text-gray-500 text-sm mt-0.5">
+                  Donnez votre avis sur votre expérience
+                </Text>
+              </View>
+            </Pressable>
+          )}
+
           {/* Actions */}
-          <View className="mx-4 mt-5 gap-3">
+          <View className="mt-6 gap-3">
             <TouchableOpacity
-              className="bg-brand-500 rounded-xl py-4 items-center"
+              className="bg-green-900 rounded-2xl py-4 items-center"
               onPress={() => router.push("/(tabs)")}
             >
               <Text className="text-white font-bold text-base">
                 Commander à nouveau
               </Text>
             </TouchableOpacity>
+            {/* <TouchableOpacity
+              className="bg-gray-100 rounded-2xl py-4 items-center"
+              onPress={appelerSupport}
+            >
+              <Text className="text-gray-700 font-semibold text-base">
+                Contacter le support
+              </Text>
+            </TouchableOpacity>
             <TouchableOpacity
-              className="bg-gray-100 rounded-xl py-4 items-center"
-              onPress={() => router.push("/(tabs)/profil")}
+              className="bg-gray-100 rounded-2xl py-4 items-center"
+              onPress={() => router.push("/(tabs)/commandes")}
             >
               <Text className="text-gray-700 font-semibold text-base">
                 Mes autres commandes
               </Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </ScrollView>
       </SafeAreaView>

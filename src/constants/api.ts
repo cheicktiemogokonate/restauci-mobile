@@ -11,5 +11,6 @@ export const ENDPOINTS = {
   authClientLogin: "/api/v1/client/auth/login",
   authClientRegister: "/api/v1/client/auth/register",
   authClientMe: "/api/v1/client/auth/me",
+  authClientRefresh: "/api/v1/client/auth/refresh",
   pushExpoRegister: "/api/v1/push/expo/register",
 } as const;

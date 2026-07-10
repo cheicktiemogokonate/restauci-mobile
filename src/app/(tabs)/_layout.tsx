@@ -1,27 +1,30 @@
 import { useStore } from "@/store";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { List, Map, ShoppingBag, User } from "lucide-react-native";
+import { useCallback } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import Animated, { LinearTransition } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
+  const client = useStore((s) => s.client);
+  const router = useRouter();
 
   return (
     <View
       style={{
-        position: 'absolute',
+        position: "absolute",
         bottom: insets.bottom > 0 ? insets.bottom : 20,
         left: 20,
         right: 20,
-        flexDirection: 'row',
-        backgroundColor: '#f4f3ef',
+        flexDirection: "row",
+        backgroundColor: "#f9fafb",
         borderRadius: 40,
         padding: 6,
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        shadowColor: '#000',
+        justifyContent: "space-between",
+        alignItems: "center",
+        shadowColor: "ink-900",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 10,
@@ -48,19 +51,23 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 
         const onPress = () => {
           const event = navigation.emit({
-            type: 'tabPress',
+            type: "tabPress",
             target: route.key,
             canPreventDefault: true,
           });
 
           if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name, route.params);
+            if (route.name === "profil" && !client) {
+              router.push("/auth/login");
+            } else {
+              navigation.navigate(route.name, route.params);
+            }
           }
         };
 
         const onLongPress = () => {
           navigation.emit({
-            type: 'tabLongPress',
+            type: "tabLongPress",
             target: route.key,
           });
         };
@@ -74,31 +81,37 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             testID={options.tabBarTestID}
             onPress={onPress}
             onLongPress={onLongPress}
-            style={{ flex: isFocused ? 1 : 0.6, alignItems: 'center' }}
+            style={{ flex: isFocused ? 1 : 0.6, alignItems: "center" }}
             activeOpacity={0.8}
           >
             <Animated.View
               layout={LinearTransition.springify().damping(15).stiffness(150)}
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: isFocused ? '#386b2a' : 'transparent',
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: isFocused ? "#386b2a" : "transparent",
                 borderRadius: 30,
                 paddingVertical: 10,
                 paddingHorizontal: isFocused ? 16 : 10,
                 borderWidth: isFocused ? 1 : 0,
-                borderColor: '#457b3b',
+                borderColor: "#457b3b",
               }}
             >
-              {options.tabBarIcon ? options.tabBarIcon({ focused: isFocused, color: isFocused ? '#ffffff' : '#8fa794', size: 20 }) : null}
+              {options.tabBarIcon
+                ? options.tabBarIcon({
+                  focused: isFocused,
+                  color: isFocused ? "#ffffff" : "#8fa794",
+                  size: 20,
+                })
+                : null}
               {isFocused && (
                 <Animated.Text
                   style={{
-                    color: '#ffffff',
+                    color: "#ffffff",
                     marginLeft: 6,
-                    fontWeight: '600',
-                    fontSize: 13
+                    fontWeight: "600",
+                    fontSize: 13,
                   }}
                   numberOfLines={1}
                 >
@@ -109,20 +122,22 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
               {options.tabBarBadge !== undefined && (
                 <View
                   style={{
-                    position: 'absolute',
+                    position: "absolute",
                     top: 6,
                     right: 6,
-                    backgroundColor: '#ff4b4b',
+                    backgroundColor: "#ff4b4b",
                     borderRadius: 10,
                     width: 14,
                     height: 14,
-                    justifyContent: 'center',
-                    alignItems: 'center',
+                    justifyContent: "center",
+                    alignItems: "center",
                     borderWidth: 1.5,
-                    borderColor: isFocused ? '#386b2a' : '#1a3821'
+                    borderColor: isFocused ? "#386b2a" : "green-900",
                   }}
                 >
-                  <Text style={{ color: 'white', fontSize: 8, fontWeight: 'bold' }}>
+                  <Text
+                    style={{ color: "white", fontSize: 8, fontWeight: "bold" }}
+                  >
                     {options.tabBarBadge}
                   </Text>
                 </View>
@@ -138,11 +153,21 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 export default function TabLayout() {
   const nombre = useStore((s) => s.nombreArticles());
 
+  // Mémoriser la prop tabBar pour éviter de re-monter les écrans
+  // (dont la carte) à chaque re-rendu déclenché par le store.
+  const renderTabBar = useCallback(
+    (props: any) => <CustomTabBar {...props} />,
+    [],
+  );
+
   return (
     <Tabs
-      tabBar={(props) => <CustomTabBar {...props} />}
+      tabBar={renderTabBar}
+      detachInactiveScreens={false} // Empêche la destruction de la vue native de l'onglet sur Android
       screenOptions={{
         headerShown: false,
+        // On peut aussi éviter que la vue soit freeze en arrière-plan
+        freezeOnBlur: false,
       }}
     >
       <Tabs.Screen
@@ -154,13 +179,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="restaurant"
-        options={{
-          title: "Restaurant",
-          href: null,
-        }}
-      />
+
       <Tabs.Screen
         name="commandes"
         options={{
@@ -181,7 +200,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="itineraire"
+        name="itineraire/[id]"
         options={{
           title: "Itinéraire",
           href: null,

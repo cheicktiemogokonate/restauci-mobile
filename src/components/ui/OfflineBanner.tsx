@@ -1,6 +1,6 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
 import { useConnectivite } from "@/hooks/useConnectivite";
+import React from "react";
+import { Text, View } from "react-native";
 
 export const OfflineBanner: React.FC = () => {
   const { isConnected } = useConnectivite();
@@ -8,29 +8,12 @@ export const OfflineBanner: React.FC = () => {
   if (isConnected !== false) return null;
 
   return (
-    <View style={styles.banner}>
-      <Text style={styles.text}>Pas de connexion internet</Text>
+    <View className="absolute top-0 left-0 right-0 z-9999 bg-danger-600 py-2 px-4 items-center">
+      <Text className="text-white text-xs font-semibold">
+        Pas de connexion internet
+      </Text>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  banner: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 9999,
-    backgroundColor: "#ef4444",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    alignItems: "center",
-  },
-  text: {
-    color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "600",
-  },
-});
 
 export default OfflineBanner;

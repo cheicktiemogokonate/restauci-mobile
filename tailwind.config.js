@@ -8,14 +8,16 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Couleur de marque — CTA principaux (aligné avec les anciens boutons #22c55e)
-        brand: {
+        // Couleur principale de l'app (palette verte RestauCi)
+        green: {
           50: "#f0fdf4",
           100: "#dcfce7",
           400: "#4ade80",
           500: "#22c55e",
           600: "#16a34a",
           700: "#15803d",
+          800: "#166534",
+          900: "#14532d",
         },
         // Palette neutre — remplace les gris codés en dur (#111827, #6b7280, #f3f4f6...)
         ink: {

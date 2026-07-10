@@ -2,16 +2,64 @@ import { DEFAULT_COORDS, DEFAULT_ZOOM } from "@/hooks/usePosition";
 import type { Restaurant } from "@/types";
 import {
   Camera,
+  GeoJSONSource,
+  Images,
+  Layer,
   Map,
-  Marker,
-  type CameraRef,
+  type CameraRef
 } from "@maplibre/maplibre-react-native";
-import { Link } from "expo-router";
-import React, { useImperativeHandle, useRef, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useRouter } from "expo-router";
+import React, {
+  useCallback,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+} from "react";
+import { NativeSyntheticEvent, Text, TouchableOpacity, View } from "react-native";
 
 // ============================================
-// Composant CarteView — MapLibre + OpenFreeMap
+// Constantes stables — hors composant pour ne jamais être recréées
+// ============================================
+const INITIAL_VIEW_STATE = {
+  zoom: DEFAULT_ZOOM,
+  center: [DEFAULT_COORDS.longitude, DEFAULT_COORDS.latitude] as [
+    number,
+    number,
+  ],
+};
+
+const MARKER_IMAGES = {
+  "restaurant-marker": require("../../../assets/images/restaurant-marker.png"),
+};
+
+// ============================================
+// Styles de couches (objets stables, hors rendu)
+// ============================================
+const restaurantSymbolLayout: Record<string, any> = {
+  "icon-image": "restaurant-marker",
+  "icon-size": 0.13,
+  "icon-allow-overlap": true,
+  "icon-ignore-placement": true,
+};
+
+const restaurantSymbolPaint: Record<string, any> = {
+  "icon-color": "#457b3b",
+};
+
+const userOuterCirclePaint: Record<string, any> = {
+  "circle-radius": 14,
+  "circle-color": "rgba(56, 107, 42, 0.25)",
+};
+
+const userInnerCirclePaint: Record<string, any> = {
+  "circle-radius": 7,
+  "circle-color": "#386b2a",
+  "circle-stroke-color": "#ffffff",
+  "circle-stroke-width": 2,
+};
+
+// ============================================
+// Types
 // ============================================
 interface CarteViewProps {
   restaurants: Restaurant[];
@@ -22,10 +70,55 @@ export interface CarteViewRef {
   flyTo: (lngLat: [number, number], zoom?: number) => void;
 }
 
+// ============================================
+// Helpers GeoJSON — fonctions pures hors composant
+// ============================================
+function toRestaurantsGeoJSON(restaurants: Restaurant[]): GeoJSON.FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: restaurants.map((r) => ({
+      type: "Feature",
+      id: r.id,
+      geometry: {
+        type: "Point",
+        coordinates: [r.longitude, r.latitude],
+      },
+      properties: { id: r.id, slug: r.slug },
+    })),
+  };
+}
+
+function toUserLocationGeoJSON(
+  userLocation: { latitude: number; longitude: number } | null,
+): GeoJSON.FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: userLocation
+      ? [
+        {
+          type: "Feature",
+          geometry: {
+            type: "Point",
+            coordinates: [userLocation.longitude, userLocation.latitude],
+          },
+          properties: {},
+        },
+      ]
+      : [],
+  };
+}
+
+// ============================================
+// Composant principal
+// ============================================
 export const CarteView = React.forwardRef<CarteViewRef, CarteViewProps>(
   ({ restaurants, userLocation }, ref) => {
     const cameraRef = useRef<CameraRef>(null);
-    const [currentZoom, setCurrentZoom] = useState(DEFAULT_ZOOM);
+    const router = useRouter();
+
+    // useRef pour le zoom courant : évite tout setState pendant les gestes
+    // de déplacement de la carte → aucun re-render, 100% fluide.
+    const currentZoomRef = useRef(DEFAULT_ZOOM);
 
     useImperativeHandle(ref, () => ({
       flyTo: (lngLat: [number, number], zoom = DEFAULT_ZOOM) => {
@@ -37,172 +130,114 @@ export const CarteView = React.forwardRef<CarteViewRef, CarteViewProps>(
       },
     }));
 
+    // GeoJSON mémorisé — recalculé uniquement si les données changent
+    const restaurantsGeoJSON = useMemo(
+      () => toRestaurantsGeoJSON(restaurants),
+      [restaurants],
+    );
+
+    const userLocationGeoJSON = useMemo(
+      () => toUserLocationGeoJSON(userLocation),
+      [userLocation],
+    );
+
+    // Gestion des taps sans re-render du composant
+    const handleRestaurantPress = useCallback(
+      (e: NativeSyntheticEvent<any>) => {
+        const feature = (e.nativeEvent as any)?.features?.[0];
+        const slug = feature?.properties?.slug;
+        if (slug) {
+          router.push(`/restaurant/${slug}`);
+        }
+      },
+      [router],
+    );
+
+    // Suivi du zoom via ref uniquement (pas de setState)
+    const handleRegionChange = useCallback((e: any) => {
+      const zoom = e?.properties?.zoomLevel ?? e?.nativeEvent?.zoom;
+      if (typeof zoom === "number") {
+        currentZoomRef.current = zoom;
+      }
+    }, []);
+
     return (
-      <View style={styles.mapContainer}>
+      <View
+        style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }}
+      >
         <Map
-          style={styles.map}
+          style={{ flex: 1 }}
           mapStyle="https://tiles.openfreemap.org/styles/liberty"
           attribution={false}
           compass={false}
           scaleBar={false}
           logo={false}
-          onRegionDidChange={(e) => {
-            if (e.nativeEvent && typeof e.nativeEvent.zoom === "number") {
-              setCurrentZoom(e.nativeEvent.zoom);
-            }
-          }}
+          onRegionDidChange={handleRegionChange}
         >
-          <Camera
-            ref={cameraRef}
-            initialViewState={{
-              zoom: DEFAULT_ZOOM,
-              center: [DEFAULT_COORDS.longitude, DEFAULT_COORDS.latitude],
-            }}
-          />
+          <Camera ref={cameraRef} initialViewState={INITIAL_VIEW_STATE} />
 
-          {userLocation && (
-            <Marker lngLat={[userLocation.longitude, userLocation.latitude]}>
-              <View style={styles.markerUserOuter}>
-                <View style={styles.markerUserInner} />
-              </View>
-            </Marker>
-          )}
+          {/* Enregistrement de l'image du marqueur */}
+          <Images images={MARKER_IMAGES} />
 
-          {restaurants.map((resto) => (
-            <Marker
-              key={resto.id}
-              id={resto.id}
-              lngLat={[resto.longitude, resto.latitude]}
-            >
-              <Link
-                href={{
-                  pathname: "/restaurant/[slug]",
-                  params: { slug: resto.slug },
-                }}
-                asChild
-              >
-                <TouchableOpacity
-                  style={{
-                    width: 52,
-                    height: 52,
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <Image
-                    source={require("../../../assets/images/restaurant-marker.png")}
-                    style={{
-                      width: 52,
-                      height: 52,
-                      resizeMode: "contain",
-                      tintColor: "#457b3b",
-                    }}
-                  />
-                </TouchableOpacity>
-              </Link>
-            </Marker>
-          ))}
+          <GeoJSONSource
+            id="restaurants-source"
+            data={restaurantsGeoJSON}
+            onPress={handleRestaurantPress}
+          >
+            <Layer
+              id="restaurant-icons"
+              type="symbol"
+              layout={restaurantSymbolLayout}
+              paint={restaurantSymbolPaint}
+            />
+          </GeoJSONSource>
+
+          <GeoJSONSource id="user-location-source" data={userLocationGeoJSON}>
+            <Layer
+              id="user-location-outer"
+              type="circle"
+              paint={userOuterCirclePaint}
+            />
+            <Layer
+              id="user-location-inner"
+              type="circle"
+              paint={userInnerCirclePaint}
+            />
+          </GeoJSONSource>
         </Map>
 
-        {/* Zoom controls */}
-        <View style={styles.zoomControls}>
+        {/* Contrôles de zoom */}
+        <View
+          style={{ position: "absolute", right: 16, bottom: 120 }}
+          className="overflow-hidden rounded-2xl bg-white shadow-md"
+        >
           <TouchableOpacity
-            style={styles.zoomButton}
+            className="h-11 w-11 items-center justify-center"
             onPress={() =>
-              cameraRef.current?.zoomTo(currentZoom + 1, { duration: 300 })
+              cameraRef.current?.zoomTo(currentZoomRef.current + 1, {
+                duration: 300,
+              })
             }
             activeOpacity={0.7}
           >
-            <Text style={styles.zoomText}>+</Text>
+            <Text className="text-2xl font-light text-ink-700">+</Text>
           </TouchableOpacity>
-          <View style={styles.zoomDivider} />
+          <View className="h-px w-8 self-center bg-ink-200" />
           <TouchableOpacity
-            style={styles.zoomButton}
+            className="h-11 w-11 items-center justify-center"
             onPress={() =>
-              cameraRef.current?.zoomTo(currentZoom - 1, { duration: 300 })
+              cameraRef.current?.zoomTo(currentZoomRef.current - 1, {
+                duration: 300,
+              })
             }
             activeOpacity={0.7}
           >
-            <Text style={styles.zoomText}>−</Text>
+            <Text className="text-2xl font-light text-ink-700">−</Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   },
 );
-
-const styles = StyleSheet.create({
-  mapContainer: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-  },
-  map: {
-    flex: 1,
-  },
-  markerUserOuter: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(59, 130, 246, 0.25)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  markerUserInner: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: "#3b82f6",
-    borderWidth: 3,
-    borderColor: "#ffffff",
-  },
-  customPinContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: 42,
-    height: 42,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  customPinInnerIcon: {
-    position: "absolute",
-    top: 9,
-  },
-  zoomControls: {
-    position: "absolute",
-    right: 16,
-    bottom: 120, // Positioned above the recenter button in index.tsx
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 5,
-    overflow: "hidden",
-  },
-  zoomButton: {
-    width: 44,
-    height: 44,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  zoomDivider: {
-    height: 1,
-    backgroundColor: "#e5e7eb",
-    width: 32,
-    alignSelf: "center",
-  },
-  zoomText: {
-    fontSize: 24,
-    color: "#374151",
-    fontWeight: "400",
-  },
-});
 
 export default CarteView;

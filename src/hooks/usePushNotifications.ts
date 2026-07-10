@@ -16,7 +16,9 @@ function getProjectId(): string | undefined {
   );
 }
 
-export async function registerForPushNotificationsAsync(): Promise<string | null> {
+export async function registerForPushNotificationsAsync(): Promise<
+  string | null
+> {
   try {
     const Notifications = await import("expo-notifications");
     const { status: existingStatus } =
@@ -34,7 +36,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 
     const projectId = getProjectId();
     const { data: token } = await Notifications.getExpoPushTokenAsync(
-      projectId ? { projectId } : undefined
+      projectId ? { projectId } : undefined,
     );
 
     if (token) {
@@ -62,9 +64,10 @@ interface NotificationData {
 export function usePushNotifications() {
   const client = useStore((s) => s.client);
 
-  const handleNotification = useCallback((notification: Notification) => {
-    console.log("Push notification received:", notification);
-  }, []);
+  const handleNotification = useCallback(
+    (notification: Notification) => {},
+    [],
+  );
 
   const handleNotificationResponse = useCallback(
     (response: NotificationResponse) => {
@@ -76,7 +79,7 @@ export function usePushNotifications() {
         router.push(`/commandes/${data.commandeId}`);
       }
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -101,13 +104,12 @@ export function usePushNotifications() {
           }),
         });
 
-        notificationListener = Notifications.addNotificationReceivedListener(
-          handleNotification
-        );
+        notificationListener =
+          Notifications.addNotificationReceivedListener(handleNotification);
 
         responseListener =
           Notifications.addNotificationResponseReceivedListener(
-            handleNotificationResponse
+            handleNotificationResponse,
           );
       })
       .catch(() => {
@@ -130,11 +132,11 @@ export function usePushNotifications() {
 
 async function syncPushToken(token: string): Promise<void> {
   try {
-    await apiFetch(ENDPOINTS.clientDeviceToken, {
+    await apiFetch(ENDPOINTS.pushExpoRegister, {
       method: "POST",
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ expoToken: token }),
     });
   } catch (err) {
-    console.log("Échec de synchronisation du push token:", err);
+    // Ignore token sync errors in non-critical path
   }
 }

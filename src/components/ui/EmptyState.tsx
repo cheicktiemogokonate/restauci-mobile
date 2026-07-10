@@ -1,6 +1,5 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
+import { Text, TouchableOpacity, View } from "react-native";
 
 interface EmptyStateProps {
   emoji?: string;
@@ -23,56 +22,26 @@ export function EmptyState(props: EmptyStateProps) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.emoji}>{emoji}</Text>
-      <Text style={styles.title}>{title}</Text>
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+    <View className="flex-1 justify-center items-center px-8 pb-12">
+      <Text className="text-6xl mb-4">{emoji}</Text>
+      <Text className="text-lg font-bold text-ink-900 mb-2 text-center">
+        {title}
+      </Text>
+      {message ? (
+        <Text className="text-sm text-ink-500 text-center leading-5 mb-5">
+          {message}
+        </Text>
+      ) : null}
       {actionLabel ? (
-        <TouchableOpacity style={styles.button} onPress={handlePress}>
-          <Text style={styles.buttonText}>{actionLabel}</Text>
+        <TouchableOpacity
+          className="bg-green-500 rounded-2xl py-3 px-6"
+          onPress={handlePress}
+        >
+          <Text className="text-white text-sm font-bold">{actionLabel}</Text>
         </TouchableOpacity>
       ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 32,
-    paddingBottom: 48,
-  },
-  emoji: {
-    fontSize: 56,
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  message: {
-    fontSize: 14,
-    color: "#6b7280",
-    textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: "#22c55e",
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  buttonText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-});
 
 export default EmptyState;

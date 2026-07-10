@@ -1,5 +1,10 @@
-import * as ExpoLocation from 'expo-location';
-import { useCallback, useEffect, useState } from 'react';
+import * as ExpoLocation from "expo-location";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+// ============================================
+// Flag de test — forcer les coordonnées par défaut
+// ============================================
+const TEST_MODE = true; // 🧪 Mettre à false en production
 
 export const DEFAULT_ZOOM = 13;
 export const RESTAURANT_DETAIL_ZOOM = 15;
@@ -30,21 +35,36 @@ export function usePosition(): UsePositionReturn {
   const [error, setError] = useState<Error | null>(null);
 
   const requestPermission = useCallback(async () => {
-    const { status: existingStatus } = await ExpoLocation.getForegroundPermissionsAsync();
-    if (existingStatus !== 'granted') {
+    const { status: existingStatus } =
+      await ExpoLocation.getForegroundPermissionsAsync();
+    if (existingStatus !== "granted") {
       const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
       return status;
     }
     return existingStatus;
   }, []);
 
+  // Garder une référence stable de requestPermission pour éviter
+  // de recréer fetchPosition à chaque rendu.
+  const requestPermissionRef = useRef(requestPermission);
+  useEffect(() => {
+    requestPermissionRef.current = requestPermission;
+  });
+
   const fetchPosition = useCallback(async () => {
     setLoading(true);
     setError(null);
 
+    // 🧪 En mode test, forcer les coordonnées par défaut (Abidjan)
+    if (TEST_MODE) {
+      setCoords(DEFAULT_COORDS);
+      setLoading(false);
+      return;
+    }
+
     try {
       const serviceEnabled = await ExpoLocation.getProviderStatusAsync().then(
-        (status) => status.locationServicesEnabled
+        (status) => status.locationServicesEnabled,
       );
 
       if (!serviceEnabled) {
@@ -53,9 +73,9 @@ export function usePosition(): UsePositionReturn {
         return;
       }
 
-      const permissionResult = await requestPermission();
+      const permissionResult = await requestPermissionRef.current();
 
-      if (permissionResult !== 'granted') {
+      if (permissionResult !== "granted") {
         setLoading(false);
         // Fallback silently to Abidjan
         return;
@@ -85,7 +105,10 @@ export function usePosition(): UsePositionReturn {
     } finally {
       setLoading(false);
     }
-  }, [requestPermission]);
+  // Dépendances vides — on utilise requestPermissionRef pour éviter
+  // que fetchPosition soit recréée et relance un effet à chaque rendu.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Initial fetch on mount
   useEffect(() => {

@@ -1,7 +1,8 @@
 import { useStore } from "@/store";
 import { useRouter } from "expo-router";
+import { ShoppingBag } from "lucide-react-native";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 interface PanierFABProps {
   fraisLivraison?: number;
@@ -26,56 +27,20 @@ export const PanierFAB: React.FC<PanierFABProps> = ({
 
   return (
     <TouchableOpacity
-      style={styles.fab}
+      className="absolute bottom-8 right-4 w-14 h-14 rounded-full bg-green-700 justify-center items-center shadow-lg z-20"
       onPress={handlePress}
       activeOpacity={0.8}
     >
-      <Text style={styles.icon}>🛒</Text>
-      <View style={styles.badgeContainer}>
-        <Text style={styles.badge}>{nombre}</Text>
+      <ShoppingBag color="white" />
+      <View className="absolute -top-2 -right-1">
+        <View className="bg-danger-600 px-1 py-1 rounded-full">
+          <Text className="text-white text-base font-bold w-5 h-5 text-center leading-5 overflow-hidden bg-danger-600 rounded-full">
+            {nombre}
+          </Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  fab: {
-    position: "absolute",
-    bottom: 32,
-    right: 16,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#22c55e",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
-    zIndex: 20,
-  },
-  icon: {
-    fontSize: 22,
-  },
-  badgeContainer: {
-    position: "absolute",
-    top: -2,
-    right: -4,
-  },
-  badge: {
-    backgroundColor: "#ef4444",
-    color: "#ffffff",
-    fontSize: 11,
-    fontWeight: "700",
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    textAlign: "center",
-    lineHeight: 20,
-    overflow: "hidden",
-  },
-});
 
 export default PanierFAB;

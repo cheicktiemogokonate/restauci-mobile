@@ -145,18 +145,41 @@ export interface AuthTokens {
   expiresIn: number; // en secondes
 }
 
+export interface FavoriteRestaurant {
+  id: string;
+  nom: string;
+  slug: string;
+  logoUrl?: string | null;
+  banniereUrl?: string | null;
+}
+
+export interface AdresseLocale {
+  id: string;
+  libelle: string;
+  adresse: string;
+  ville?: string | null;
+  codePostal?: string | null;
+  pays?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  estParDefaut?: boolean;
+}
+
 export interface AuthResponse {
-  client: Omit<
-    Client,
-    | "adresseDefaut"
-    | "latitudeDefaut"
-    | "longitudeDefaut"
-    | "nombreCommandes"
-    | "createdAt"
-  > & {
-    actif?: boolean;
+  success: boolean;
+  data: {
+    client: Omit<
+      Client,
+      | "adresseDefaut"
+      | "latitudeDefaut"
+      | "longitudeDefaut"
+      | "nombreCommandes"
+      | "createdAt"
+    > & {
+      actif?: boolean;
+    };
+    tokens: AuthTokens;
   };
-  tokens: AuthTokens;
 }
 
 // Ancien alias, à supprimer
@@ -164,7 +187,8 @@ export interface ClientSession {
   id: string;
   nom: string;
   telephone: string;
-  email?: string;
+  email?: string | null;
+  actif?: boolean;
 }
 
 // --- Commandes ---
@@ -175,12 +199,14 @@ export interface CommandeItem {
   nom: string;
   prix: number;
   quantite: number;
+  photoUrl: string | null;
 }
 
 // Payload pour créer une commande (POST /api/v1/client/commandes)
 export interface CommandePayload {
-  restaurantSlug: string; // Pas restaurantId !
-  modeCommande: string; // "emporter", "livraison", "sur_place" ou "takeout", "delivery"
+  restaurantId?: string;
+  restaurantSlug?: string; // Pas restaurantId !
+  modeCommande?: string; // "emporter", "livraison", "sur_place" ou "takeout", "delivery"
   items: Array<{
     platId: string;
     quantite: number;
@@ -188,6 +214,7 @@ export interface CommandePayload {
   adresseLivraison?: string;
   numeroTable?: string;
   notes?: string;
+  telephone?: string;
 }
 
 // Réponse POST /api/v1/client/commandes

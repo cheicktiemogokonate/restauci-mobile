@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useCallback } from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 // ============================================
 // Composant FiltreCategoriesMobile — filtres
@@ -16,28 +16,22 @@ export const FiltreCategoriesMobile: React.FC<FiltreCategoriesMobileProps> = ({
   onSelect,
 }) => {
   const handleSelectAll = useCallback(() => onSelect(null), [onSelect]);
-  const handleSelectCat = useCallback(
-    (id: string) => onSelect(id),
-    [onSelect]
-  );
+  const handleSelectCat = useCallback((id: string) => onSelect(id), [onSelect]);
 
   return (
-    <View style={styles.container}>
+    <View className="bg-white py-2.5 border-b border-ink-100">
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
       >
         <TouchableOpacity
-          style={[styles.chip, selectedCategory === null && styles.chipActive]}
+          className={`px-4 py-2 rounded-full ${selectedCategory === null ? "bg-green-800" : "bg-ink-100"}`}
           onPress={handleSelectAll}
           activeOpacity={0.7}
         >
           <Text
-            style={[
-              styles.chipText,
-              selectedCategory === null && styles.chipTextActive,
-            ]}
+            className={`text-sm font-semibold ${selectedCategory === null ? "text-white" : "text-ink-500"}`}
           >
             Tout
           </Text>
@@ -46,18 +40,12 @@ export const FiltreCategoriesMobile: React.FC<FiltreCategoriesMobileProps> = ({
         {categories.map((cat) => (
           <TouchableOpacity
             key={cat.id}
-            style={[
-              styles.chip,
-              selectedCategory === cat.id && styles.chipActive,
-            ]}
+            className={`px-4 py-2 rounded-full ${selectedCategory === cat.id ? "bg-green-800" : "bg-ink-100"}`}
             onPress={() => handleSelectCat(cat.id)}
             activeOpacity={0.7}
           >
             <Text
-              style={[
-                styles.chipText,
-                selectedCategory === cat.id && styles.chipTextActive,
-              ]}
+              className={`text-sm font-semibold ${selectedCategory === cat.id ? "text-white" : "text-ink-500"}`}
             >
               {cat.nom}
             </Text>
@@ -67,35 +55,5 @@ export const FiltreCategoriesMobile: React.FC<FiltreCategoriesMobileProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#ffffff',
-    paddingVertical: 10,
-    borderBottomColor: '#f3f4f6',
-    borderBottomWidth: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f3f4f6',
-  },
-  chipActive: {
-    backgroundColor: '#22c55e',
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  chipTextActive: {
-    color: '#ffffff',
-  },
-});
 
 export default FiltreCategoriesMobile;

@@ -1,41 +1,36 @@
 import { ENDPOINTS } from "@/constants/api";
 import { apiFetch } from "@/lib/api";
 import { useStore } from "@/store";
-import { ClientSession } from "@/types";
+import type { AuthResponse } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useRouter } from "expo-router";
+import { ChevronDown, Eye, EyeOff, Lock } from "lucide-react-native";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { z } from "zod";
 
 const loginSchema = z.object({
   telephone: z
     .string()
     .min(8, "Numéro trop court")
-    .regex(/^\+?[0-9\s]{8,20}$/, "Numéro invalide"),
+    .regex(/^[0-9\s]{8,20}$/, "Numéro invalide"),
   password: z.string().min(1, "Mot de passe requis"),
 });
 
 type LoginInput = z.infer<typeof loginSchema>;
-
-interface AuthResponse {
-  client: ClientSession;
-  tokens: {
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: number;
-  };
-}
 
 export default function LoginScreen() {
   const {
@@ -49,24 +44,34 @@ export default function LoginScreen() {
 
   const setClient = useStore((s) => s.setClient);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (data: LoginInput) => {
     setIsLoading(true);
     setServerError(null);
 
     try {
-      const result = await apiFetch<AuthResponse>(ENDPOINTS.authClientLogin, {
+      // Le champ ne contient que le numéro local, on préfixe l'indicatif ici
+      const telephoneComplet = `+225${data.telephone.replace(/\s/g, "")}`;
+
+      const response = await apiFetch<AuthResponse>(ENDPOINTS.authClientLogin, {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          telephone: telephoneComplet,
+          password: data.password,
+        }),
       });
 
-      setClient(result.client, result.tokens.accessToken);
+      const { client, tokens } = response.data;
+      setClient(client, tokens.accessToken, tokens.refreshToken);
       router.back();
     } catch (error) {
       if (error instanceof Error) {
         setServerError(error.message);
+        alert(error.message);
       } else {
         setServerError("Une erreur est survenue. Veuillez réessayer.");
       }
@@ -75,38 +80,85 @@ export default function LoginScreen() {
     }
   };
 
+  // const handleGoogle = async () => {
+  //   // 🔗 Flux OAuth Google -> échange du token avec ENDPOINTS.authClientGoogle (à confirmer sur l'OpenAPI)
+  //   setServerError("La connexion Google sera disponible prochainement.");
+  // };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-white"
+      className="flex-1 bg-ink-100"
     >
       <ScrollView
-        className="flex-1 px-6 pt-12"
+        style={{ paddingTop: insets.top }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        className="flex-1 bg-ink-100"
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <Text className="text-3xl font-bold text-brand-600 mb-2">
-          Connexion
-        </Text>
-        <Text className="text-gray-500 mb-8">
-          Connectez-vous pour accéder à vos commandes
-        </Text>
+        {/* Logo */}
+        <View className="items-center -mt-9">
+          <View className="items-center justify-center h-28 w-full">
+            <Image
+              source={require("@/assets/images/logo-restauci.png")}
+              resizeMode="contain"
+              style={{ width: "100%", height: "100%" }}
+            />
+          </View>
+        </View>
 
-        <View className="mb-4">
-          <Text className="text-gray-700 font-medium mb-2">Téléphone</Text>
+        {/* Illustration */}
+        <View className="items-center justify-center mt-6 mb-2 h-56">
+          <Image
+            source={require("@/assets/images/login-illustration.jpeg")}
+            resizeMode="contain"
+            style={{ width: "100%", height: "100%" }}
+          />
+        </View>
+
+        {/* Titre */}
+        <View className="items-center px-8 mt-2">
+          <Text className="text-2xl font-extrabold text-black">
+            Bon retour !
+          </Text>
+          <Text className="text-gray-400 text-center mt-2 leading-5">
+            Connectez-vous pour découvrir les meilleurs restaurants autour de
+            vous.
+          </Text>
+        </View>
+
+        {/* Formulaire */}
+        <View className="px-6 mt-8">
+          {/* Téléphone */}
+          <Text className="text-black font-semibold mb-2">Téléphone</Text>
           <Controller
             control={control}
             name="telephone"
             render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className={`border rounded-xl p-4 text-base bg-gray-50 ${errors.telephone ? "border-red-500" : "border-gray-200"
+              <View
+                className={`flex-row items-center border rounded-2xl h-14 px-4 ${errors.telephone ? "border-red-500" : "border-gray-200"
                   }`}
-                placeholder="+225 07 00 00 00"
-                keyboardType="phone-pad"
-                autoCapitalize="none"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-              />
+              >
+                <Text className="text-lg mr-1">🇨🇮</Text>
+                <Text className="text-black font-medium ml-1">+225</Text>
+                <ChevronDown
+                  size={16}
+                  color="#9ca3af"
+                  style={{ marginLeft: 4 }}
+                />
+                <View className="w-px h-6 bg-gray-200 mx-3" />
+                <TextInput
+                  className="flex-1 text-black text-base"
+                  placeholder="07 51 23 45 67"
+                  placeholderTextColor="#9ca3af"
+                  keyboardType="phone-pad"
+                  autoCapitalize="none"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+              </View>
             )}
           />
           {errors.telephone && (
@@ -114,23 +166,39 @@ export default function LoginScreen() {
               {errors.telephone.message}
             </Text>
           )}
-        </View>
 
-        <View className="mb-4">
-          <Text className="text-gray-700 font-medium mb-2">Mot de passe</Text>
+          {/* Mot de passe */}
+          <Text className="text-black font-semibold mb-2 mt-5">
+            Mot de passe
+          </Text>
           <Controller
             control={control}
             name="password"
             render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className={`border rounded-xl p-4 text-base bg-gray-50 ${errors.password ? "border-red-500" : "border-gray-200"
+              <View
+                className={`flex-row items-center border rounded-2xl h-14 px-4 ${errors.password ? "border-red-500" : "border-gray-200"
                   }`}
-                placeholder="••••••••"
-                secureTextEntry
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-              />
+              >
+                <Lock size={18} color="#14532d" />
+                <TextInput
+                  className="flex-1 text-black text-base ml-3"
+                  placeholder="Entrez votre mot de passe"
+                  secureTextEntry={!showPassword}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+                <Pressable
+                  onPress={() => setShowPassword((v) => !v)}
+                  hitSlop={10}
+                >
+                  {showPassword ? (
+                    <EyeOff size={18} color="#14532d" />
+                  ) : (
+                    <Eye size={18} color="#14532d" />
+                  )}
+                </Pressable>
+              </View>
             )}
           />
           {errors.password && (
@@ -138,45 +206,63 @@ export default function LoginScreen() {
               {errors.password.message}
             </Text>
           )}
-        </View>
 
-        {serverError && (
-          <View className="mb-4 p-4 bg-red-50 rounded-xl border border-red-200">
-            <Text className="text-red-600 text-center">{serverError}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          className={`rounded-xl p-4 mb-4 ${isLoading ? "bg-brand-600/70" : "bg-brand-500"
-            }`}
-          onPress={handleSubmit(onSubmit)}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white font-bold text-center text-lg">
-              Se connecter
+          <Pressable
+            onPress={() => router.push("/")}
+            className="self-end mt-2 mb-2"
+          >
+            <Text className="text-green-800 font-medium">
+              Mot de passe oublié ?
             </Text>
+          </Pressable>
+
+          {serverError && (
+            <View className="mt-2 mb-2 p-4 bg-red-50 rounded-2xl border border-red-200">
+              <Text className="text-red-600 text-center">{serverError}</Text>
+            </View>
           )}
-        </TouchableOpacity>
 
-        <View className="items-center py-4">
-          <Link href="/auth/register" className="mb-4">
-            <Text className="text-brand-600 font-medium text-base">
-              Pas encore de compte ?{" "}
-              <Text className="underline">S'inscrire</Text>
-            </Text>
-          </Link>
-
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-gray-500 text-sm underline">
-              Commander sans compte
-            </Text>
+          {/* Bouton Se connecter */}
+          <TouchableOpacity
+            onPress={handleSubmit(onSubmit)}
+            disabled={isLoading}
+            className={`rounded-2xl h-14 items-center justify-center mt-4 ${isLoading ? "bg-green-900/70" : "bg-green-900"
+              }`}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-white font-semibold text-base">
+                Se connecter
+              </Text>
+            )}
           </TouchableOpacity>
-        </View>
 
-        <View className="pb-8" />
+          {/* <View className="flex-row items-center my-6">
+            <View className="flex-1 h-px bg-gray-200" />
+            <Text className="mx-3 text-gray-400 text-sm">ou</Text>
+            <View className="flex-1 h-px bg-gray-200" />
+          </View>
+
+          <Pressable
+            onPress={handleGoogle}
+            className="flex-row items-center justify-center border border-green-200 rounded-2xl h-14 active:bg-green-50"
+          >
+            <Text className="text-green-800 font-medium text-base">
+              Continuer avec Google
+            </Text>
+          </Pressable> */}
+
+          {/* Créer un compte */}
+          <View className="items-center mt-8 mb-14">
+            <Text className="text-gray-500">Vous n'avez pas de compte ?</Text>
+            <Link href="/auth/register">
+              <Text className="text-green-800 font-semibold mt-1">
+                Créer un compte
+              </Text>
+            </Link>
+          </View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

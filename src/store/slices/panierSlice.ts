@@ -1,13 +1,13 @@
-import type { StateCreator } from "zustand";
 import type { CommandeItem } from "@/types";
+import type { StateCreator } from "zustand";
 
 export interface PanierSlice {
   items: CommandeItem[];
-  restaurantId: string | null;
+  restaurantSlug: string | null;
   ajouterItem: (
-    plat: { id: string; nom: string; prix: number },
+    plat: { id: string; nom: string; prix: number; photoUrl?: string | null },
     quantite?: number,
-    restaurantId?: string
+    restaurantSlug?: string,
   ) => void;
   retirerItem: (platId: string) => void;
   viderPanier: () => void;
@@ -17,9 +17,9 @@ export interface PanierSlice {
 
 export const createPanierSlice: StateCreator<PanierSlice> = (set, get) => ({
   items: [],
-  restaurantId: null,
+  restaurantSlug: null,
 
-  ajouterItem(plat, quantite = 1, restaurantId) {
+  ajouterItem(plat, quantite = 1, restaurantSlug) {
     const state = get();
     const existingItem = state.items.find((item) => item.platId === plat.id);
 
@@ -27,19 +27,25 @@ export const createPanierSlice: StateCreator<PanierSlice> = (set, get) => ({
       const updatedItems = state.items.map((item) =>
         item.platId === plat.id
           ? { ...item, quantite: item.quantite + quantite }
-          : item
+          : item,
       );
       set({
         items: updatedItems,
-        restaurantId: restaurantId ?? state.restaurantId,
+        restaurantSlug: restaurantSlug ?? state.restaurantSlug,
       });
     } else {
       set({
         items: [
           ...state.items,
-          { platId: plat.id, nom: plat.nom, prix: plat.prix, quantite },
+          {
+            platId: plat.id,
+            nom: plat.nom,
+            prix: plat.prix,
+            quantite,
+            photoUrl: plat.photoUrl ?? null,
+          },
         ],
-        restaurantId: restaurantId ?? state.restaurantId,
+        restaurantSlug: restaurantSlug ?? state.restaurantSlug,
       });
     }
   },
@@ -50,25 +56,23 @@ export const createPanierSlice: StateCreator<PanierSlice> = (set, get) => ({
     if (!existingItem) return;
 
     if (existingItem.quantite <= 1) {
-      const updatedItems = state.items.filter(
-        (item) => item.platId !== platId
-      );
+      const updatedItems = state.items.filter((item) => item.platId !== platId);
       set({
         items: updatedItems,
-        restaurantId: updatedItems.length > 0 ? state.restaurantId : null,
+        restaurantSlug: updatedItems.length > 0 ? state.restaurantSlug : null,
       });
     } else {
       const updatedItems = state.items.map((item) =>
         item.platId === platId
           ? { ...item, quantite: item.quantite - 1 }
-          : item
+          : item,
       );
       set({ items: updatedItems });
     }
   },
 
   viderPanier() {
-    set({ items: [], restaurantId: null });
+    set({ items: [], restaurantSlug: null });
   },
 
   nombreArticles() {
@@ -78,7 +82,7 @@ export const createPanierSlice: StateCreator<PanierSlice> = (set, get) => ({
   sousTotal() {
     return get().items.reduce(
       (sum, item) => sum + item.prix * item.quantite,
-      0
+      0,
     );
   },
 });

@@ -1,6 +1,6 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
+import React from "react";
+import { Text, TouchableOpacity, View } from "react-native";
 
 interface ErrorViewProps {
   message?: string;
@@ -18,80 +18,34 @@ export const ErrorView: React.FC<ErrorViewProps> = ({
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.emoji}>😕</Text>
-      <Text style={styles.title}>{title ?? "Oups"}</Text>
-      <Text style={styles.message}>{message}</Text>
-      <View style={styles.actions}>
+    <View className="flex-1 justify-center items-center px-8 pb-12">
+      <Text className="text-6xl mb-4">😕</Text>
+      <Text className="text-xl font-bold text-ink-900 mb-2 text-center">
+        {title ?? "Oups"}
+      </Text>
+      <Text className="text-sm text-ink-500 text-center leading-5 mb-6">
+        {message}
+      </Text>
+      <View className="gap-3 w-full max-w-60">
         {showRetry && onRetry && (
-          <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
-            <Text style={styles.retryText}>Réessayer</Text>
+          <TouchableOpacity
+            className="bg-green-500 rounded-2xl py-3.5 items-center"
+            onPress={onRetry}
+          >
+            <Text className="text-white text-base font-bold">Réessayer</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity
-          style={styles.homeButton}
+          className="bg-ink-100 rounded-2xl py-3.5 items-center"
           onPress={() => router.push("/(tabs)")}
         >
-          <Text style={styles.homeText}>Retour à la carte</Text>
+          <Text className="text-ink-700 text-base font-semibold">
+            Retour à la carte
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 32,
-    paddingBottom: 48,
-  },
-  emoji: {
-    fontSize: 56,
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  message: {
-    fontSize: 14,
-    color: "#6b7280",
-    textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  actions: {
-    gap: 12,
-    width: "100%",
-    maxWidth: 240,
-  },
-  retryButton: {
-    backgroundColor: "#22c55e",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  retryText: {
-    color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  homeButton: {
-    backgroundColor: "#f3f4f6",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  homeText: {
-    color: "#374151",
-    fontSize: 15,
-    fontWeight: "600",
-  },
-});
 
 export default ErrorView;

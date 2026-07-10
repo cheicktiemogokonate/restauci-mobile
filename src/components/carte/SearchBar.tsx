@@ -1,28 +1,45 @@
-import React, { useState, useCallback } from 'react';
+import { useGeoSearch } from "@/hooks/useGeoSearch";
+import { useRestaurantSearch } from "@/hooks/useRestaurantSearch";
+import { MapPin, Search } from "lucide-react-native";
+import React, { useCallback, useState } from "react";
 import {
-  View,
+  FlatList,
+  ScrollView,
   Text,
   TextInput,
-  FlatList,
   TouchableOpacity,
-  StyleSheet,
-  Platform,
-} from 'react-native';
-import { useGeoSearch } from '@/hooks/useGeoSearch';
-import type { Suggestion } from '@/types';
+  View
+} from "react-native";
 
 // ============================================
 // Composant SearchBar — recherche géographique
 // ============================================
 interface SearchBarProps {
   onSelectSuggestion: (lat: number, lon: number) => void;
+  onFilterChange?: (cuisine: string | null) => void;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({ onSelectSuggestion }) => {
-  const [query, setQuery] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
+const CATEGORIES = ["Halal", "Pizza", "Burger", "Asiatique", "Traditionnel", "Tacos"];
 
-  const { data: suggestions, isLoading } = useGeoSearch(query);
+type CombinedSuggestion =
+  | { type: "geo"; label: string; lat: number; lon: number }
+  | { type: "restaurant"; id: string; label: string; lat: number; lon: number };
+
+
+export const SearchBar: React.FC<SearchBarProps> = ({ onSelectSuggestion, onFilterChange }) => {
+  const [query, setQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedCuisine, setSelectedCuisine] = useState<string | null>(null);
+
+  const { data: geoSuggestions, isLoading: geoLoading } = useGeoSearch(query);
+  const { data: restaurantSuggestions, isLoading: restaurantLoading } = useRestaurantSearch(query, selectedCuisine);
+
+  const isLoading = geoLoading || restaurantLoading;
+
+  const suggestions: CombinedSuggestion[] = [
+    ...(restaurantSuggestions || []),
+    ...(geoSuggestions || []).map((s) => ({ ...s, type: "geo" as const })),
+  ];
 
   const handleChangeText = useCallback((text: string) => {
     setQuery(text);
@@ -30,13 +47,21 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectSuggestion }) => {
   }, []);
 
   const handleSelect = useCallback(
-    (item: Suggestion) => {
+    (item: CombinedSuggestion) => {
       onSelectSuggestion(item.lat, item.lon);
       setQuery(item.label);
       setShowSuggestions(false);
     },
-    [onSelectSuggestion]
+    [onSelectSuggestion],
   );
+
+  const handleSelectCategory = useCallback((category: string) => {
+    const newCategory = selectedCuisine === category ? null : category;
+    setSelectedCuisine(newCategory);
+    if (onFilterChange) {
+      onFilterChange(newCategory);
+    }
+  }, [selectedCuisine, onFilterChange]);
 
   const handleBlur = useCallback(() => {
     setTimeout(() => setShowSuggestions(false), 200);
@@ -49,28 +74,33 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectSuggestion }) => {
   }, [query]);
 
   const renderItem = useCallback(
-    ({ item }: { item: Suggestion }) => (
+    ({ item }: { item: CombinedSuggestion }) => (
       <TouchableOpacity
-        style={styles.suggestionItem}
+        className="flex-row items-center px-3 py-3 border-b border-ink-100"
         onPress={() => handleSelect(item)}
         activeOpacity={0.6}
       >
-        <Text style={styles.suggestionIcon}>📍</Text>
-        <Text style={styles.suggestionLabel} numberOfLines={1}>
+        <Text className="mr-2 text-base">
+          {item.type === "restaurant" ? "🍽️" : <MapPin />}
+        </Text>
+        <Text className="flex-1 text-sm text-ink-700 mr-2" numberOfLines={1}>
           {item.label}
         </Text>
       </TouchableOpacity>
     ),
-    [handleSelect]
+    [handleSelect],
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.searchRow}>
-        <Text style={styles.searchIcon}>🔍</Text>
+    <View
+      style={{ position: "absolute", top: 56, left: 16, right: 16, zIndex: 10 }
+      }
+    >
+      <View className="flex-row items-center bg-white rounded-2xl px-3 h-12 shadow-md">
+        <Search size={20} color="#000" />
         <TextInput
-          style={styles.input}
-          placeholder="Rechercher un lieu..."
+          className="flex-1 text-base text-ink-900 ml-2"
+          placeholder="Restaurants, adresses..."
           placeholderTextColor="#9ca3af"
           value={query}
           onChangeText={handleChangeText}
@@ -81,8 +111,29 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectSuggestion }) => {
         />
       </View>
 
+      <View className="mt-2">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          {CATEGORIES.map((category) => {
+            const isSelected = selectedCuisine === category;
+            return (
+              <TouchableOpacity
+                key={category}
+                onPress={() => handleSelectCategory(category)}
+                className={`mr-2 px-4 py-1.5 rounded-full border ${isSelected ? 'bg-green-500 border-green-500' : 'bg-white border-gray-200'
+                  } shadow-sm`}
+              >
+                <Text className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-gray-700'}`}>
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+
       {showSuggestions && suggestions && suggestions.length > 0 && (
-        <View style={styles.suggestionsContainer}>
+        <View className="bg-white rounded-2xl mt-1 max-h-48 shadow-md overflow-hidden">
           <FlatList
             data={suggestions}
             keyExtractor={(item, index) => `${item.label}-${index}`}
@@ -90,94 +141,25 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectSuggestion }) => {
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled
             scrollEnabled
-            style={styles.suggestionsList}
+            scrollEventThrottle={0}
           />
         </View>
       )}
 
-      {showSuggestions && suggestions && suggestions.length === 0 && !isLoading && (
-        <View style={styles.suggestionsContainer}>
-          <View style={styles.noResults}>
-            <Text style={styles.noResultsText}>Aucun résultat</Text>
+      {showSuggestions &&
+        suggestions &&
+        suggestions.length === 0 &&
+        !isLoading && (
+          <View className="bg-white rounded-2xl mt-1 shadow-md overflow-hidden">
+            <View className="px-3.5 py-3">
+              <Text className="text-sm text-ink-400 text-center">
+                Aucun résultat
+              </Text>
+            </View>
           </View>
-        </View>
-      )}
+        )}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 56 : 48,
-    left: 16,
-    right: 16,
-    zIndex: 10,
-  },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  searchIcon: {
-    fontSize: 16,
-    marginRight: 8,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: '#111827',
-    paddingVertical: 0,
-  },
-  suggestionsContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    marginTop: 4,
-    maxHeight: 200,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 5,
-    overflow: 'hidden',
-  },
-  suggestionsList: {
-    flexGrow: 0,
-  },
-  suggestionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderBottomColor: '#f3f4f6',
-    borderBottomWidth: 1,
-  },
-  suggestionIcon: {
-    fontSize: 14,
-    marginRight: 8,
-  },
-suggestionLabel: {
-    flex: 1,
-    fontSize: 14,
-    color: "#374151",
-  },
-  noResults: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  noResultsText: {
-    fontSize: 14,
-    color: "#9ca3af",
-    textAlign: "center",
-  },
-});
 
 export default SearchBar;

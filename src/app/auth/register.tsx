@@ -1,21 +1,32 @@
 import { ENDPOINTS } from "@/constants/api";
 import { apiFetch } from "@/lib/api";
 import { useStore } from "@/store";
-import { ClientSession } from "@/types";
+import type { AuthResponse } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useRouter } from "expo-router";
+import {
+  ChevronDown,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  User,
+} from "lucide-react-native";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { z } from "zod";
 
 const registerSchema = z
@@ -23,12 +34,9 @@ const registerSchema = z
     nom: z.string().min(2, "Nom trop court").max(255),
     telephone: z
       .string()
-      .regex(/^\+?[0-9\s]{8,20}$/, "Numéro de téléphone invalide"),
+      .regex(/^[0-9\s]{8,20}$/, "Numéro de téléphone invalide"),
     email: z.string().email("Email invalide").optional().or(z.literal("")),
-    password: z
-      .string()
-      .min(6, "6 caractères minimum")
-      .max(100),
+    password: z.string().min(6, "6 caractères minimum").max(100),
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -37,15 +45,6 @@ const registerSchema = z
   });
 
 type RegisterInput = z.infer<typeof registerSchema>;
-
-interface AuthResponse {
-  client: ClientSession;
-  tokens: {
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: number;
-  };
-}
 
 export default function RegisterScreen() {
   const {
@@ -65,30 +64,37 @@ export default function RegisterScreen() {
 
   const setClient = useStore((s) => s.setClient);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const onSubmit = async (data: RegisterInput) => {
     setIsLoading(true);
     setServerError(null);
 
     try {
+      // Le champ ne contient que le numéro local, on préfixe l'indicatif ici
+      const telephoneComplet = `+225${data.telephone.replace(/\s/g, "")}`;
+
       const body: Record<string, string> = {
         nom: data.nom,
-        telephone: data.telephone,
+        telephone: telephoneComplet,
         password: data.password,
       };
       if (data.email) body.email = data.email;
 
-      const result = await apiFetch<AuthResponse>(
+      const response = await apiFetch<AuthResponse>(
         ENDPOINTS.authClientRegister,
         {
           method: "POST",
           body: JSON.stringify(body),
-        }
+        },
       );
 
-      setClient(result.client, result.tokens.accessToken);
+      const { client, tokens } = response.data;
+      setClient(client, tokens.accessToken, tokens.refreshToken);
       router.back();
     } catch (error) {
       if (error instanceof Error) {
@@ -101,178 +107,293 @@ export default function RegisterScreen() {
     }
   };
 
-  const fieldStyle = (hasError: boolean) =>
-    `border rounded-xl p-4 text-base bg-gray-50 ${hasError ? "border-red-500" : "border-gray-200"
-    }`;
+  const handleGoogle = async () => {
+    // 🔗 Flux OAuth Google -> échange du token avec ENDPOINTS.authClientGoogle (à confirmer sur l'OpenAPI)
+    setServerError("La connexion Google sera disponible prochainement.");
+  };
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-white"
+      className="flex-1 bg-[#ffffff]"
     >
       <ScrollView
-        className="flex-1 px-6 pt-12"
+        style={{ paddingTop: insets.top }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        className="flex-1 bg-[#ffffff]"
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <Text className="text-3xl font-bold text-brand-600 mb-2">
-          Inscription
-        </Text>
-        <Text className="text-gray-500 mb-8">
-          Créez votre compte pour commander facilement
-        </Text>
+        {/* Logo */}
+        <View className="items-center -mt-9">
+          <View className="items-center justify-center h-28 w-full">
+            <Image
+              source={require("@/assets/images/logo-restauci.png")}
+              resizeMode="contain"
+              style={{ width: "100%", height: "100%" }}
+            />
+          </View>
+        </View>
 
-        <View className="mb-4">
-          <Text className="text-gray-700 font-medium mb-2">
-            Nom complet
+        <View className="items-center justify-center mt-4 mb-2 h-48">
+          <Image
+            source={require("@/assets/images/inscription-illustration.jpeg")}
+            resizeMode="contain"
+            style={{ width: "100%", height: "100%" }}
+          />
+        </View>
+
+        {/* Titre */}
+        <View className="items-center px-8 mt-2">
+          <Text className="text-2xl font-extrabold text-black">
+            Créer un compte
           </Text>
+          <Text className="text-gray-400 text-center mt-2 leading-5">
+            Rejoignez RestauCi et découvrez les meilleurs restaurants autour de
+            vous.
+          </Text>
+        </View>
+
+        {/* Formulaire */}
+        <View className="px-6 mt-7">
+          {/* Nom complet */}
+          <Text className="text-black font-semibold mb-2">Nom complet</Text>
           <Controller
             control={control}
             name="nom"
             render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className={fieldStyle(!!errors.nom)}
-                placeholder="Votre nom"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-              />
+              <View
+                className={`flex-row items-center border rounded-2xl h-14 px-4 ${
+                  errors.nom ? "border-red-500" : "border-gray-200"
+                }`}
+              >
+                <User size={18} color="#14532d" />
+                <TextInput
+                  className="flex-1 text-black text-base ml-3"
+                  placeholder="Entrez votre nom complet"
+                  //   placeholderTextColor="#14532d"
+                  autoCapitalize="words"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+              </View>
             )}
           />
           {errors.nom && (
-            <Text className="text-red-500 text-sm mt-1">
+            <Text className="text-red-500 text-sm mt-1 mb-1">
               {errors.nom.message}
             </Text>
           )}
-        </View>
 
-        <View className="mb-4">
-          <Text className="text-gray-700 font-medium mb-2">Téléphone</Text>
+          {/* Téléphone */}
+          <Text className="text-black font-semibold mb-2 mt-4">Téléphone</Text>
           <Controller
             control={control}
             name="telephone"
             render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className={fieldStyle(!!errors.telephone)}
-                placeholder="+225 07 00 00 00"
-                keyboardType="phone-pad"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-              />
+              <View
+                className={`flex-row items-center border rounded-2xl h-14 px-4 ${
+                  errors.telephone ? "border-red-500" : "border-gray-200"
+                }`}
+              >
+                <Text className="text-lg mr-1">🇨🇮</Text>
+                <Text className="text-black font-medium ml-1">+225</Text>
+                <ChevronDown
+                  size={16}
+                  color="#14532d"
+                  style={{ marginLeft: 4 }}
+                />
+                <View className="w-px h-6 bg-gray-200 mx-3" />
+                <TextInput
+                  className="flex-1 text-black text-base"
+                  placeholder="07 51 23 45 67"
+                  //   placeholderTextColor="#14532d"
+                  keyboardType="phone-pad"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+              </View>
             )}
           />
           {errors.telephone && (
-            <Text className="text-red-500 text-sm mt-1">
+            <Text className="text-red-500 text-sm mt-1 mb-1">
               {errors.telephone.message}
             </Text>
           )}
-        </View>
 
-        <View className="mb-4">
-          <Text className="text-gray-700 font-medium mb-2">
-            Email <Text className="text-gray-400 font-normal">(optionnel)</Text>
+          {/* Email optionnel */}
+          <Text className="text-black font-semibold mb-2 mt-4">
+            Email (optionnel)
           </Text>
           <Controller
             control={control}
             name="email"
             render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className={fieldStyle(!!errors.email)}
-                placeholder="votre@email.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-              />
+              <View
+                className={`flex-row items-center border rounded-2xl h-14 px-4 ${
+                  errors.email ? "border-red-500" : "border-gray-200"
+                }`}
+              >
+                <Mail size={18} color="#14532d" />
+                <TextInput
+                  className="flex-1 text-black text-base ml-3"
+                  placeholder="Entrez votre email"
+                  //   placeholderTextColor="#14532d"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+              </View>
             )}
           />
           {errors.email && (
-            <Text className="text-red-500 text-sm mt-1">
+            <Text className="text-red-500 text-sm mt-1 mb-1">
               {errors.email.message}
             </Text>
           )}
-        </View>
 
-        <View className="mb-4">
-          <Text className="text-gray-700 font-medium mb-2">Mot de passe</Text>
+          {/* Mot de passe */}
+          <Text className="text-black font-semibold mb-2 mt-4">
+            Mot de passe
+          </Text>
           <Controller
             control={control}
             name="password"
             render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className={fieldStyle(!!errors.password)}
-                placeholder="6 caractères minimum"
-                secureTextEntry
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-              />
+              <View
+                className={`flex-row items-center border rounded-2xl h-14 px-4 ${
+                  errors.password ? "border-red-500" : "border-gray-200"
+                }`}
+              >
+                <Lock size={18} color="#14532d" />
+                <TextInput
+                  className="flex-1 text-black text-base ml-3"
+                  placeholder="Créez un mot de passe"
+                  //   placeholderTextColor="#14532d"
+                  secureTextEntry={!showPassword}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+                <Pressable
+                  onPress={() => setShowPassword((v) => !v)}
+                  hitSlop={10}
+                >
+                  {showPassword ? (
+                    <EyeOff size={18} color="#14532d" />
+                  ) : (
+                    <Eye size={18} color="#14532d" />
+                  )}
+                </Pressable>
+              </View>
             )}
           />
           {errors.password && (
-            <Text className="text-red-500 text-sm mt-1">
+            <Text className="text-red-500 text-sm mt-1 mb-1">
               {errors.password.message}
             </Text>
           )}
-        </View>
 
-        <View className="mb-4">
-          <Text className="text-gray-700 font-medium mb-2">
+          {/* Confirmer le mot de passe */}
+          <Text className="text-black font-semibold mb-2 mt-4">
             Confirmer le mot de passe
           </Text>
           <Controller
             control={control}
             name="confirmPassword"
             render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className={fieldStyle(!!errors.confirmPassword)}
-                placeholder="Retapez le mot de passe"
-                secureTextEntry
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-              />
+              <View
+                className={`flex-row items-center border rounded-2xl h-14 px-4 ${
+                  errors.confirmPassword ? "border-red-500" : "border-gray-200"
+                }`}
+              >
+                <Lock size={18} color="#14532d" />
+                <TextInput
+                  className="flex-1 text-black text-base ml-3"
+                  placeholder="Confirmez votre mot de passe"
+                  //     //   placeholderTextColor="#14532d"
+                  secureTextEntry={!showConfirmPassword}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+                <Pressable
+                  onPress={() => setShowConfirmPassword((v) => !v)}
+                  hitSlop={10}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={18} color="#14532d" />
+                  ) : (
+                    <Eye size={18} color="#14532d" />
+                  )}
+                </Pressable>
+              </View>
             )}
           />
           {errors.confirmPassword && (
-            <Text className="text-red-500 text-sm mt-1">
+            <Text className="text-red-500 text-sm mt-1 mb-1">
               {errors.confirmPassword.message}
             </Text>
           )}
-        </View>
 
-        {serverError && (
-          <View className="mb-4 p-4 bg-red-50 rounded-xl border border-red-200">
-            <Text className="text-red-600 text-center">{serverError}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          className={`rounded-xl p-4 mb-4 ${isLoading ? "bg-brand-600/70" : "bg-brand-500"
-            }`}
-          onPress={handleSubmit(onSubmit)}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white font-bold text-center text-lg">
-              Créer mon compte
-            </Text>
+          {serverError && (
+            <View className="mt-3 mb-2 p-4 bg-red-50 rounded-2xl border border-red-200">
+              <Text className="text-red-600 text-center">{serverError}</Text>
+            </View>
           )}
-        </TouchableOpacity>
 
-        <View className="items-center py-4">
-          <Link href="/auth/login">
-            <Text className="text-brand-600 font-medium text-base">
-              Déjà un compte ?{" "}
-              <Text className="underline">Se connecter</Text>
+          {/* Bouton Créer mon compte */}
+          <TouchableOpacity
+            onPress={handleSubmit(onSubmit)}
+            disabled={isLoading}
+            className={`rounded-2xl h-14 items-center justify-center mt-6 ${
+              isLoading ? "bg-green-900/70" : "bg-green-900"
+            }`}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-white font-semibold text-base">
+                Créer mon compte
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          {/*  <View className="flex-row items-center my-6">
+            <View className="flex-1 h-px bg-gray-200" />
+            <Text className="mx-3 text-gray-400 text-sm">ou</Text>
+            <View className="flex-1 h-px bg-gray-200" />
+          </View>
+
+          <Pressable
+            onPress={handleGoogle}
+            className="flex-row items-center justify-center border border-gray-200 rounded-2xl h-14 active:bg-gray-50"
+          >
+            <Image
+              source={require("../assets/images/google-logo.png")}
+              style={{ width: 20, height: 20, marginRight: 10 }}
+              resizeMode="contain"
+            />
+            <Frown />
+            <Text className="text-black font-medium text-base">
+              S'inscrire avec Google
             </Text>
-          </Link>
-        </View>
+          </Pressable> */}
 
-        <View className="pb-8" />
+          {/* Se connecter */}
+          <View className="items-center mt-8 mb-14">
+            <Text className="text-gray-500">Vous avez déjà un compte ?</Text>
+            <Link href="/auth/login">
+              <Text className="text-green-800 font-semibold mt-1">
+                Se connecter
+              </Text>
+            </Link>
+          </View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

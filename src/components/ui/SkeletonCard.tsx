@@ -1,13 +1,12 @@
-import React, { useEffect, useRef } from "react";
-import { StyleSheet, View, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import React, { useEffect } from "react";
+import { Dimensions, View } from "react-native";
 import Animated, {
-  useSharedValue,
+  Easing,
   useAnimatedStyle,
+  useSharedValue,
   withRepeat,
   withTiming,
-  interpolate,
-  Easing,
 } from "react-native-reanimated";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -26,7 +25,7 @@ export const SkeletonCard: React.FC = () => {
         easing: Easing.linear,
       }),
       -1,
-      false
+      false,
     );
   }, [translateX]);
 
@@ -37,77 +36,35 @@ export const SkeletonCard: React.FC = () => {
   });
 
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <View style={styles.imagePlaceholder} />
-        <View style={styles.content}>
-          <View style={styles.lineShort} />
-          <View style={styles.lineLong} />
-          <View style={styles.lineMedium} />
+    <View
+      className="mx-4 mb-2.5 rounded-2xl overflow-hidden bg-white relative"
+      style={{ height: CARD_HEIGHT }}
+    >
+      <View className="flex-row p-2.5" style={{ height: CARD_HEIGHT }}>
+        <View className="w-18 h-18 rounded-2.5 bg-ink-200 mr-3" />
+        <View className="flex-1 justify-center gap-1.5">
+          <View className="h-3.5 w-3/5 bg-ink-200 rounded-1.5" />
+          <View className="h-3.5 w-9/10 bg-ink-100 rounded-1.5" />
+          <View className="h-3 w-2/5 bg-ink-200 rounded-1.5" />
         </View>
       </View>
       <AnimatedLinearGradient
         colors={["transparent", "rgba(255,255,255,0.4)", "transparent"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        style={[styles.shimmer, shimmerStyle]}
+        style={[
+          {
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: CARD_WIDTH * 0.6,
+            height: CARD_HEIGHT,
+          },
+          shimmerStyle,
+        ]}
       />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    marginHorizontal: 16,
-    marginBottom: 10,
-    borderRadius: 12,
-    overflow: "hidden",
-    backgroundColor: "#ffffff",
-    height: CARD_HEIGHT,
-    position: "relative",
-  },
-  card: {
-    flexDirection: "row",
-    padding: 10,
-    height: CARD_HEIGHT,
-  },
-  imagePlaceholder: {
-    width: 72,
-    height: 72,
-    borderRadius: 10,
-    backgroundColor: "#e5e7eb",
-    marginRight: 12,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    gap: 6,
-  },
-  lineShort: {
-    height: 14,
-    width: "60%",
-    backgroundColor: "#e5e7eb",
-    borderRadius: 6,
-  },
-  lineLong: {
-    height: 14,
-    width: "90%",
-    backgroundColor: "#f3f4f6",
-    borderRadius: 6,
-  },
-  lineMedium: {
-    height: 12,
-    width: "40%",
-    backgroundColor: "#e5e7eb",
-    borderRadius: 6,
-  },
-  shimmer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: CARD_WIDTH * 0.6,
-    height: CARD_HEIGHT,
-  },
-});
 
 export default SkeletonCard;
