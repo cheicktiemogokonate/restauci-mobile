@@ -6,6 +6,7 @@ import { useStore } from "@/store";
 import type { CommandeItem } from "@/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowRight,
@@ -18,7 +19,6 @@ import {
 import { useCallback, useMemo, useRef } from "react";
 import {
   Alert,
-  Image,
   Pressable,
   ScrollView,
   StatusBar,
@@ -30,6 +30,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const SEUIL_LIVRAISON_OFFERTE = 2000;
 const FRAIS_LIVRAISON_BASE = 500;
 const FRAIS_EMBALLAGE = 200;
+const PLAT_PLACEHOLDER = require("@/assets/images/plat-placeholder.jpg");
 
 function QuantiteControl({
   quantite,
@@ -87,21 +88,14 @@ function ArticleRow({
 }) {
   return (
     <View className="flex-row items-center gap-4 border-b border-ink-100 px-4 py-4 last:border-b-0">
-      {article.photoUrl ? (
-        <Image
-          source={{ uri: article.photoUrl }}
-          className="h-20 w-20 rounded-2xl"
-          style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.1)" }}
-        />
-      ) : (
-        <Image
-          source={{
-            uri: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=200&q=80",
-          }}
-          className="h-20 w-20 rounded-2xl"
-          style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.1)" }}
-        />
-      )}
+      <Image
+        source={article.photoUrl ?? PLAT_PLACEHOLDER}
+        placeholder={PLAT_PLACEHOLDER}
+        contentFit="cover"
+        transition={150}
+        className="h-20 w-20 rounded-2xl"
+        style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.1)" }}
+      />
       <View className="flex-1">
         <View className="flex-row items-start justify-between">
           <Text className="flex-1 pr-2 text-base font-bold text-ink-900">
@@ -272,7 +266,7 @@ export default function PanierScreen() {
           <Image
             source={require("@/assets/images/fast-delivery.png")}
             className="h-24 w-24"
-            resizeMode="contain"
+            contentFit="contain"
             style={{
               tintColor: "#14532d",
             }}
