@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Text as ButtonText } from "@/components/ui/text";
 import { formatPrix } from "@/lib/format";
 import { useStore } from "@/store";
+import { selectSousTotal } from "@/store/selectors";
 import type { CommandeItem } from "@/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import * as Haptics from "expo-haptics";
@@ -16,7 +17,7 @@ import {
   Ticket,
   Trash2,
 } from "lucide-react-native";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useRef } from "react";
 import {
   Alert,
   Pressable,
@@ -212,10 +213,7 @@ export default function PanierScreen() {
     formulaireRef.current?.dismiss();
   };
 
-  const sousTotal = useMemo(
-    () => items.reduce((sum, item) => sum + item.prix * item.quantite, 0),
-    [items],
-  );
+  const sousTotal = useStore(selectSousTotal);
 
   const total = sousTotal + fraisLivraison + FRAIS_EMBALLAGE;
 

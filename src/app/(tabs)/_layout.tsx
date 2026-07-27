@@ -1,4 +1,5 @@
 import { useStore } from "@/store";
+import { selectNombreArticles } from "@/store/selectors";
 import { Tabs } from "expo-router";
 import { List, Map, ShoppingBag, User } from "lucide-react-native";
 import { useCallback } from "react";
@@ -145,9 +146,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 }
 
 export default function TabLayout() {
-  const nombre = useStore((s) =>
-    s.items.reduce((sum, i) => sum + i.quantite, 0),
-  );
+  const nombre = useStore(selectNombreArticles);
 
   // Mémoriser la prop tabBar pour éviter de re-monter les écrans
   // (dont la carte) à chaque re-rendu déclenché par le store.

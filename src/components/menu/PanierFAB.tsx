@@ -1,4 +1,5 @@
 import { useStore } from "@/store";
+import { selectNombreArticles } from "@/store/selectors";
 import { useRouter } from "expo-router";
 import { ShoppingBag } from "lucide-react-native";
 import React from "react";
@@ -14,7 +15,7 @@ export const PanierFAB: React.FC<PanierFABProps> = ({
   restaurantNom,
 }) => {
   const router = useRouter();
-  const nombre = useStore((s) => s.items.reduce((sum, i) => sum + i.quantite, 0));
+  const nombre = useStore(selectNombreArticles);
 
   if (nombre === 0) return null;
 
