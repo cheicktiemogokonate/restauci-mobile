@@ -14,3 +14,21 @@ Convention : une ligne par point traité. ✅ fait / ⏭️ ignoré / 🛑 bloqu
 - ✅ `(tabs)/_layout.tsx` : retrait de `useRouter`, `client`, et du branchement conditionnel profil→login dans `onPress` (la garde est maintenant dans le layout Profil).
 - ✅ `_layout.tsx` racine : retrait des `Stack.Screen name="profil"` et `name="commandes"` devenus orphelins (les dossiers `src/app/profil` et `src/app/commandes` n'existent plus).
 - 📋 **À vérifier manuellement (humain)** : (a) tap onglet Profil déconnecté → login ; (b) les 6 lignes du menu naviguent ; (c) deep link `/profil/adresses` déconnecté → login.
+
+## Phase 3 — Performance
+
+- ✅ `assets/images` : suppression des 7 images du starter Expo (react-logo*, expo-badge*, expo-logo, tutorial-web, tabIcons/) — 0 référence.
+- ✅ `assets/images` : suppression de 6 visuels projet non référencés (delivery-bike, food_bowl, livreur-scooter, livreur-scooter2, logo-glow, logo-restauci.jpeg). Récupérables via `git show HEAD~n`.
+- ✅ Recompression `food2.jpeg` (2.4Mo → 335Ko, 1536→2000px max) et `default_hero_bg.jpg` (1.0Mo → 349Ko). Total `assets/images` : 6.6Mo → 2.1Mo.
+- ⏭️ `icon.png` (799Ko, 1024×1024) laissé tel quel : c'est l'icône d'app, elle doit rester en PNG sans perte et sera de toute façon remplacée par l'icône Toutci (voir point "identité d'application").
+- ✅ `panier.tsx` : `FlatList` imbriquée dans le `ScrollView` → rendu direct par `.map()`.
+- ✅ `HeaderRestaurant.tsx` : `FlatList` horizontale imbriquée → `ScrollView` horizontal (+ `accessibilityLabel` sur les cartes de plats).
+- ✅ `restaurant/[slug]/index.tsx` : `FlatList` de skeletons → `SkeletonCardList`.
+- ✅ `SkeletonCard.tsx` : extraction de `SkeletonCardList` — **une seule** boucle Reanimated partagée par les N cartes au lieu d'une par carte (6 timers → 1 dans `MenuBottomSheet`). Classes invalides corrigées au passage (`w-18`→`w-[72px]`, `rounded-2.5`/`rounded-1.5`→`rounded-xl`/`rounded-md`, `w-9/10`→`w-[90%]`).
+- ✅ `package.json` : retrait de `@expo/ui`, `expo-glass-effect`, `expo-symbols`, `expo-web-browser`, `expo-device`, `tailwindcss-animate` (0 occurrence, vérifié par `grep -r` sur `src`, configs et `app.json`).
+- ⏭️ `react-dom` / `react-native-web` conservés : `app.json` déclare `web.output: "static"`, la cible web reste active.
+- ⏭️ `expo-font`, `expo-system-ui`, `expo-status-bar` conservés : dépendances transitives usuelles d'`expo-router`/`expo`, leur retrait explicite casserait le prebuild.
+- ✅ `panier.tsx` : migration `Image` (RN) → `expo-image`, et remplacement de l'image Unsplash distante par `assets/images/plat-placeholder.jpg` (9Ko, local), utilisé aussi comme `placeholder` pendant le chargement.
+- ✅ `src/store/selectors.ts` (nouveau) : `selectNombreArticles` / `selectSousTotal` s'appuyant sur `nombreArticles()` / `sousTotal()` déjà présents dans `panierSlice`. Les 3 `reduce` inline dupliqués (`(tabs)/_layout.tsx`, `PanierFAB.tsx`, `panier.tsx`) sont remplacés.
+- ✅ `(tabs)/_layout.tsx` : `freezeOnBlur: true` par défaut, `freezeOnBlur: false` uniquement sur l'onglet `index` (carte). `detachInactiveScreens={false}` reste au niveau du navigateur — cette prop n'est pas déclinable par écran, et c'est elle qui empêche la destruction de la vue native MapLibre sur Android.
+- ⏭️ « Compilateur React + mémoïsation redondante » : `experiments.reactCompiler` est actif, les `useMemo`/`useCallback` restants (13 fichiers) sont donc en grande partie redondants — mais un retrait en masse est un risque de régression non mesurable sans profiling, et plusieurs servent encore d'ancrage d'identité explicite (ex. `renderTabBar`). Reporté : demande une passe de profiling dédiée.
