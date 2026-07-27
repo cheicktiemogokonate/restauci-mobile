@@ -1,22 +1,17 @@
 import { HeaderRestaurant } from "@/components/menu/HeaderRestaurant";
 import { MenuBottomSheet } from "@/components/menu/MenuBottomSheet";
-import PanierFAB from "@/components/menu/PanierFAB";
+import { PanierFAB } from "@/components/menu/PanierFAB";
+import { Button } from "@/components/ui/button";
 import { ErrorView } from "@/components/ui/ErrorView";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
+import { Text as ButtonText } from "@/components/ui/text";
 import { useMenuRestaurant, useRestaurant } from "@/hooks/useMenuRestaurant";
 import type { Plat } from "@/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useMemo, useRef } from "react";
-import {
-  Linking,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Linking, Platform, ScrollView, View } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { FlatList } from "react-native-gesture-handler";
 
 export default function RestaurantScreen() {
@@ -27,13 +22,11 @@ export default function RestaurantScreen() {
   const {
     data: restaurant,
     isLoading: isRestaurantLoading,
-    isFetching: isRestaurantFetching,
     refetch: refetchRestaurant,
     error: restaurantError,
   } = useRestaurant(slug ?? null);
 
   const isLoading = isRestaurantLoading;
-  const isFetching = isRestaurantFetching;
   const error = restaurantError;
 
   const refetch = async () => {
@@ -76,7 +69,7 @@ export default function RestaurantScreen() {
       android: `geo:0,0?q=${latitude},${longitude}(${encodeURIComponent(nom)})`,
     });
     if (url) {
-      Linking.openURL(url).catch(() => { });
+      Linking.openURL(url).catch(() => {});
     }
   }, [restaurant]);
 
@@ -105,7 +98,7 @@ export default function RestaurantScreen() {
             <View className="w-[50%] h-3.5 rounded-xl bg-ink-200" />
           </View>
         </View>
-        <View className="flex-row px-4 py-2.5 bg-white border-b border-ink-100">
+        <View className="flex-row px-4 py-3 bg-white border-b border-ink-100">
           <View className="w-[70px] h-8 rounded-full bg-ink-200" />
           <View className="w-[90px] h-8 rounded-full bg-ink-200 ml-2" />
           <View className="w-[80px] h-8 rounded-full bg-ink-200 ml-2" />
@@ -127,29 +120,35 @@ export default function RestaurantScreen() {
         <ErrorView
           message={error?.message}
           onRetry={refetch}
-          title="Restaurant introuvable"
+          title="Établissement introuvable"
         />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-ink-50">
+    <Animated.View
+      entering={FadeIn.duration(200)}
+      className="flex-1 bg-ink-50"
+    >
       <ScrollView
-        contentContainerStyle={{ flex: 1, paddingBottom: 32 }}
-        refreshControl={
-          <RefreshControl refreshing={isFetching} onRefresh={refetch} />
-        }
+        contentContainerStyle={{ paddingBottom: 120 }}
+        // refreshControl={
+        //   <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+        // }
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
       >
         {ListHeader}
       </ScrollView>
-      <TouchableOpacity
-        className="bg-green-800 py-4 rounded-full items-center w-[90%] self-center mb-10"
+      <Button
+        className="items-center w-[90%] self-center mb-4 h-12 justify-center"
         onPress={handleVoirMenu}
-        activeOpacity={0.8}
       >
-        <Text className="text-white font-bold text-base">Voir le menu</Text>
-      </TouchableOpacity>
+        <ButtonText className="text-white text-lg font-semibold">
+          Voir le menu
+        </ButtonText>
+      </Button>
 
       <PanierFAB
         fraisLivraison={restaurant.fraisLivraison}
@@ -162,6 +161,6 @@ export default function RestaurantScreen() {
         restaurant={restaurant}
         onClose={handleCloseMenu}
       />
-    </View>
+    </Animated.View>
   );
 }

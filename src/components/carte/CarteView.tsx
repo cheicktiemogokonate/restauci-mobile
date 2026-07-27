@@ -240,4 +240,6 @@ export const CarteView = React.forwardRef<CarteViewRef, CarteViewProps>(
   },
 );
 
+CarteView.displayName = "CarteView";
+
 export default CarteView;

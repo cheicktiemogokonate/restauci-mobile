@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/card";
+import { formatPrix } from "@/lib/format";
 import { useStore } from "@/store";
 import type { Plat, Restaurant } from "@/types";
 import { Image } from "expo-image";
@@ -11,7 +13,7 @@ import {
   Star,
 } from "lucide-react-native";
 import { useEffect } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Text, TouchableOpacity, View } from "react-native";
 
 interface HeaderRestaurantProps {
   restaurant: Restaurant;
@@ -41,8 +43,6 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
 }) => {
   const aDesAvis = (restaurant.nombreAvis ?? 0) > 0;
   const router = useRouter();
-  const favorites = useStore((s) => s.favorites);
-  const isLoadingFavorites = useStore((s) => s.isLoadingFavorites);
   const loadFavorites = useStore((s) => s.loadFavorites);
   const toggleFavorite = useStore((s) => s.toggleFavorite);
   const isFavorite = useStore((s) => s.isFavorite);
@@ -66,7 +66,7 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
   return (
     <>
       {/* <StatusBar hidden={true} /> */}
-      <ScrollView>
+      <View>
         <View className="w-full relative">
           {restaurant.banniereUrl ? (
             <Image
@@ -79,7 +79,7 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
           ) : (
             <Image
               source={require("@/assets/images/default_hero_bg.jpg")}
-              style={{ width: "100%", height: 300 }}
+              style={{ width: "100%", height: 300, borderWidth: 1, borderColor: "rgba(0,0,0,0.1)" }}
               placeholder={{ blurhash: BLUR_HASH }}
               contentFit="cover"
               transition={200}
@@ -87,7 +87,7 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
           )}
           <View className="absolute top-14 w-full flex-row justify-between mt-3">
             <TouchableOpacity
-              className="flex-row justify-center items-center px-4 py-3 bg-white/80 backdrop-blur-sm w-14 h-14 rounded-full ml-3"
+              className="flex-row justify-center items-center px-4 py-3 bg-white shadow-md shadow-black/10 w-14 h-14 rounded-full ml-3"
               onPress={() => {
                 router.back();
               }}
@@ -97,7 +97,7 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
             </TouchableOpacity>
             <View className="flex-row justify-center items-center">
               <TouchableOpacity
-                className="flex-row justify-between items-center px-4 py-3 bg-white/80 backdrop-blur-sm w-14 h-14 rounded-full mr-3"
+                className="flex-row justify-between items-center px-4 py-3 bg-white shadow-md shadow-black/10 w-14 h-14 rounded-full mr-3"
                 onPress={handleToggleFavorite}
                 activeOpacity={0.7}
               >
@@ -108,8 +108,8 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
                 />
               </TouchableOpacity>
               <TouchableOpacity
-                className="flex-row justify-between items-center px-4 py-3 bg-white/80 backdrop-blur-sm w-14 h-14 rounded-full mr-3"
-                onPress={() => { }}
+                className="flex-row justify-between items-center px-4 py-3 bg-white shadow-md shadow-black/10 w-14 h-14 rounded-full mr-3"
+                onPress={() => {}}
                 activeOpacity={0.7}
               >
                 <Share size={24} color="black" />
@@ -118,13 +118,13 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
           </View>
         </View>
 
-        <View className="mx-4 -mt-10 bg-white rounded-2xl p-3.5 shadow-sm">
+        <Card className="mx-4 -mt-10 p-4 bg-ink-50 border-ink-200">
           <View className="flex-row items-center">
             <View className="w-14 h-14 rounded-full overflow-hidden bg-ink-100 mr-3">
               {restaurant.logoUrl ? (
                 <Image
                   source={restaurant.logoUrl}
-                  style={{ width: "100%", height: "100%" }}
+                  style={{ width: "100%", height: "100%", borderWidth: 1, borderColor: "rgba(0,0,0,0.1)" }}
                   placeholder={{ blurhash: BLUR_HASH }}
                   contentFit="cover"
                   transition={200}
@@ -143,23 +143,25 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
 
               {/* Cuisines : décision rapide */}
               {restaurant.cuisines?.length > 0 && (
-                <Text className="text-sm text-ink-500 mt-0.5" numberOfLines={1}>
+                <Text className="text-sm text-ink-500 mt-1" numberOfLines={1}>
                   {restaurant.cuisines.join(" · ")}
                 </Text>
               )}
 
               {(!restaurant.accepteCommandes || !restaurant.enLigne) && (
                 <View
-                  className={`mt-2 self-start rounded-full px-3 py-1 ${!restaurant.accepteCommandes
+                  className={`mt-2 self-start rounded-full px-3 py-1 ${
+                    !restaurant.accepteCommandes
                       ? "bg-orange-100"
                       : "bg-ink-100"
-                    }`}
+                  }`}
                 >
                   <Text
-                    className={`text-xs font-semibold ${!restaurant.accepteCommandes
+                    className={`text-xs font-semibold ${
+                      !restaurant.accepteCommandes
                         ? "text-orange-700"
                         : "text-ink-500"
-                      }`}
+                    }`}
                   >
                     {!restaurant.accepteCommandes
                       ? "Actuellement complet"
@@ -181,7 +183,7 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
           </View>
 
           {restaurant.modesCommande.length > 0 && (
-            <View className="flex-row flex-wrap mt-3 mx-auto bg-ink-50 justify-between gap-8 px-3 py-2 rounded-2xl">
+            <View className="flex-row flex-wrap mt-3 mx-auto bg-ink-200 justify-between gap-4 px-3 py-2 rounded-2xl">
               {restaurant.modesCommande.map((mode) => (
                 <View key={mode}>
                   <Text className="text-sm font-semibold">
@@ -193,7 +195,7 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
           )}
 
           {/* Bloc stats : avis / note / temps d'attente */}
-          <View className="flex-row mt-3 bg-ink-100 rounded-2xl p-2.5 justify-around">
+          <View className="flex-row mt-3 bg-ink-100 rounded-2xl p-3 justify-around">
             <View className="flex items-center">
               <Text className="text-base font-bold">
                 {aDesAvis ? restaurant.nombreAvis : "—"}
@@ -219,14 +221,14 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
                       : "—")}
                 </Text>
               </View>
-              <Text className="text-xs text-ink-500 mt-1">Temps d'attente</Text>
+              <Text className="text-xs text-ink-500 mt-1">Temps d&apos;attente</Text>
             </View>
           </View>
-        </View>
+        </Card>
         <View className=" bg-ink-50 w-[90%] mx-auto mt-3">
           {restaurant.description && (
             <View className="mt-4">
-              <Text className="text-xl tracking-wider font-bold text-ink-900 mb-1.5">
+              <Text className="text-xl tracking-wider font-bold text-ink-900 mb-2">
                 À propos
               </Text>
               <Text
@@ -241,7 +243,7 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
           {/* Contact — un seul bloc, URL de dev filtrée */}
           {(restaurant.telephone || restaurant.email || restaurant.siteWeb) && (
             <View className="mt-4">
-              <Text className="text-xl tracking-wider font-bold text-ink-900 mb-1.5">
+              <Text className="text-xl tracking-wider font-bold text-ink-900 mb-2">
                 Contact
               </Text>
               <View className="flex-row items-center flex-wrap gap-3">
@@ -269,45 +271,51 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
               <Text className="text-xl font-bold text-ink-900 tracking-wider mb-2">
                 Plats populaires
               </Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {popularPlats.map((p) => (
-                  <TouchableOpacity
-                    key={p.id}
-                    className="w-32 mr-5"
-                    onPress={onVoirMenu ?? (() => { })}
-                    activeOpacity={0.8}
+            <FlatList
+              data={popularPlats}
+              keyExtractor={(p) => p.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingRight: 16 }}
+              renderItem={({ item: p }) => (
+                <TouchableOpacity
+                  className="w-32 mr-4"
+                  onPress={onVoirMenu ?? (() => {})}
+                  activeOpacity={0.8}
+                >
+                  {p.photoUrl ? (
+                    <Image
+                      source={p.photoUrl}
+                      style={{ width: 120, height: 90, borderRadius: 12, borderWidth: 1, borderColor: "rgba(0,0,0,0.1)" }}
+                    />
+                  ) : (
+                    <View
+                      className="rounded-2xl"
+                      style={{
+                        width: 120,
+                        height: 90,
+                        backgroundColor: "#eef2e9",
+                        borderWidth: 1,
+                        borderColor: "rgba(0,0,0,0.1)",
+                      }}
+                    />
+                  )}
+                  <Text
+                    className="mt-2 text-base text-ink-900 font-semibold"
+                    numberOfLines={1}
                   >
-                    {p.photoUrl ? (
-                      <Image
-                        source={p.photoUrl}
-                        style={{ width: 120, height: 90, borderRadius: 12 }}
-                      />
-                    ) : (
-                      <View
-                        className="rounded-2xl"
-                        style={{
-                          width: 120,
-                          height: 90,
-                          backgroundColor: "#eef2e9",
-                        }}
-                      />
-                    )}
-                    <Text
-                      className="mt-2 text-base text-ink-900 font-semibold"
-                      numberOfLines={1}
-                    >
-                      {p.nom}
-                    </Text>
-                    <Text className="text-base text-green-700 mt-1 font-bold">
-                      {p.prix.toLocaleString("fr-FR")} FCFA
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+                    {p.nom}
+                  </Text>
+                  <Text className="text-base text-green-700 mt-1 font-bold">
+                    {formatPrix(p.prix)}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
             </View>
           )}
         </View>
-      </ScrollView>
+      </View>
     </>
   );
 };

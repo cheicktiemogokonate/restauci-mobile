@@ -3,16 +3,7 @@ import { ENDPOINTS } from "@/constants/api";
 import { apiFetch } from "@/lib/api";
 import { useStore } from "@/store";
 
-export interface CommandeSummary {
-  id: string;
-  numero: string;
-  statut: string;
-  total: number;
-  createdAt: string;
-  restaurantNom?: string;
-  modeCommande: string;
-}
-
+import type { CommandeSummary } from "@/types";
 export function useCommandesClient() {
   const token = useStore((s) => s.token);
   return useQuery<CommandeSummary[]>({

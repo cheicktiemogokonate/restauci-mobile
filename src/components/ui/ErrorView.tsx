@@ -1,13 +1,9 @@
+import { Button } from "@/components/ui/button";
+import { Text as ButtonText } from "@/components/ui/text";
+import { ErrorViewProps } from "@/types";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-
-interface ErrorViewProps {
-  message?: string;
-  onRetry?: () => void;
-  title?: string;
-  showRetry?: boolean;
-}
 
 export const ErrorView: React.FC<ErrorViewProps> = ({
   message = "Une erreur est survenue",
@@ -28,12 +24,14 @@ export const ErrorView: React.FC<ErrorViewProps> = ({
       </Text>
       <View className="gap-3 w-full max-w-60">
         {showRetry && onRetry && (
-          <TouchableOpacity
-            className="bg-green-500 rounded-2xl py-3.5 items-center"
+          <Button
+            className="py-3.5 items-center"
             onPress={onRetry}
           >
-            <Text className="text-white text-base font-bold">Réessayer</Text>
-          </TouchableOpacity>
+            <ButtonText className="text-white text-base font-bold">
+              Réessayer
+            </ButtonText>
+          </Button>
         )}
         <TouchableOpacity
           className="bg-ink-100 rounded-2xl py-3.5 items-center"

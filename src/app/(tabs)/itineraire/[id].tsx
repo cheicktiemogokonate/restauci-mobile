@@ -13,7 +13,7 @@ export default function ItineraireScreen() {
     <SafeAreaView style={styles.container}>
       <Text style={styles.emoji}>🗺</Text>
       <Text style={styles.title}>Itinéraire</Text>
-      <Text style={styles.subtitle}>Restaurante ID : {id ?? '—'}</Text>
+      <Text style={styles.subtitle}>Établissement ID : {id ?? '—'}</Text>
       <Text style={styles.hint}>Fonctionnalité en cours de développement</Text>
     </SafeAreaView>
   );

@@ -136,7 +136,7 @@ async function syncPushToken(token: string): Promise<void> {
       method: "POST",
       body: JSON.stringify({ expoToken: token }),
     });
-  } catch (err) {
+  } catch {
     // Ignore token sync errors in non-critical path
   }
 }

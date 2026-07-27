@@ -19,19 +19,22 @@ export const FiltreCategoriesMobile: React.FC<FiltreCategoriesMobileProps> = ({
   const handleSelectCat = useCallback((id: string) => onSelect(id), [onSelect]);
 
   return (
-    <View className="bg-white py-2.5 border-b border-ink-100">
+    <View className="bg-white py-3 border-b border-ink-100">
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
       >
         <TouchableOpacity
-          className={`px-4 py-2 rounded-full ${selectedCategory === null ? "bg-green-800" : "bg-ink-100"}`}
+          className={`mr-2 px-4 py-1.5 rounded-full border ${
+            selectedCategory === null
+              ? "bg-brand-900 border-brand-900"
+              : "bg-white border-gray-200"
+          } shadow-sm`}
           onPress={handleSelectAll}
-          activeOpacity={0.7}
         >
           <Text
-            className={`text-sm font-semibold ${selectedCategory === null ? "text-white" : "text-ink-500"}`}
+            className={`text-sm font-medium ${selectedCategory === null ? "text-white" : "text-gray-700"}`}
           >
             Tout
           </Text>
@@ -40,12 +43,15 @@ export const FiltreCategoriesMobile: React.FC<FiltreCategoriesMobileProps> = ({
         {categories.map((cat) => (
           <TouchableOpacity
             key={cat.id}
-            className={`px-4 py-2 rounded-full ${selectedCategory === cat.id ? "bg-green-800" : "bg-ink-100"}`}
+            className={`mr-2 px-4 py-1.5 rounded-full border ${
+              selectedCategory === cat.id
+                ? "bg-brand-900 border-brand-900"
+                : "bg-white border-gray-200"
+            } shadow-sm`}
             onPress={() => handleSelectCat(cat.id)}
-            activeOpacity={0.7}
           >
             <Text
-              className={`text-sm font-semibold ${selectedCategory === cat.id ? "text-white" : "text-ink-500"}`}
+              className={`text-sm font-medium ${selectedCategory === cat.id ? "text-white" : "text-gray-700"}`}
             >
               {cat.nom}
             </Text>

@@ -115,8 +115,8 @@ export interface GeocodeResult {
   adresse: string;
   lat: number;
   lng: number;
-  ville: string;
-  pays: string;
+  ville?: string;
+  pays?: string;
 }
 
 export interface Suggestion {
@@ -207,15 +207,30 @@ export interface CommandePayload {
   restaurantId?: string;
   restaurantSlug?: string; // Pas restaurantId !
   modeCommande?: string; // "emporter", "livraison", "sur_place" ou "takeout", "delivery"
-  items: Array<{
+  items: {
     platId: string;
     quantite: number;
-  }>;
+  }[];
   adresseLivraison?: string;
   numeroTable?: string;
   notes?: string;
   telephone?: string;
 }
+
+// Types utilitaires pour les valeurs de mode et de statut de commande.
+// Conservés dans le code client pour la saisie, mais le DTO complet utilise `string`.
+export type ModeCommande =
+  | "livraison"
+  | "sur_place"
+  | "emporter"
+  | "takeout"
+  | "delivery";
+export type StatutCommande =
+  | "recue"
+  | "en_preparation"
+  | "prete"
+  | "servie"
+  | "annulee";
 
 // Réponse POST /api/v1/client/commandes
 export interface CommandeCreatedResponse {
@@ -236,11 +251,12 @@ export interface CommandeSummary {
   numero: string;
   statut: string;
   total: number;
-  fraisLivraison: number;
-  sousTotal: number;
-  items: CommandeItem[];
+  fraisLivraison?: number;
+  sousTotal?: number;
+  items?: CommandeItem[];
   modeCommande: string;
   createdAt: string;
+  restaurantNom?: string;
 }
 
 // Timeline event pour CommandeDetail
@@ -273,7 +289,7 @@ export interface CommandeDetail {
   clientId: string;
   restaurant: {
     nom: string;
-    logoUrl: string | null;
+    logoUrl?: string | null;
   };
   statutLabel: string;
   estAnnulee: boolean;
@@ -309,4 +325,11 @@ export interface RegionVisible {
   latitude: number;
   longitude: number;
   zoom: number;
+}
+
+export interface ErrorViewProps {
+  message?: string;
+  onRetry?: () => void;
+  title?: string;
+  showRetry?: boolean;
 }

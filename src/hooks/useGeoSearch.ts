@@ -2,19 +2,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { apiFetch } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
-interface GeocodeResult {
-  adresse: string;
-  lat: number;
-  lng: number;
-  ville?: string;
-  pays?: string;
-}
-
-interface Suggestion {
-  label: string;
-  lat: number;
-  lon: number;
-}
+import type { GeocodeResult, Suggestion } from "@/types";
 
 function mapToSuggestion(r: GeocodeResult): Suggestion {
   return {

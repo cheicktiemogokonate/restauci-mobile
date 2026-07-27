@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/card";
+import { formatPrix } from "@/lib/format";
 import { useStore } from "@/store";
 import type { Plat } from "@/types";
 import * as Haptics from "expo-haptics";
@@ -21,16 +23,11 @@ export const CartePlatMobile: React.FC<CartePlatMobileProps> = ({
   onAjouter,
   onRetirer,
 }) => {
-  const items = useStore((s) => s.items);
-  const cartItem = useMemo(
-    () => items.find((item) => item.platId === plat.id),
-    [items, plat.id],
+  const quantite = useStore(
+    (s) => s.items.find((item) => item.platId === plat.id)?.quantite ?? 0,
   );
-  const quantite = cartItem?.quantite ?? 0;
 
-  const prixFormate = useMemo(() => {
-    return new Intl.NumberFormat("fr-FR").format(plat.prix) + " FCFA";
-  }, [plat.prix]);
+  const prixFormate = useMemo(() => formatPrix(plat.prix), [plat.prix]);
 
   const handleAdd = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -45,14 +42,14 @@ export const CartePlatMobile: React.FC<CartePlatMobileProps> = ({
   const estIndisponible = !plat.disponible;
 
   return (
-    <View
-      className={`flex-row bg-white my-2 rounded-2xl  mx-4 mb-2.5 p-4 shadow-sm ${estIndisponible ? "opacity-55" : ""}`}
+    <Card
+      className={`flex-row bg-white my-2 mx-4 mb-2.5 p-4 rounded-3xl ${estIndisponible ? "opacity-55" : ""}`}
     >
-      <View className="w-18  h-18 rounded-2.5 overflow-hidden bg-ink-100 mr-3">
+      <View className="w-18 h-18 rounded-lg overflow-hidden bg-ink-100 mr-4">
         {plat.photoUrl ? (
           <Image
             source={plat.photoUrl}
-            style={{ width: 72, height: 72, borderRadius: 10 }}
+            style={{ width: 72, height: 72, borderRadius: 8 }}
             placeholder={{ blurhash: BLUR_HASH }}
             contentFit="cover"
             transition={300}
@@ -82,7 +79,7 @@ export const CartePlatMobile: React.FC<CartePlatMobileProps> = ({
               </Text>
             )}
             <Text
-              className={`text-sm font-bold mt-0.5 ${estIndisponible ? "text-ink-400" : "text-green-500"}`}
+              className={`text-sm font-bold mt-1 ${estIndisponible ? "text-ink-400" : "text-green-500"}`}
             >
               {prixFormate}
             </Text>
@@ -95,23 +92,23 @@ export const CartePlatMobile: React.FC<CartePlatMobileProps> = ({
               </Text>
             </View>
           ) : quantite > 0 ? (
-            <View className="flex-row items-center bg-green-50 rounded-full px-0.5 gap-1">
+            <View className="flex-row items-center bg-green-50 rounded-full px-1 gap-1">
               <TouchableOpacity
-                className="w-6 h-6 rounded-full bg-green-500 justify-center items-center"
+                className="w-9 h-9 rounded-full bg-brand-900 justify-center items-center"
                 onPress={handleRemove}
-                activeOpacity={0.6}
+                activeOpacity={0.7}
               >
                 <Text className="text-lg font-bold text-white leading-5">
                   −
                 </Text>
               </TouchableOpacity>
-              <Text className="text-sm font-bold text-green-700 w-5 text-center">
+              <Text className="text-sm font-bold text-green-900 w-6 text-center">
                 {quantite}
               </Text>
               <TouchableOpacity
-                className="w-6 h-6 rounded-full bg-green-500 justify-center items-center"
+                className="w-9 h-9 rounded-full bg-brand-900 justify-center items-center"
                 onPress={handleAdd}
-                activeOpacity={0.6}
+                activeOpacity={0.7}
               >
                 <Text className="text-lg font-bold text-white leading-5">
                   +
@@ -120,7 +117,7 @@ export const CartePlatMobile: React.FC<CartePlatMobileProps> = ({
             </View>
           ) : (
             <TouchableOpacity
-              className="w-9 h-9 rounded-full bg-green-500 justify-center items-center"
+              className="w-9 h-9 rounded-full bg-brand-900 justify-center items-center"
               onPress={handleAdd}
               activeOpacity={0.6}
             >
@@ -131,7 +128,7 @@ export const CartePlatMobile: React.FC<CartePlatMobileProps> = ({
           )}
         </View>
       </View>
-    </View>
+    </Card>
   );
 };
 

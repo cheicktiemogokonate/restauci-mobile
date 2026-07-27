@@ -1,4 +1,7 @@
+import { Button } from "@/components/ui/button";
+import { Text as ButtonText } from "@/components/ui/text";
 import { useCommandeTracking } from "@/hooks/useCommandeTracking";
+import { formatPrix } from "@/lib/format";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
   AlertCircle,
@@ -8,7 +11,7 @@ import {
   Headphones,
   ShoppingBag,
   Smile,
-  Truck
+  Truck,
 } from "lucide-react-native";
 import React from "react";
 import {
@@ -18,7 +21,6 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -41,7 +43,7 @@ const STATUT_ICONS: Record<string, typeof Check> = {
 export default function CommandeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { commande, statut, isLoading, error } = useCommandeTracking(
+  const { commande, isLoading, error } = useCommandeTracking(
     id ?? null,
   );
 
@@ -50,7 +52,7 @@ export default function CommandeDetailScreen() {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <ActivityIndicator size="large" color="#1B4D1E" />
+        <ActivityIndicator size="large" color="#166534" />
       </SafeAreaView>
     );
   }
@@ -65,12 +67,9 @@ export default function CommandeDetailScreen() {
         <Text className="text-gray-500 text-center mb-6">
           {error?.message ?? "Cette commande n'existe pas ou a été supprimée."}
         </Text>
-        <TouchableOpacity
-          className="bg-green-900 rounded-2xl px-6 py-4"
-          onPress={() => router.back()}
-        >
-          <Text className="text-white font-bold">Retour</Text>
-        </TouchableOpacity>
+        <Button className="px-6 py-4" onPress={() => router.back()}>
+          <ButtonText className="text-white font-bold">Retour</ButtonText>
+        </Button>
       </SafeAreaView>
     );
   }
@@ -85,8 +84,7 @@ export default function CommandeDetailScreen() {
     "fr-FR",
     { hour: "2-digit", minute: "2-digit" },
   );
-  const totalFormate =
-    new Intl.NumberFormat("fr-FR").format(commande.total / 100) + " FCFA";
+  const totalFormate = formatPrix(commande.total);
 
   // Le livreur n'est présent que si le backend l'a assigné (mode livraison, commande prise en charge)
   // const livreur = commande.livreur;
@@ -97,7 +95,11 @@ export default function CommandeDetailScreen() {
       <SafeAreaView className="flex-1 bg-white pb-14">
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 py-3">
-          <Pressable onPress={() => router.push("/(tabs)/commandes")} hitSlop={10} className="w-9">
+          <Pressable
+            onPress={() => router.push("/(tabs)/commandes")}
+            hitSlop={10}
+            className="w-9"
+          >
             <ChevronLeft size={26} color="#111111" />
           </Pressable>
 
@@ -116,7 +118,7 @@ export default function CommandeDetailScreen() {
             hitSlop={10}
             onPress={appelerSupport}
           >
-            <Headphones size={18} color="#1B4D1E" />
+            <Headphones size={18} color="#166534" />
             <Text className="text-green-800 font-medium ml-1">Aide</Text>
           </Pressable>
         </View>
@@ -142,7 +144,7 @@ export default function CommandeDetailScreen() {
               </View>
               {commande.modeCommande === "livraison" && (
                 <Image
-                  source={require('@/assets/images/livreur-profile.png')}
+                  source={require("@/assets/images/livreur-profile.png")}
                   style={{ width: 110, height: 110, borderRadius: 999 }}
                   resizeMode="contain"
                 />
@@ -150,13 +152,15 @@ export default function CommandeDetailScreen() {
             </View>
           ) : (
             <View className="bg-red-50 rounded-3xl p-5 mt-2 border border-red-100">
-              <AlertCircle size={28} color="#DC2626" />
-              <Text className="font-bold text-red-600 text-lg mt-2">
-                Commande annulée
-              </Text>
+              <View className="flex-row items-center gap-2">
+                <AlertCircle size={28} color="#DC2626" />
+                <Text className="font-bold text-red-600 text-lg mt-2">
+                  Commande annulée
+                </Text>
+              </View>
               <Text className="text-gray-500 mt-1">
-                Cette commande a été annulée. Contactez le restaurant pour
-                plus d'informations.
+                Cette commande a été annulée. Contactez l&rsquo;établissement pour
+                plus d&apos;informations.
               </Text>
             </View>
           )}
@@ -172,8 +176,9 @@ export default function CommandeDetailScreen() {
                   <React.Fragment key={etape.etape}>
                     <View className="items-center" style={{ width: 64 }}>
                       <View
-                        className={`w-9 h-9 rounded-full items-center justify-center ${estAtteinte ? "bg-green-900" : "bg-gray-200"
-                          }`}
+                        className={`w-9 h-9 rounded-full items-center justify-center ${
+                          estAtteinte ? "bg-green-900" : "bg-gray-200"
+                        }`}
                       >
                         <Icon
                           size={16}
@@ -181,17 +186,18 @@ export default function CommandeDetailScreen() {
                         />
                       </View>
                       <Text
-                        className={`text-xs mt-2 text-center ${etape.actif
-                          ? "text-green-800 font-semibold"
-                          : etape.fait
-                            ? "text-black"
-                            : "text-gray-400"
-                          }`}
+                        className={`text-xs mt-2 text-center ${
+                          etape.actif
+                            ? "text-green-800 font-semibold"
+                            : etape.fait
+                              ? "text-black"
+                              : "text-gray-400"
+                        }`}
                       >
                         {etape.label}
                       </Text>
                       {etape.timestamp && (
-                        <Text className="text-[11px] text-gray-400 mt-0.5">
+                        <Text className="text-[11px] text-gray-400 mt-1">
                           {new Date(etape.timestamp).toLocaleTimeString(
                             "fr-FR",
                             { hour: "2-digit", minute: "2-digit" },
@@ -201,8 +207,9 @@ export default function CommandeDetailScreen() {
                     </View>
                     {index < commande.timeline.length - 1 && (
                       <View
-                        className={`flex-1 h-0.5 mt-[18px] ${etape.fait ? "bg-green-900" : "bg-gray-200"
-                          }`}
+                        className={`flex-1 h-0.5 mt-4 ${
+                          etape.fait ? "bg-green-900" : "bg-gray-200"
+                        }`}
                       />
                     )}
                   </React.Fragment>
@@ -233,7 +240,7 @@ export default function CommandeDetailScreen() {
                       ({livreur.avis} avis)
                     </Text>
                   </View>
-                  <Text className="text-gray-400 text-sm mt-0.5">
+                  <Text className="text-gray-400 text-sm mt-1">
                     ID : {livreur.id}
                   </Text>
                 </View>
@@ -241,7 +248,7 @@ export default function CommandeDetailScreen() {
                   onPress={() => Linking.openURL(`tel:${livreur.telephone}`)}
                   className="w-11 h-11 rounded-full bg-green-50 items-center justify-center mr-2"
                 >
-                  <Phone size={18} color="#1B4D1E" />
+                  <Phone size={18} color="#166534" />
                 </Pressable>
                 <Pressable
                   onPress={() => router.push(`/`)}
@@ -259,12 +266,12 @@ export default function CommandeDetailScreen() {
               <Text className="text-lg font-bold text-black">
                 Détails de la commande
               </Text>
-              <Text className="text-gray-400 text-sm">
-                {dateFormatee} • {heureFormatee}
-              </Text>
             </View>
             <Text className="text-gray-400 text-sm mt-1">
               Commande #{commande.numero}
+            </Text>
+            <Text className="text-gray-400 text-sm">
+              {dateFormatee} • {heureFormatee}
             </Text>
 
             <View className="h-px bg-gray-100 my-4" />
@@ -305,10 +312,7 @@ export default function CommandeDetailScreen() {
                   </Text>
                 </View>
                 <Text className="font-medium text-gray-600">
-                  {new Intl.NumberFormat("fr-FR").format(
-                    item.prix * item.quantite,
-                  )}{" "}
-                  FCFA
+                  {formatPrix(item.prix * item.quantite)}
                 </Text>
               </View>
             ))}
@@ -319,19 +323,13 @@ export default function CommandeDetailScreen() {
             <View className="flex-row justify-between mb-2">
               <Text className="text-gray-500">Sous-total</Text>
               <Text className="text-black">
-                {new Intl.NumberFormat("fr-FR").format(
-                  commande.sousTotal / 100,
-                )}{" "}
-                FCFA
+                {formatPrix(commande.sousTotal)}
               </Text>
             </View>
             <View className="flex-row justify-between mb-3">
               <Text className="text-gray-500">Frais de livraison</Text>
               <Text className="text-black">
-                {new Intl.NumberFormat("fr-FR").format(
-                  commande.fraisLivraison / 100,
-                )}{" "}
-                FCFA
+                {formatPrix(commande.fraisLivraison)}
               </Text>
             </View>
             <View className="flex-row justify-between">
@@ -358,12 +356,12 @@ export default function CommandeDetailScreen() {
               onPress={() => router.push(`/`)}
               className="flex-row items-center bg-green-50 rounded-2xl p-4 mt-6"
             >
-              <Smile size={26} color="#1B4D1E" />
+              <Smile size={26} color="#166534" />
               <View className="flex-1 ml-3">
                 <Text className="text-black font-medium">
                   Vous avez aimé notre service ?
                 </Text>
-                <Text className="text-gray-500 text-sm mt-0.5">
+                <Text className="text-gray-500 text-sm mt-1">
                   Donnez votre avis sur votre expérience
                 </Text>
               </View>
@@ -372,14 +370,14 @@ export default function CommandeDetailScreen() {
 
           {/* Actions */}
           <View className="mt-6 gap-3">
-            <TouchableOpacity
-              className="bg-green-900 rounded-2xl py-4 items-center"
+            <Button
+              className="py-4 items-center"
               onPress={() => router.push("/(tabs)")}
             >
-              <Text className="text-white font-bold text-base">
+              <ButtonText className="text-white font-bold text-base">
                 Commander à nouveau
-              </Text>
-            </TouchableOpacity>
+              </ButtonText>
+            </Button>
             {/* <TouchableOpacity
               className="bg-gray-100 rounded-2xl py-4 items-center"
               onPress={appelerSupport}

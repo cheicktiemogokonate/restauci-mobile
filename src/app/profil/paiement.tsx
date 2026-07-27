@@ -1,26 +1,9 @@
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useRouter } from "expo-router";
-import { ChevronLeft } from "lucide-react-native";
-import { Pressable, SafeAreaView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 export default function PaiementScreen() {
-  const router = useRouter();
-
   return (
-    <SafeAreaView className="flex-1 bg-ink-50">
-      <View className="flex-row items-center border-b border-ink-200 px-4 py-3">
-        <Pressable
-          onPress={() => router.back()}
-          className="h-10 w-10 items-center justify-center rounded-full bg-ink-100"
-        >
-          <ChevronLeft size={20} color="green-900" />
-        </Pressable>
-        <Text className="flex-1 text-center text-lg font-bold text-green-900">
-          Moyens de paiement
-        </Text>
-        <View className="h-10 w-10" />
-      </View>
-
+    <View className="flex-1 bg-ink-50">
       <View className="mx-4 mt-4 rounded-2xl border border-ink-200 bg-info p-4">
         <Text className="text-sm font-semibold text-ink-50">
           Ajoutez ou gérez vos moyens de paiement ici.
@@ -33,6 +16,6 @@ export default function PaiementScreen() {
         title="Cette section arrive bientôt"
         message="La gestion de vos moyens de paiement sera disponible prochainement."
       />
-    </SafeAreaView>
+    </View>
   );
 }

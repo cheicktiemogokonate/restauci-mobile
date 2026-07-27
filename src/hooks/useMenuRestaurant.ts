@@ -1,12 +1,8 @@
 import { ENDPOINTS } from "@/constants/api";
 import { apiFetch } from "@/lib/api";
-import type { Categorie, Restaurant } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-}
+import type { ApiResponse, Categorie, Restaurant } from "@/types";
 
 /**
  * Récupère le menu d'un restaurant (catégories et plats).

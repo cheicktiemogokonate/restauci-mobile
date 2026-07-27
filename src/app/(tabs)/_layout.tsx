@@ -2,7 +2,7 @@ import { useStore } from "@/store";
 import { Tabs, useRouter } from "expo-router";
 import { List, Map, ShoppingBag, User } from "lucide-react-native";
 import { useCallback } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { StatusBar, Text, TouchableOpacity, View } from "react-native";
 import Animated, { LinearTransition } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -24,7 +24,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         padding: 6,
         justifyContent: "space-between",
         alignItems: "center",
-        shadowColor: "ink-900",
+        shadowColor: "#111827",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 10,
@@ -90,20 +90,20 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: isFocused ? "#386b2a" : "transparent",
+                backgroundColor: isFocused ? "#14532d" : "transparent",
                 borderRadius: 30,
                 paddingVertical: 10,
                 paddingHorizontal: isFocused ? 16 : 10,
                 borderWidth: isFocused ? 1 : 0,
-                borderColor: "#457b3b",
+                borderColor: "#14532d",
               }}
             >
               {options.tabBarIcon
                 ? options.tabBarIcon({
-                  focused: isFocused,
-                  color: isFocused ? "#ffffff" : "#8fa794",
-                  size: 20,
-                })
+                    focused: isFocused,
+                    color: isFocused ? "#ffffff" : "#14532d",
+                    size: 20,
+                  })
                 : null}
               {isFocused && (
                 <Animated.Text
@@ -125,14 +125,14 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                     position: "absolute",
                     top: 6,
                     right: 6,
-                    backgroundColor: "#ff4b4b",
+                    backgroundColor: "#DC2626",
                     borderRadius: 10,
                     width: 14,
                     height: 14,
                     justifyContent: "center",
                     alignItems: "center",
                     borderWidth: 1.5,
-                    borderColor: isFocused ? "#386b2a" : "green-900",
+                    borderColor: isFocused ? "#386b2a" : "#14532d",
                   }}
                 >
                   <Text
@@ -151,7 +151,9 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 }
 
 export default function TabLayout() {
-  const nombre = useStore((s) => s.nombreArticles());
+  const nombre = useStore((s) =>
+    s.items.reduce((sum, i) => sum + i.quantite, 0),
+  );
 
   // Mémoriser la prop tabBar pour éviter de re-monter les écrans
   // (dont la carte) à chaque re-rendu déclenché par le store.
@@ -161,60 +163,64 @@ export default function TabLayout() {
   );
 
   return (
-    <Tabs
-      tabBar={renderTabBar}
-      detachInactiveScreens={false} // Empêche la destruction de la vue native de l'onglet sur Android
-      screenOptions={{
-        headerShown: false,
-        // On peut aussi éviter que la vue soit freeze en arrière-plan
-        freezeOnBlur: false,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Carte",
-          tabBarIcon: ({ color, size }) => (
-            <Map color={color} size={size} strokeWidth={2.5} />
-          ),
-        }}
-      />
+    <>
+      <StatusBar barStyle={"dark-content"} />
 
-      <Tabs.Screen
-        name="commandes"
-        options={{
-          title: "Commandes",
-          tabBarIcon: ({ color, size }) => (
-            <List color={color} size={size} strokeWidth={2.5} />
-          ),
+      <Tabs
+        tabBar={renderTabBar}
+        detachInactiveScreens={false} // Empêche la destruction de la vue native de l'onglet sur Android
+        screenOptions={{
+          headerShown: false,
+          // On peut aussi éviter que la vue soit freeze en arrière-plan
+          freezeOnBlur: false,
         }}
-      />
-      <Tabs.Screen
-        name="panier"
-        options={{
-          title: "Panier",
-          tabBarBadge: nombre > 0 ? nombre : undefined,
-          tabBarIcon: ({ color, size }) => (
-            <ShoppingBag color={color} size={size} strokeWidth={2.5} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="itineraire/[id]"
-        options={{
-          title: "Itinéraire",
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="profil"
-        options={{
-          title: "Profil",
-          tabBarIcon: ({ color, size }) => (
-            <User color={color} size={size} strokeWidth={2.5} />
-          ),
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Carte",
+            tabBarIcon: ({ color, size }) => (
+              <Map color={color} size={size} strokeWidth={2.5} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="commandes"
+          options={{
+            title: "Commandes",
+            tabBarIcon: ({ color, size }) => (
+              <List color={color} size={size} strokeWidth={2.5} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="panier"
+          options={{
+            title: "Panier",
+            tabBarBadge: nombre > 0 ? nombre : undefined,
+            tabBarIcon: ({ color, size }) => (
+              <ShoppingBag color={color} size={size} strokeWidth={2.5} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="itineraire/[id]"
+          options={{
+            title: "Itinéraire",
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="profil"
+          options={{
+            title: "Profil",
+            tabBarIcon: ({ color, size }) => (
+              <User color={color} size={size} strokeWidth={2.5} />
+            ),
+          }}
+        />
+      </Tabs>
+    </>
   );
 }

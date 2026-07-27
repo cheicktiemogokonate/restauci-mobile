@@ -40,7 +40,7 @@ export const SkeletonCard: React.FC = () => {
       className="mx-4 mb-2.5 rounded-2xl overflow-hidden bg-white relative"
       style={{ height: CARD_HEIGHT }}
     >
-      <View className="flex-row p-2.5" style={{ height: CARD_HEIGHT }}>
+      <View className="flex-row p-3" style={{ height: CARD_HEIGHT }}>
         <View className="w-18 h-18 rounded-2.5 bg-ink-200 mr-3" />
         <View className="flex-1 justify-center gap-1.5">
           <View className="h-3.5 w-3/5 bg-ink-200 rounded-1.5" />

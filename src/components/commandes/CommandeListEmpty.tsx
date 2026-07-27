@@ -1,7 +1,8 @@
-import { ClipboardList } from "lucide-react-native";
-import { Text, TouchableOpacity, View } from "react-native";
-import { Filtre } from "./CommandeCard";
 import { useRouter } from "expo-router";
+import { ClipboardList } from "lucide-react-native";
+import { Text, View } from "react-native";
+import { Button } from "../ui/button";
+import { Filtre } from "./CommandeCard";
 
 interface CommandeListEmptyProps {
   filtre: Filtre;
@@ -21,11 +22,17 @@ export function CommandeListEmpty({ filtre }: CommandeListEmptyProps) {
           ? "Vos commandes apparaîtront ici une fois passées"
           : "Aucune commande ne correspond à ce filtre"}
       </Text>
-      <TouchableOpacity className="mt-6" onPress={() => router.back()}>
+      {/* <TouchableOpacity className="mt-6" onPress={() => router.back()}>
         <Text className="text-brand-800 font-semibold underline">
           Retour à la carte
         </Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
+
+      <Button variant={"link"} onPress={() => router.back()} className="mt-6">
+        <Text className="text-brand-800 font-semibold underline">
+          Retour à la carte
+        </Text>
+      </Button>
     </View>
   );
 }

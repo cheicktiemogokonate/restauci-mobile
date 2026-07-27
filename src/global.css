@@ -1,3 +1,39 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 221 39% 11%;
+  --primary: 143 64% 24%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 217 91% 60%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 220 13% 91%;
+  --muted-foreground: 215 14% 34%;
+  --accent: 38 92% 50%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 53%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 143 64% 24%;
+}
+
+.dark {
+  --background: 221 39% 11%;
+  --foreground: 210 20% 98%;
+  --primary: 143 64% 24%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 217 91% 60%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 215 14% 34%;
+  --muted-foreground: 210 20% 98%;
+  --accent: 38 92% 50%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 53%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 215 14% 34%;
+  --input: 215 14% 34%;
+  --ring: 143 64% 24%;
+}

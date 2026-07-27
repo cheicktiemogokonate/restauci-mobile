@@ -17,7 +17,7 @@ export function useRestaurantsProches(
         url += `&cuisine=${encodeURIComponent(cuisine)}`;
       }
 
-      const response = await apiFetch<any>(url);
+      const response = await apiFetch<any>(url, { skipAuth: true });
 
       // L'API structure: {success: true, data: Restaurant | Restaurant[] | any, meta: {...}}
       let restaurants: Restaurant[] = [];

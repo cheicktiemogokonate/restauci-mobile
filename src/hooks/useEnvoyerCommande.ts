@@ -3,51 +3,7 @@ import { apiFetch } from "@/lib/api";
 import type { CommandePayload } from "@/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export interface CommandeResponse {
-  success: boolean;
-  data: {
-    commande: Commande;
-  };
-}
 
-
-export interface Commande {
-  id: string;
-  numero: string;
-  createdAt: string;
-
-  modeCommande: ModeCommande;
-  statut: StatutCommande;
-
-  fraisLivraison: number;
-  sousTotal: number;
-  total: number;
-
-  items: CommandeItem[];
-}
-
-
-export interface CommandeItem {
-  platId: string;
-  nom: string;
-  prix: number;
-  quantite: number;
-}
-
-
-export type ModeCommande =
-  | "livraison"
-  | "sur_place"
-  | "emporter";
-
-
-export type StatutCommande =
-  | "recue"
-  | "confirmee"
-  | "preparation"
-  | "prete"
-  | "livree"
-  | "annulee";
 
 export function useEnvoyerCommande() {
   const queryClient = useQueryClient();

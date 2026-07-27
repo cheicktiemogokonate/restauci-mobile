@@ -1,6 +1,6 @@
 import { useCommandesClient } from "@/hooks/useCommandesClient";
 import { useStore } from "@/store";
-import { Link, useRouter } from "expo-router";
+import { Link } from "expo-router";
 import {
   ChevronRight,
   CreditCard,
@@ -59,11 +59,9 @@ function StatBlock({ icon, value, label }: Stat) {
 }
 
 function MenuRow({ icon, label, route, onPress }: MenuItem) {
-  const router = useRouter();
-
   return (
     <Pressable
-      onPress={onPress ?? (() => route && router.push(route as any))}
+      //   onPress={onPress ?? (() => route && router.push(route as any))}
       className="flex-row items-center justify-between py-4 px-5 border-b border-ink-100 active:bg-ink-50"
     >
       <View className="flex-row items-center gap-4">
@@ -83,12 +81,10 @@ export default function ProfilScreen() {
   const insets = useSafeAreaInsets();
 
   const client = useStore((s) => s.client);
-  const isLoading = useStore((s) => s.isLoading);
   const logout = useStore((s) => s.logout);
   const favorites = useStore((s) => s.favorites);
   const adresses = useStore((s) => s.adresses);
   const loadAdresses = useStore((s) => s.loadAdresses);
-  const router = useRouter();
 
   const handleLogout = () => {
     logout();
@@ -100,18 +96,7 @@ export default function ProfilScreen() {
 
   const {
     data: commandes,
-    isLoading: isLoadingCommandes,
-    refetch,
-    isRefetching,
   } = useCommandesClient();
-
-  // 🔗 À remplacer par vos vraies données (authSlice / useStore)
-  const user = {
-    prenom: client?.nom?.split(" ")[0] ?? "Client",
-    sousTitre: client?.email ? "Compte vérifié" : "Bienvenue chez RestauCi",
-    avatarUrl:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=faces",
-  };
 
   const stats: Stat[] = [
     {
@@ -173,7 +158,7 @@ export default function ProfilScreen() {
   if (!client) {
     return (
       <SafeAreaView className="flex-1 bg-white px-6 pt-8">
-        <Text className="text-3xl font-bold text-green-600 mb-2">
+        <Text className="text-3xl font-bold text-brand-600 mb-2">
           Mon profil
         </Text>
         <Text className="text-gray-500 mb-10">
@@ -182,20 +167,26 @@ export default function ProfilScreen() {
 
         <View className="gap-4">
           <Link href="/auth/login" asChild>
-            <TouchableOpacity className="bg-green-500 rounded-xl p-4">
+            <TouchableOpacity className="bg-brand-500 rounded-xl p-4">
               <Text className="text-white font-bold text-center text-lg">
                 Se connecter
               </Text>
             </TouchableOpacity>
           </Link>
-
           <Link href="/auth/register" asChild>
-            <TouchableOpacity className="bg-white border-2 border-green-500 rounded-xl p-4">
-              <Text className="text-green-500 font-bold text-center text-lg">
+            <TouchableOpacity className="bg-white border-2 border-brand-500 rounded-xl p-4">
+              <Text className="text-brand-500 font-bold text-center text-lg">
                 Créer un compte
               </Text>
             </TouchableOpacity>
           </Link>
+          {/* <Link href="/(tabs)" asChild>
+            <TouchableOpacity className="mt-2 self-center">
+              <Text className="text-ink-500 text-sm">
+                Continuer sans compte
+              </Text>
+            </TouchableOpacity>
+          </Link> */}
         </View>
       </SafeAreaView>
     );
@@ -224,12 +215,12 @@ export default function ProfilScreen() {
           <View className="rounded-3xl bg-green-900 px-5 pt-6 pb-14">
             <View className="flex-row items-center gap-4">
               <Image
-                source={{ uri: user.avatarUrl }}
+                source={require("@/assets/images/utilisateur.png")}
                 className="h-16 w-16 rounded-full border-2 border-white/40"
               />
               <View className="flex-1">
                 <Text className="text-xl font-bold text-white">
-                  Bonjour, {client.nom} ! 👋
+                  Salut, {client.nom} ! 👋
                 </Text>
                 <Text className="mt-1 text-sm text-white/80">
                   {client.telephone} {client.email && `• ${client.email}`}
@@ -251,7 +242,7 @@ export default function ProfilScreen() {
           <View className="flex-row items-center gap-2">
             <Crown size={20} color="warning" />
             <Text className="text-lg font-bold text-#14532d">
-              RestauCi Premium
+              Toutci Premium
             </Text>
           </View>
           <Text className="mt-2 text-sm leading-5 text-ink-600 pr-16">

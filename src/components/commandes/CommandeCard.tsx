@@ -1,4 +1,5 @@
-import type { CommandeSummary } from "@/hooks/useCommandesClient";
+import type { CommandeSummary } from "@/types";
+import { formatPrix } from "@/lib/format";
 import {
   Bike,
   Calendar,
@@ -8,6 +9,7 @@ import {
   XCircle,
 } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
+import { Card } from "@/components/ui/card";
 
 export const STATUT_LABELS: Record<string, string> = {
   recue: "Reçue",
@@ -37,8 +39,7 @@ export function CommandeCard({
   onActionLivreeOuAnnulee,
 }: CommandeCardProps) {
   const categorie = categoriser(item.statut);
-  const totalFormate =
-    new Intl.NumberFormat("fr-FR").format(item.total / 100) + " FCFA";
+const totalFormate = formatPrix(item.total);
   const dateFormatee = new Date(item.createdAt).toLocaleDateString("fr-FR", {
     day: "2-digit",
     month: "long",
@@ -49,7 +50,6 @@ export function CommandeCard({
     minute: "2-digit",
   });
 
-  const itemImage = (item as { image?: string }).image;
   const nombreArticles = (item as { nombreArticles?: number }).nombreArticles;
 
   const getBadgeStyle = () => {
@@ -58,7 +58,7 @@ export function CommandeCard({
         return {
           bg: "#f0fdf4",
           text: "#166534",
-          iconColor: "#1B4D1E",
+          iconColor: "#166534",
           Icon: CheckCircle2,
         };
       case "annulees":
@@ -85,7 +85,7 @@ export function CommandeCard({
           bg: "bg-brand-50",
           text: "text-brand-800",
           border: "border-brand-800",
-          iconColor: "#1B4D1E",
+          iconColor: "#166534",
           Icon: CheckCircle2,
           message: "Commandée et livrée",
           actionLabel: "Commander à nouveau",
@@ -120,7 +120,7 @@ export function CommandeCard({
   const bandeau = getBandeauStyle();
 
   return (
-    <View className="bg-white rounded-3xl mb-4 border border-gray-100 overflow-hidden">
+    <Card className="mb-4">
       <TouchableOpacity className="p-4" onPress={() => onPress(item.id)} activeOpacity={0.7}>
         <View className="flex-row">
           {/* <Image
@@ -170,7 +170,7 @@ export function CommandeCard({
                 <Text className="text-brand-800 font-semibold text-sm">
                   Voir les détails
                 </Text>
-                <ChevronRight size={14} color="#1B4D1E" />
+                <ChevronRight size={14} color="#166534" />
               </View>
             </View>
           </View>
@@ -193,6 +193,6 @@ export function CommandeCard({
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </Card>
   );
 }

@@ -1,4 +1,7 @@
 import { FormulaireCommande } from "@/components/panier/FormulaireCommande";
+import { Button } from "@/components/ui/button";
+import { Text as ButtonText } from "@/components/ui/text";
+import { formatPrix } from "@/lib/format";
 import { useStore } from "@/store";
 import type { CommandeItem } from "@/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
@@ -6,7 +9,6 @@ import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowRight,
-  ChevronRight,
   Minus,
   Plus,
   ShoppingBag,
@@ -15,6 +17,8 @@ import {
 } from "lucide-react-native";
 import { useCallback, useMemo, useRef } from "react";
 import {
+  Alert,
+  FlatList,
   Image,
   Pressable,
   ScrollView,
@@ -49,12 +53,13 @@ function QuantiteControl({
           }
         }}
         disabled={isQuantiteMin}
-        className={`h-7 w-7 items-center justify-center rounded-full ${isQuantiteMin ? "opacity-40" : "active:bg-green-100"
-          }`}
+        className={`h-9 w-9 items-center justify-center rounded-full ${
+          isQuantiteMin ? "opacity-40" : "active:bg-green-100"
+        }`}
       >
-        <Minus size={16} color="#14532d" />
+        <Minus size={18} color="#14532d" />
       </Pressable>
-      <Text className="w-4 text-center text-base font-semibold text-ink-900">
+      <Text className="w-6 text-center text-base font-semibold text-ink-900">
         {quantite}
       </Text>
       <Pressable
@@ -62,9 +67,9 @@ function QuantiteControl({
           await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           onIncrement();
         }}
-        className="h-7 w-7 items-center justify-center rounded-full active:bg-green-100"
+        className="h-9 w-9 items-center justify-center rounded-full active:bg-green-100"
       >
-        <Plus size={16} color="#14532d" />
+        <Plus size={18} color="#14532d" />
       </Pressable>
     </View>
   );
@@ -87,6 +92,7 @@ function ArticleRow({
         <Image
           source={{ uri: article.photoUrl }}
           className="h-20 w-20 rounded-2xl"
+          style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.1)" }}
         />
       ) : (
         <Image
@@ -94,6 +100,7 @@ function ArticleRow({
             uri: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=200&q=80",
           }}
           className="h-20 w-20 rounded-2xl"
+          style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.1)" }}
         />
       )}
       <View className="flex-1">
@@ -104,7 +111,19 @@ function ArticleRow({
           <Pressable
             onPress={async () => {
               await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onSupprimer();
+              Alert.alert(
+                "Supprimer cet article ?",
+                `« ${article.nom} » sera retiré de votre panier.`,
+                [
+                  { text: "Annuler", style: "cancel" },
+                  {
+                    text: "Supprimer",
+                    style: "destructive",
+                    onPress: onSupprimer,
+                  },
+                ],
+                { cancelable: true },
+              );
             }}
             className="items-center justify-center rounded-full border border-ink-200 px-2.5 py-1.5 active:opacity-60"
           >
@@ -118,7 +137,7 @@ function ArticleRow({
         </View>
         <View className="flex-row justify-between mt-3">
           <Text className="mb-3 mt-1 text-base font-semibold text-green-800">
-            {article.prix.toLocaleString("fr-FR")} FCFA
+            {formatPrix(article.prix)}
           </Text>
           <QuantiteControl
             quantite={article.quantite}
@@ -141,7 +160,7 @@ function LigneResume({
   emphase?: boolean;
 }) {
   return (
-    <View className="flex-row items-center justify-between py-2.5">
+    <View className="flex-row items-center justify-between py-3">
       <Text
         className={
           emphase ? "text-lg font-bold text-ink-900" : "text-sm text-ink-500"
@@ -165,12 +184,13 @@ function LigneResume({
 export default function PanierScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { frais: fraisStr, nom: restaurantNom } = useLocalSearchParams<{
+  const { frais: fraisStr } = useLocalSearchParams<{
     frais?: string;
     nom?: string;
   }>();
 
   const items = useStore((s) => s.items);
+  const client = useStore((s) => s.client);
   const restaurantSlug = useStore((s) => s.restaurantSlug);
   const ajouterItem = useStore((s) => s.ajouterItem);
   const retirerItem = useStore((s) => s.retirerItem);
@@ -181,8 +201,12 @@ export default function PanierScreen() {
   const fraisLivraison = Number(fraisStr ?? FRAIS_LIVRAISON_BASE);
 
   const handleCommander = useCallback(() => {
+    if (!client) {
+      router.push("/auth/login");
+      return;
+    }
     formulaireRef.current?.present();
-  }, []);
+  }, [client, router]);
 
   const handleCommandeSuccess = (commandeId: string) => {
     formulaireRef.current?.dismiss();
@@ -201,29 +225,23 @@ export default function PanierScreen() {
   );
 
   const total = sousTotal + fraisLivraison + FRAIS_EMBALLAGE;
-  const montantRestant = Math.max(0, SEUIL_LIVRAISON_OFFERTE - sousTotal);
-  const progression = Math.min(1, sousTotal / SEUIL_LIVRAISON_OFFERTE);
-  const format = (n: number) => `${n.toLocaleString("fr-FR")} FCFA`;
 
   if (items.length === 0) {
     return (
       <View className="flex-1 items-center justify-center bg-white px-8">
-
         <ShoppingBag size={78} color="#14532d" />
         <Text className="my-4 text-xl font-bold text-ink-900">
           Votre panier est vide
         </Text>
         <Text className="mb-6 text-center text-ink-500">
-          Ajoutez des plats depuis le menu d'un restaurant
+          Ajoutez des plats depuis le menu d&apos;un établissement
         </Text>
-        <Pressable
-          className="rounded-xl bg-green-800 px-6 py-3.5"
-          onPress={() => router.back()}
-        >
-          <Text className="text-[15px] font-semibold text-white">
-            Découvrir les restaurants
+
+        <Button variant={"link"} onPress={() => router.back()}>
+          <Text className="text-brand-800 font-semibold underline">
+            Découvrir les établissements
           </Text>
-        </Pressable>
+        </Button>
       </View>
     );
   }
@@ -261,80 +279,79 @@ export default function PanierScreen() {
             }}
           />
           <View className="flex-1">
-
             <Text className="text-sm leading-5 text-ink-700">
-              🎉 Vous bénéficiez de la{" "}
+              Vous bénéficiez de la{" "}
               <Text className="font-bold text-green-800">
                 livraison offerte
-              </Text>{" "}dès{" "}
-              <Text className="font-bold text-green-800">
-                {format(SEUIL_LIVRAISON_OFFERTE)} FCFA
               </Text>{" "}
-              d'achat!
+              dès{" "}
+              <Text className="font-bold text-green-800">
+                {formatPrix(SEUIL_LIVRAISON_OFFERTE)}
+              </Text>{" "}
+              d&apos;achat!
             </Text>
-
           </View>
         </View>
 
         <View className="mx-4 mt-5 overflow-hidden rounded-2xl bg-white">
-          {items.map((item) => (
-            <ArticleRow
-              key={item.platId}
-              article={item}
-              onIncrement={() =>
-                ajouterItem({
-                  id: item.platId,
-                  nom: item.nom,
-                  prix: item.prix,
-                  photoUrl: item.photoUrl,
-                })
-              }
-              onDecrement={() => retirerItem(item.platId)}
-              onSupprimer={() => retirerItem(item.platId)}
-            />
-          ))}
+          <FlatList
+            data={items}
+            keyExtractor={(item) => item.platId}
+            scrollEnabled={false}
+            renderItem={({ item }) => (
+              <ArticleRow
+                article={item}
+                onIncrement={() =>
+                  ajouterItem({
+                    id: item.platId,
+                    nom: item.nom,
+                    prix: item.prix,
+                    photoUrl: item.photoUrl,
+                  })
+                }
+                onDecrement={() => retirerItem(item.platId)}
+                onSupprimer={() => retirerItem(item.platId)}
+              />
+            )}
+          />
         </View>
 
-        <Pressable
-          className="mx-4 mt-5 flex-row items-center justify-between rounded-2xl bg-green-50 px-4 py-4 active:opacity-80"
-          onPress={() => { }}
-        >
+        {/* Bientôt disponible — ne pas présenter une affordance morte */}
+        <View className="mx-4 mt-5 flex-row items-center justify-between rounded-2xl bg-ink-50 px-4 py-4">
           <View className="flex-row items-center gap-3">
-            <Ticket size={20} color="#14532d" />
-            <Text className="text-base font-medium text-ink-900">
-              Vous avez un code promo ?
+            <Ticket size={20} color="#9ca3af" />
+            <Text className="text-base font-medium text-ink-500">
+              Code promo — bientôt disponible
             </Text>
           </View>
-          <View className="flex-row items-center gap-1">
-            <Text className="text-base font-bold text-green-800">
-              Appliquer
-            </Text>
-            <ChevronRight size={16} color="#14532d" />
-          </View>
-        </Pressable>
+        </View>
 
         <View className="mx-4 mt-5 rounded-2xl bg-white px-4 py-3">
-          <LigneResume label="Sous-total" valeur={format(sousTotal)} />
+          <LigneResume label="Sous-total" valeur={formatPrix(sousTotal)} />
           <LigneResume
             label="Frais de livraison"
-            valeur={format(fraisLivraison)}
+            valeur={formatPrix(fraisLivraison)}
           />
 
-          <View className="my-1 border-t border-ink-100" />
-          <LigneResume label="Total à payer" valeur={format(total)} emphase />
+          <View className="my-2 border-t border-ink-100" />
+          <LigneResume
+            label="Total à payer"
+            valeur={formatPrix(total)}
+            emphase
+          />
         </View>
 
-        <Pressable
-          className="mx-4 mt-5 flex-row items-center justify-between rounded-full bg-green-900 px-6 py-4 active:opacity-90"
+        <Button
+          className="mx-4 mt-5 flex-row items-center justify-between rounded-full px-6 py-4"
           onPress={handleCommander}
         >
           <View className="flex-1 items-center">
-            <Text className="text-base font-bold text-white">
+            <ButtonText className="text-base font-bold text-white">
               Passer à la commande
-            </Text>
+            </ButtonText>
           </View>
           <ArrowRight size={20} color="#fff" />
-        </Pressable>
+        </Button>
       </ScrollView>
 
       {restaurantSlug && (

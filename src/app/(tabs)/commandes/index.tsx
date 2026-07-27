@@ -1,4 +1,8 @@
-import { CommandeCard, categoriser, type Filtre } from "@/components/commandes/CommandeCard";
+import {
+  CommandeCard,
+  categoriser,
+  type Filtre,
+} from "@/components/commandes/CommandeCard";
 import { CommandeFiltres } from "@/components/commandes/CommandeFiltres";
 import { CommandeListEmpty } from "@/components/commandes/CommandeListEmpty";
 import { useCommandesClient } from "@/hooks/useCommandesClient";
@@ -34,6 +38,8 @@ export default function CommandesScreen() {
     return commandes.filter((c) => categoriser(c.statut) === filtre);
   }, [commandes, filtre]);
 
+  //   console.log(commandes?.map((c) => ({ statut: c.statut })));
+
   const handlePress = useCallback(
     (id: string) => {
       router.push(`/(tabs)/commandes/${id}`);
@@ -68,7 +74,7 @@ export default function CommandesScreen() {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <ActivityIndicator size="large" color="#1B4D1E" />
+        <ActivityIndicator size="large" color="#166534" />
       </SafeAreaView>
     );
   }
@@ -102,7 +108,6 @@ export default function CommandesScreen() {
               onPress={handlePress}
               onActionLivreeOuAnnulee={handleActionLivreeOuAnnulee}
             />
-
           )}
           contentContainerStyle={{
             paddingHorizontal: 16,
@@ -113,7 +118,7 @@ export default function CommandesScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor="#1B4D1E"
+              tintColor="#166534"
             />
           }
           showsVerticalScrollIndicator={false}

@@ -14,7 +14,7 @@ export const PanierFAB: React.FC<PanierFABProps> = ({
   restaurantNom,
 }) => {
   const router = useRouter();
-  const nombre = useStore((s) => s.nombreArticles());
+  const nombre = useStore((s) => s.items.reduce((sum, i) => sum + i.quantite, 0));
 
   if (nombre === 0) return null;
 
@@ -25,16 +25,16 @@ export const PanierFAB: React.FC<PanierFABProps> = ({
     router.push(`/(tabs)/panier?${params.toString()}`);
   };
 
-  return (
-    <TouchableOpacity
-      className="absolute bottom-8 right-4 w-14 h-14 rounded-full bg-green-700 justify-center items-center shadow-lg z-20"
-      onPress={handlePress}
-      activeOpacity={0.8}
-    >
+    return (
+      <TouchableOpacity
+        className="absolute bottom-8 right-4 w-14 h-14 rounded-full bg-brand-900 justify-center items-center shadow-lg z-20"
+        onPress={handlePress}
+        activeOpacity={0.8}
+      >
       <ShoppingBag color="white" />
       <View className="absolute -top-2 -right-1">
-        <View className="bg-danger-600 px-1 py-1 rounded-full">
-          <Text className="text-white text-base font-bold w-5 h-5 text-center leading-5 overflow-hidden bg-danger-600 rounded-full">
+        <View className="bg-danger-600 min-w-5 h-5 px-1 rounded-full justify-center items-center">
+          <Text className="text-white text-sm font-bold text-center leading-5">
             {nombre}
           </Text>
         </View>

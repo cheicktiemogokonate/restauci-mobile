@@ -109,7 +109,7 @@ export default function LoginScreen() {
         </View>
 
         {/* Illustration */}
-        <View className="items-center justify-center mt-6 mb-2 h-56">
+        <View className="items-center justify-center mt-6 mb-2 h-40">
           <Image
             source={require("@/assets/images/login-illustration.jpeg")}
             resizeMode="contain"
@@ -123,7 +123,7 @@ export default function LoginScreen() {
             Bon retour !
           </Text>
           <Text className="text-gray-400 text-center mt-2 leading-5">
-            Connectez-vous pour découvrir les meilleurs restaurants autour de
+            Connectez-vous pour découvrir les meilleurs établissements autour de
             vous.
           </Text>
         </View>
@@ -137,8 +137,9 @@ export default function LoginScreen() {
             name="telephone"
             render={({ field: { onChange, onBlur, value } }) => (
               <View
-                className={`flex-row items-center border rounded-2xl h-14 px-4 ${errors.telephone ? "border-red-500" : "border-gray-200"
-                  }`}
+                className={`flex-row items-center border rounded-2xl h-14 px-4 ${
+                  errors.telephone ? "border-red-500" : "border-gray-200"
+                }`}
               >
                 <Text className="text-lg mr-1">🇨🇮</Text>
                 <Text className="text-black font-medium ml-1">+225</Text>
@@ -176,8 +177,9 @@ export default function LoginScreen() {
             name="password"
             render={({ field: { onChange, onBlur, value } }) => (
               <View
-                className={`flex-row items-center border rounded-2xl h-14 px-4 ${errors.password ? "border-red-500" : "border-gray-200"
-                  }`}
+                className={`flex-row items-center border rounded-2xl h-14 px-4 ${
+                  errors.password ? "border-red-500" : "border-gray-200"
+                }`}
               >
                 <Lock size={18} color="#14532d" />
                 <TextInput
@@ -226,8 +228,9 @@ export default function LoginScreen() {
           <TouchableOpacity
             onPress={handleSubmit(onSubmit)}
             disabled={isLoading}
-            className={`rounded-2xl h-14 items-center justify-center mt-4 ${isLoading ? "bg-green-900/70" : "bg-green-900"
-              }`}
+            className={`rounded-2xl h-14 items-center justify-center mt-4 ${
+              isLoading ? "bg-green-900/70" : "bg-green-900"
+            }`}
           >
             {isLoading ? (
               <ActivityIndicator color="white" />
@@ -238,24 +241,9 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          {/* <View className="flex-row items-center my-6">
-            <View className="flex-1 h-px bg-gray-200" />
-            <Text className="mx-3 text-gray-400 text-sm">ou</Text>
-            <View className="flex-1 h-px bg-gray-200" />
-          </View>
-
-          <Pressable
-            onPress={handleGoogle}
-            className="flex-row items-center justify-center border border-green-200 rounded-2xl h-14 active:bg-green-50"
-          >
-            <Text className="text-green-800 font-medium text-base">
-              Continuer avec Google
-            </Text>
-          </Pressable> */}
-
           {/* Créer un compte */}
           <View className="items-center mt-8 mb-14">
-            <Text className="text-gray-500">Vous n'avez pas de compte ?</Text>
+            <Text className="text-gray-500">Vous n&apos;avez pas de compte ?</Text>
             <Link href="/auth/register">
               <Text className="text-green-800 font-semibold mt-1">
                 Créer un compte

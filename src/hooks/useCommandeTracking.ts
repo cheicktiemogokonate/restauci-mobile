@@ -2,39 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { useStore } from "@/store";
 
-export interface CommandeItemAPI {
-  platId: string;
-  nom: string;
-  prix: number;
-  quantite: number;
-}
-
-export interface TimelineEtape {
-  etape: string;
-  label: string;
-  fait: boolean;
-  actif: boolean;
-  timestamp: string | null;
-}
-
-export interface CommandeDetail {
-  id: string;
-  numero: string;
-  statut: string;
-  statutLabel: string;
-  estAnnulee: boolean;
-  modeCommande: string;
-  items: CommandeItemAPI[];
-  sousTotal: number;
-  fraisLivraison: number;
-  total: number;
-  noteClient?: string | null;
-  adresseLivraison?: string | null;
-  numeroTable?: string | null;
-  createdAt: string;
-  restaurant: { nom: string; logoUrl?: string | null } | null;
-  timeline: TimelineEtape[];
-}
+import type { CommandeDetail } from "@/types";
 
 const STATUTS_TERMINAUX = new Set(["servie", "annulee"]);
 const POLL_INTERVAL_MS = 5000;

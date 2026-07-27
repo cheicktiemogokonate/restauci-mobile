@@ -1,0 +1,16 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "style": "default",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.js",
+    "css": "src/global.css",
+    "baseColor": "slate",
+    "cssVariables": true
+  },
+  "alias": {
+    "components": "@/components/ui",
+    "utils": "@/lib/utils"
+  }
+}

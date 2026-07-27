@@ -100,18 +100,18 @@ export function usePosition(): UsePositionReturn {
       } else {
         // Fallback to Abidjan
       }
-    } catch (err) {
+    } catch {
       // Fallback silently to Abidjan on error
     } finally {
       setLoading(false);
     }
   // Dépendances vides — on utilise requestPermissionRef pour éviter
   // que fetchPosition soit recréée et relance un effet à chaque rendu.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Initial fetch on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchPosition();
   }, [fetchPosition]);
 

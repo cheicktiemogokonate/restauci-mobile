@@ -107,11 +107,6 @@ export default function RegisterScreen() {
     }
   };
 
-  const handleGoogle = async () => {
-    // 🔗 Flux OAuth Google -> échange du token avec ENDPOINTS.authClientGoogle (à confirmer sur l'OpenAPI)
-    setServerError("La connexion Google sera disponible prochainement.");
-  };
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -149,7 +144,7 @@ export default function RegisterScreen() {
             Créer un compte
           </Text>
           <Text className="text-gray-400 text-center mt-2 leading-5">
-            Rejoignez RestauCi et découvrez les meilleurs restaurants autour de
+            Rejoignez Toutci et découvrez les meilleurs établissements autour de
             vous.
           </Text>
         </View>
@@ -362,27 +357,6 @@ export default function RegisterScreen() {
               </Text>
             )}
           </TouchableOpacity>
-
-          {/*  <View className="flex-row items-center my-6">
-            <View className="flex-1 h-px bg-gray-200" />
-            <Text className="mx-3 text-gray-400 text-sm">ou</Text>
-            <View className="flex-1 h-px bg-gray-200" />
-          </View>
-
-          <Pressable
-            onPress={handleGoogle}
-            className="flex-row items-center justify-center border border-gray-200 rounded-2xl h-14 active:bg-gray-50"
-          >
-            <Image
-              source={require("../assets/images/google-logo.png")}
-              style={{ width: 20, height: 20, marginRight: 10 }}
-              resizeMode="contain"
-            />
-            <Frown />
-            <Text className="text-black font-medium text-base">
-              S'inscrire avec Google
-            </Text>
-          </Pressable> */}
 
           {/* Se connecter */}
           <View className="items-center mt-8 mb-14">

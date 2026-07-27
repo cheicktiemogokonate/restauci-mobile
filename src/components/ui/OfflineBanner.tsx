@@ -8,7 +8,7 @@ export const OfflineBanner: React.FC = () => {
   if (isConnected !== false) return null;
 
   return (
-    <View className="absolute top-0 left-0 right-0 z-9999 bg-danger-600 py-2 px-4 items-center">
+    <View className="absolute top-0 left-0 right-0 z-50 bg-danger-600 py-2 px-4 items-center">
       <Text className="text-white text-xs font-semibold">
         Pas de connexion internet
       </Text>

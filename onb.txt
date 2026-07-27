@@ -1,10 +1,12 @@
 import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
-import { Image, ImageBackground } from "expo-image";
-import { Link } from "expo-router";
-import { Text, TouchableOpacity, View } from "react-native";
+import { ImageBackground } from "expo-image";
+import { Link, useRouter } from "expo-router";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function OnboardingScreen() {
+  const router = useRouter();
+
   return (
     <SafeAreaView className="flex-1 bg-[ink-100]">
       <ImageBackground
@@ -18,7 +20,7 @@ export default function OnboardingScreen() {
             <View className="h-10 w-full mb-4">
               <Image
                 source={require("@/assets/images/logo-restauci2.png")}
-                contentFit="contain"
+                resizeMode="contain"
                 style={{ width: "100%", height: "100%" }}
               />
             </View>
@@ -26,13 +28,13 @@ export default function OnboardingScreen() {
           {/* Headlines */}
           <View className="mb-6 z-10">
             <Text className="text-[40px] leading-[48px] font-extrabold text-[green-900]">
-              Vos meilleurs{"\n"}établissement,{"\n"}tout{" "}
-              <Text className="text-[#457b3b]">près d&apos;ici.</Text>
+              Vos meilleurs{"\n"}restaurants,{"\n"}tout{" "}
+              <Text className="text-[#457b3b]">près d'ici.</Text>
             </Text>
           </View>
 
           <Text className="text-lg text-[green-900] mb-12 pr-10 font-medium z-10">
-            Trouvez les meilleurs établissement{"\n"}autour de vous, en quelques
+            Trouvez les meilleurs restaurants{"\n"}autour de vous, en quelques
             secondes.
           </Text>
 
@@ -40,7 +42,9 @@ export default function OnboardingScreen() {
           <View className="flex-1 justify-center items-center mt-4">
             <View className="w-[300px] h-[300px] rounded-full justify-center items-center">
               {/* Top Left Badge — brand voice, not fake metric */}
-              <View className="absolute -left-4 top-10 flex-row items-center bg-ink-50 px-3 py-2 rounded-2xl shadow-sm border border-ink-200">
+              <View
+                className="absolute -left-4 top-10 flex-row items-center bg-ink-50 px-3 py-2 rounded-2xl shadow-sm border border-ink-200"
+              >
                 <FontAwesome5 name="walking" size={18} color="#457b3b" />
                 <View className="ml-2">
                   <Text className="text-sm font-bold text-ink-900">
@@ -51,25 +55,27 @@ export default function OnboardingScreen() {
               </View>
 
               {/* Right Badge */}
-              <View className="absolute -right-12 top-14 flex-row items-center bg-ink-50 px-3 py-2 rounded-2xl shadow-sm border border-ink-200">
+              <View
+                className="absolute -right-12 top-14 flex-row items-center bg-ink-50 px-3 py-2 rounded-2xl shadow-sm border border-ink-200"
+              >
                 <MaterialCommunityIcons
                   name="storefront-outline"
                   size={20}
                   color="#457b3b"
                 />
                 <View className="ml-2">
-                  <Text className="text-sm font-bold text-ink-900">Ouvert</Text>
+                  <Text className="text-sm font-bold text-ink-900">
+                    Ouvert
+                  </Text>
                   <Text className="text-xs text-ink-500">à Bouaké</Text>
                 </View>
               </View>
 
               {/* Bottom Left Badge — cuisine identity, not a vanity rating */}
-              <View className="absolute -left-2 bottom-12 flex-row items-center bg-ink-50 px-3 py-2 rounded-2xl shadow-sm border border-ink-200">
-                <MaterialCommunityIcons
-                  name="silverware-fork-knife"
-                  size={20}
-                  color="#457b3b"
-                />
+              <View
+                className="absolute -left-2 bottom-12 flex-row items-center bg-ink-50 px-3 py-2 rounded-2xl shadow-sm border border-ink-200"
+              >
+                <MaterialCommunityIcons name="silverware-fork-knife" size={20} color="#457b3b" />
                 <View className="ml-2">
                   <Text className="text-sm font-bold text-ink-900">
                     Cuisine

@@ -7,7 +7,7 @@ import { useMenuRestaurant } from "@/hooks/useMenuRestaurant";
 import { useStore } from "@/store";
 import type { Categorie, CreneauHoraire, Plat, Restaurant } from "@/types";
 import { isPlatDisponible } from "@/utils/creneaux";
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import * as Haptics from "expo-haptics";
 import { forwardRef, useCallback, useMemo, useState } from "react";
 import { Text, View } from "react-native";
@@ -43,8 +43,6 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
     const retirerItem = useStore((s) => s.retirerItem);
     const storeRestaurantSlug = useStore((s) => s.restaurantSlug);
 
-    const creneaux: CreneauHoraire[] = [];
-
     const visibleCategories = useMemo(
       () => categories.filter((category) => category.visible !== false),
       [categories],
@@ -60,11 +58,12 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
     );
 
     const platsAffiches = useMemo(() => {
+      const creneaux: CreneauHoraire[] = [];
       let source: Categorie[] = visibleCategories;
       if (selectedCategory) {
         source = source.filter((c) => c.id === selectedCategory);
       }
-      const result: Array<{ plat: Plat; categorie: Categorie }> = [];
+      const result: { plat: Plat; categorie: Categorie }[] = [];
       for (const cat of source) {
         const plats = Array.isArray(cat.plats) ? cat.plats : [];
         for (const plat of plats) {
@@ -76,7 +75,7 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
         }
       }
       return result;
-    }, [visibleCategories, selectedCategory, creneaux]);
+    }, [visibleCategories, selectedCategory]);
 
     const handleCategorySelect = useCallback((catId: string | null) => {
       setSelectedCategory(catId);
@@ -136,34 +135,39 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
             onSelect={handleCategorySelect}
           />
         )}
-        <BottomSheetScrollView contentContainerStyle={{ paddingBottom: 32 }}>
+        {isMenuLoading ? (
           <View className="px-4 pb-8">
-            {isMenuLoading ? (
-              Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-            ) : menuError || !categories.length ? (
-              <ErrorView
-                message={menuError?.message}
-                onRetry={refetchMenu}
-                title="Menu indisponible"
+            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          </View>
+        ) : menuError || !categories.length ? (
+          <View className="px-4 pb-8">
+            <ErrorView
+              message={menuError?.message}
+              onRetry={refetchMenu}
+              title="Menu indisponible"
+            />
+          </View>
+        ) : (
+          <BottomSheetFlatList
+            data={platsAffiches}
+            keyExtractor={(item) => item.plat.id}
+            renderItem={({ item }) => (
+              <CartePlatMobile
+                plat={item.plat}
+                onAjouter={handleAjouter}
+                onRetirer={handleRetirer}
               />
-            ) : platsAffiches.length > 0 ? (
-              platsAffiches.map((item) => (
-                <CartePlatMobile
-                  key={item.plat.id}
-                  plat={item.plat}
-                  onAjouter={handleAjouter}
-                  onRetirer={handleRetirer}
-                />
-              ))
-            ) : (
+            )}
+            ListEmptyComponent={
               <EmptyState
                 emoji="📋"
                 title="Aucun plat disponible"
                 message="Aucun plat disponible dans cette catégorie"
               />
-            )}
-          </View>
-        </BottomSheetScrollView>
+            }
+            contentContainerStyle={{ paddingBottom: 32 }}
+          />
+        )}
       </BottomSheetModal>
     );
   },

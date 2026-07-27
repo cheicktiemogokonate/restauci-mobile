@@ -43,12 +43,12 @@ async function tryRefreshToken(): Promise<string | null> {
 
 export async function apiFetch<T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit & { skipAuth?: boolean }
 ): Promise<T> {
   let token = useStore.getState().token;
 
-  // Debug : log si le token est absent
-  if (!token) {
+  // Debug : log si le token est absent (uniquement pour les endpoints auth requis)
+  if (!token && !options?.skipAuth) {
     console.warn('[apiFetch] ⚠️ token absent dans le store pour', endpoint);
     // Tentative de récupération depuis SecureStore directement
     const stored = await SecureStore.getItemAsync(AUTH_ACCESS_TOKEN_KEY);
@@ -74,7 +74,8 @@ export async function apiFetch<T>(
   });
 
   // Si 401, on tente un refresh automatique et on relance une fois
-  if (res.status === 401) {
+  // (seulement pour les endpoints auth requis)
+  if (res.status === 401 && !options?.skipAuth) {
     console.warn('[apiFetch] 401 reçu, tentative de refresh du token...');
     const newToken = await tryRefreshToken();
     if (newToken) {

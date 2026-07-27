@@ -1,22 +1,29 @@
+import { Button } from "@/components/ui/button";
+import { Text as ButtonText } from "@/components/ui/text";
 import { useEnvoyerCommande } from "@/hooks/useEnvoyerCommande";
 import { useGeoSearch } from "@/hooks/useGeoSearch";
 import { useStore } from "@/store";
 import type { CommandePayload } from "@/types";
-import { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import {
+  BottomSheetBackdrop,
+  BottomSheetBackdropProps,
+  BottomSheetModal,
+  BottomSheetScrollView,
+} from "@gorhom/bottom-sheet";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as Haptics from "expo-haptics";
 import * as ExpoLocation from "expo-location";
 import { useRouter } from "expo-router";
 import { ChevronDown, CircleCheckBig, MapPin } from "lucide-react-native";
 import { forwardRef, useMemo, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import {
   ActivityIndicator,
   Alert,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { z } from "zod";
 
@@ -103,7 +110,6 @@ export const FormulaireCommande = forwardRef<
   const {
     control,
     handleSubmit,
-    watch,
     formState: { errors },
     setValue,
   } = useForm<CommandeFormData>({
@@ -111,11 +117,13 @@ export const FormulaireCommande = forwardRef<
     defaultValues,
   });
 
-  const watchMode = watch("mode");
-  const watchAdresse = watch("adresse");
+  const watchMode = useWatch({ control, name: "mode" });
+  const watchAdresse = useWatch({ control, name: "adresse" });
 
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const { data: geoSuggestions, isLoading: geoLoading } = useGeoSearch(watchAdresse || "");
+  const { data: geoSuggestions, isLoading: geoLoading } = useGeoSearch(
+    watchAdresse || "",
+  );
 
   const handleSelectSuggestion = (label: string) => {
     setValue("adresse", label);
@@ -158,9 +166,7 @@ export const FormulaireCommande = forwardRef<
   const onSubmit = (data: CommandeFormData) => {
     // Vérification authentification
     if (!client) {
-      void Haptics.notificationAsync(
-        Haptics.NotificationFeedbackType.Error
-      );
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
       router.push("/auth/login");
       return;
@@ -168,44 +174,32 @@ export const FormulaireCommande = forwardRef<
 
     // Vérification panier
     if (!items.length) {
-      void Haptics.notificationAsync(
-        Haptics.NotificationFeedbackType.Warning
-      );
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
-      Alert.alert(
-        "Panier vide",
-        "Votre panier ne contient aucun plat."
-      );
+      Alert.alert("Panier vide", "Votre panier ne contient aucun plat.");
 
       return;
     }
 
     // Validation téléphone
     if (!data.telephone?.trim()) {
-      void Haptics.notificationAsync(
-        Haptics.NotificationFeedbackType.Warning
-      );
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
       Alert.alert(
         "Téléphone requis",
-        "Veuillez renseigner un numéro de téléphone."
+        "Veuillez renseigner un numéro de téléphone.",
       );
 
       return;
     }
 
     // Validation livraison
-    if (
-      data.mode === "livraison" &&
-      !data.adresse?.trim()
-    ) {
-      void Haptics.notificationAsync(
-        Haptics.NotificationFeedbackType.Warning
-      );
+    if (data.mode === "livraison" && !data.adresse?.trim()) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
       Alert.alert(
         "Adresse requise",
-        "Veuillez renseigner une adresse de livraison."
+        "Veuillez renseigner une adresse de livraison.",
       );
 
       return;
@@ -222,9 +216,7 @@ export const FormulaireCommande = forwardRef<
       })),
 
       adresseLivraison:
-        data.mode === "livraison"
-          ? data.adresse.trim()
-          : undefined,
+        data.mode === "livraison" ? data.adresse.trim() : undefined,
 
       telephone: data.telephone.trim(),
 
@@ -233,21 +225,18 @@ export const FormulaireCommande = forwardRef<
 
     console.log(
       "[FormulaireCommande] Payload envoyé:",
-      JSON.stringify(payload, null, 2)
+      JSON.stringify(payload, null, 2),
     );
 
     envoyerCommande(payload, {
       onSuccess: async (result) => {
         try {
           await Haptics.notificationAsync(
-            Haptics.NotificationFeedbackType.Success
+            Haptics.NotificationFeedbackType.Success,
           );
-        } catch { }
+        } catch {}
 
-        console.log(
-          "[FormulaireCommande] Commande créée:",
-          result
-        );
+        console.log("[FormulaireCommande] Commande créée:", result);
 
         // Garde-fou : évite un crash si le backend renvoie une réponse sans id
         onSuccess(result?.id ?? "");
@@ -256,20 +245,17 @@ export const FormulaireCommande = forwardRef<
       onError: async (error) => {
         try {
           await Haptics.notificationAsync(
-            Haptics.NotificationFeedbackType.Error
+            Haptics.NotificationFeedbackType.Error,
           );
-        } catch { }
+        } catch {}
 
-        console.error(
-          "[FormulaireCommande] Erreur:",
-          error
-        );
+        console.error("[FormulaireCommande] Erreur:", error);
 
         Alert.alert(
           "Commande impossible",
           error instanceof Error
             ? error.message
-            : "Une erreur est survenue lors de la création de votre commande."
+            : "Une erreur est survenue lors de la création de votre commande.",
         );
       },
     });
@@ -287,7 +273,7 @@ export const FormulaireCommande = forwardRef<
       handleIndicatorStyle={{ backgroundColor: "#d1d5db" }}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
-      backdropComponent={(props) => (<CustomBackdrop {...props} />)}
+      backdropComponent={(props) => <CustomBackdrop {...props} />}
     >
       <BottomSheetScrollView
         className="px-5"
@@ -302,19 +288,21 @@ export const FormulaireCommande = forwardRef<
           {(["livraison", "emporter"] as const).map((mode) => (
             <TouchableOpacity
               key={mode}
-              className={`flex-1 border-2 rounded-2xl py-3 items-center ${watchMode === mode
-                ? `border-[${MODE_COLORS[mode]}] bg-[${MODE_COLORS[mode]}10]`
-                : "border-ink-200"
-                }`}
+              className={`flex-1 border-2 rounded-2xl py-3 items-center ${
+                watchMode === mode
+                  ? `border-[${MODE_COLORS[mode]}] bg-[${MODE_COLORS[mode]}10]`
+                  : "border-ink-200"
+              }`}
               onPress={() => setValue("mode", mode)}
             >
               <Text
-                className={`text-sm font-semibold ${watchMode === mode
-                  ? `text-[${MODE_COLORS[mode]}]`
-                  : "text-ink-500"
-                  }`}
+                className={`text-sm font-semibold ${
+                  watchMode === mode
+                    ? `text-[${MODE_COLORS[mode]}]`
+                    : "text-ink-500"
+                }`}
               >
-                {mode === "livraison" ? "🚚 Livraison" : "📦 Emporter"}
+                {mode === "livraison" ? "🚚 Livraison" : "📦 À emporter"}
               </Text>
             </TouchableOpacity>
           ))}
@@ -365,7 +353,7 @@ export const FormulaireCommande = forwardRef<
             </View>
 
             {showSuggestions && geoSuggestions && geoSuggestions.length > 0 && (
-              <View className="bg-white rounded-2xl mt-1 shadow-md overflow-hidden border border-gray-100 z-50 absolute top-[85px] left-0 right-0 max-h-48">
+              <View className="bg-white rounded-2xl mt-1 shadow-md overflow-hidden z-10 absolute top-20 left-0 right-0 max-h-48">
                 {geoSuggestions.map((item, index) => (
                   <TouchableOpacity
                     key={`${item.label}-${index}`}
@@ -374,23 +362,30 @@ export const FormulaireCommande = forwardRef<
                     activeOpacity={0.6}
                   >
                     <MapPin size={16} color="#9ca3af" className="mr-2" />
-                    <Text className="flex-1 text-sm text-ink-700 ml-2" numberOfLines={1}>
+                    <Text
+                      className="flex-1 text-sm text-ink-700 ml-2"
+                      numberOfLines={1}
+                    >
                       {item.label}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
             )}
-            
-            {showSuggestions && watchAdresse && watchAdresse.length > 2 && geoSuggestions?.length === 0 && !geoLoading && (
-               <View className="bg-white rounded-2xl mt-1 shadow-md overflow-hidden border border-gray-100 z-50 absolute top-[85px] left-0 right-0">
-                 <View className="px-3.5 py-3 bg-white">
-                   <Text className="text-sm text-ink-400 text-center">
-                     Aucun résultat
-                   </Text>
-                 </View>
-               </View>
-            )}
+
+            {showSuggestions &&
+              watchAdresse &&
+              watchAdresse.length > 2 &&
+              geoSuggestions?.length === 0 &&
+              !geoLoading && (
+                <View className="bg-white rounded-2xl mt-1 shadow-md overflow-hidden z-10 absolute top-20 left-0 right-0">
+                  <View className="px-3.5 py-3 bg-white">
+                    <Text className="text-sm text-ink-400 text-center">
+                      Aucun résultat
+                    </Text>
+                  </View>
+                </View>
+              )}
 
             {errors.adresse && (
               <Text className="text-xs text-danger-600 mt-1">
@@ -407,8 +402,9 @@ export const FormulaireCommande = forwardRef<
             name="telephone"
             render={({ field: { onChange, onBlur, value } }) => (
               <View
-                className={`flex-row items-center border rounded-2xl h-14 px-4 ${errors.telephone ? "border-red-500" : "border-gray-200"
-                  }`}
+                className={`flex-row items-center border rounded-2xl h-14 px-4 ${
+                  errors.telephone ? "border-red-500" : "border-gray-200"
+                }`}
               >
                 <Text className="text-lg mr-1">🇨🇮</Text>
                 <Text className="text-black font-medium ml-1">+225</Text>
@@ -459,25 +455,22 @@ export const FormulaireCommande = forwardRef<
           />
         </View>
 
-        <TouchableOpacity
-          className={`${isPending ? "bg-green-900/90" : "bg-green-900"} rounded-full py-4 items-center mt-2`}
-          onPress={
-            handleSubmit(onSubmit)
-          }
+        <Button
+          className="rounded-full py-4 items-center mt-2"
+          onPress={handleSubmit(onSubmit)}
           disabled={isPending}
         >
           {isPending ? (
             <ActivityIndicator color="white" />
           ) : (
             <View className="flex-row gap-4 items-center">
-
-              <Text className="text-white text-base font-bold">
+              <ButtonText className="text-white text-base font-bold">
                 Confirmer la commande
-              </Text>
+              </ButtonText>
               <CircleCheckBig color="#fff" />
             </View>
           )}
-        </TouchableOpacity>
+        </Button>
 
         <View className="pb-8" />
       </BottomSheetScrollView>

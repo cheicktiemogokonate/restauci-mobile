@@ -8,18 +8,24 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Couleur principale de l'app (palette verte RestauCi)
         green: {
           50: "#f0fdf4",
           100: "#dcfce7",
           400: "#4ade80",
           500: "#22c55e",
           600: "#16a34a",
-          700: "#15803d",
+          700: "#386B2A",
           800: "#166534",
           900: "#14532d",
         },
-        // Palette neutre — remplace les gris codés en dur (#111827, #6b7280, #f3f4f6...)
+        brand: {
+          50: "#f0fdf4",
+          100: "#dcfce7",
+          500: "#457B3B",
+          700: "#386B2A",
+          800: "#166534",
+          900: "#14532d",
+        },
         ink: {
           50: "#f9fafb",
           100: "#f3f4f6",
@@ -31,14 +37,44 @@ module.exports = {
           700: "#374151",
           900: "#111827",
         },
-        // Couleurs sémantiques
         info: "#3b82f6",
         danger: {
+          DEFAULT: "#E51818",
           50: "#fef2f2",
           200: "#fecaca",
-          600: "#ef4444",
+          600: "#E51818",
+          700: "#DC2626",
+        },
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
         },
         warning: "#f59e0b",
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
       },
     },
   },

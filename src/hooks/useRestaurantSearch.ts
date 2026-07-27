@@ -1,14 +1,11 @@
-import { ENDPOINTS } from "@/constants/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { apiFetch } from "@/lib/api";
-import type { Restaurant } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 
-export interface RestaurantSuggestion {
+import type { Restaurant, Suggestion } from "@/types";
+
+export interface RestaurantSuggestion extends Suggestion {
   id: string;
-  label: string;
-  lat: number;
-  lon: number;
   type: "restaurant";
 }
 
@@ -25,7 +22,7 @@ export function useRestaurantSearch(q: string, cuisine?: string | null) {
         url += `&cuisine=${encodeURIComponent(cuisine)}`;
       }
 
-      const response = await apiFetch<any>(url);
+      const response = await apiFetch<any>(url, { skipAuth: true });
       
       let restaurants: Restaurant[] = [];
       if (response?.data) {

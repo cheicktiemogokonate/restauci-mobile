@@ -1,6 +1,6 @@
 import { useGeoSearch } from "@/hooks/useGeoSearch";
 import { useRestaurantSearch } from "@/hooks/useRestaurantSearch";
-import { MapPin, Search } from "lucide-react-native";
+import { Search } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import {
   FlatList,
@@ -81,7 +81,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectSuggestion, onFilt
         activeOpacity={0.6}
       >
         <Text className="mr-2 text-base">
-          {item.type === "restaurant" ? "🍽️" : <MapPin />}
+          {item.type === "restaurant" ? "🍽️" : "📍"}
         </Text>
         <Text className="flex-1 text-sm text-ink-700 mr-2" numberOfLines={1}>
           {item.label}
@@ -100,7 +100,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectSuggestion, onFilt
         <Search size={20} color="#000" />
         <TextInput
           className="flex-1 text-base text-ink-900 ml-2"
-          placeholder="Restaurants, adresses..."
+          placeholder="Établissements, adresses..."
           placeholderTextColor="#9ca3af"
           value={query}
           onChangeText={handleChangeText}
@@ -119,7 +119,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectSuggestion, onFilt
               <TouchableOpacity
                 key={category}
                 onPress={() => handleSelectCategory(category)}
-                className={`mr-2 px-4 py-1.5 rounded-full border ${isSelected ? 'bg-green-500 border-green-500' : 'bg-white border-gray-200'
+                className={`mr-2 px-4 py-1.5 rounded-full border ${isSelected ? 'bg-brand-900 border-brand-900' : 'bg-white border-gray-200'
                   } shadow-sm`}
               >
                 <Text className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-gray-700'}`}>

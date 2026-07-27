@@ -4,7 +4,7 @@ import { usePosition } from "@/hooks/usePosition";
 import { useRestaurantsProches } from "@/hooks/useRestaurantsProches";
 import { LocateFixed } from "lucide-react-native";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -25,7 +25,9 @@ export default function CarteScreen() {
   // Ref stable pour coords afin d'éviter de recréer handleRecentrer
   // à chaque changement de coordonnées, ce qui causerait des re-renders.
   const coordsRef = useRef(coords);
-  coordsRef.current = coords;
+  useEffect(() => {
+    coordsRef.current = coords;
+  }, [coords]);
 
   const restaurantsQuery = useRestaurantsProches(
     coords?.latitude,
@@ -101,7 +103,7 @@ export default function CarteScreen() {
       />
 
       <TouchableOpacity
-        className="absolute bottom-[100px] left-4 z-10 h-12 w-12 items-center justify-center rounded-full bg-white shadow-md"
+        className="absolute bottom-24 left-4 z-10 h-12 w-12 items-center justify-center rounded-full bg-white shadow-md"
         onPress={handleRecentrer}
         activeOpacity={0.7}
       >
@@ -111,14 +113,14 @@ export default function CarteScreen() {
       {showEmptyState && (
         <View className="absolute bottom-20 left-4 right-4 items-center rounded-2xl bg-white p-6 shadow-sm">
           <Text className="mb-3 text-[40px]">🍽</Text>
-          <Text className="mb-1.5 text-[17px] font-bold text-gray-900">
-            Aucun restaurant ici
+          <Text className="mb-2 text-[17px] font-bold text-gray-900">
+            Aucun établissement ici
           </Text>
           <Text className="mb-4 text-center text-[13px] leading-[18px] text-gray-500">
-            Essayez de vous déplacer ou d'agrandir le rayon de recherche
+            Essayez de vous déplacer ou d&apos;agrandir le rayon de recherche
           </Text>
           <TouchableOpacity
-            className="rounded-[10px] bg-[green-500] px-5 py-2.5"
+            className="rounded-[10px] bg-[green-500] px-5 py-3"
             onPress={handleRecentrer}
           >
             <Text className="text-sm font-bold text-white">Réessayer</Text>
