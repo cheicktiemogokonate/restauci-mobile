@@ -1,5 +1,5 @@
 import { useStore } from "@/store";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs } from "expo-router";
 import { List, Map, ShoppingBag, User } from "lucide-react-native";
 import { useCallback } from "react";
 import { StatusBar, Text, TouchableOpacity, View } from "react-native";
@@ -8,8 +8,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
-  const client = useStore((s) => s.client);
-  const router = useRouter();
 
   return (
     <View
@@ -57,11 +55,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
           });
 
           if (!isFocused && !event.defaultPrevented) {
-            if (route.name === "profil" && !client) {
-              router.push("/auth/login");
-            } else {
-              navigation.navigate(route.name, route.params);
-            }
+            navigation.navigate(route.name, route.params);
           }
         };
 

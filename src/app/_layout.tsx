@@ -48,8 +48,6 @@ export default function RootLayout() {
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="auth" options={{ presentation: "modal" }} />
                 <Stack.Screen name="restaurant/[slug]" />
-                <Stack.Screen name="profil" />
-                <Stack.Screen name="commandes" />
               </Stack>
               <OfflineBanner />
               <PortalHost />
