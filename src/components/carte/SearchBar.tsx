@@ -1,5 +1,10 @@
 import { useGeoSearch } from "@/hooks/useGeoSearch";
 import { useRestaurantSearch } from "@/hooks/useRestaurantSearch";
+import {
+  LIBELLES_TYPE_ETABLISSEMENT,
+  TYPE_ETABLISSEMENT_DEFAUT,
+  type TypeEtablissement,
+} from "@/types/etablissement";
 import { Search } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import {
@@ -17,16 +22,24 @@ import {
 interface SearchBarProps {
   onSelectSuggestion: (lat: number, lon: number) => void;
   onFilterChange?: (cuisine: string | null) => void;
+  /** Catégories de cuisine réellement présentes autour de l'utilisateur. */
+  cuisines?: string[];
+  /** Réservé aux verticales à venir (résidences, événements). */
+  typeEtablissement?: TypeEtablissement;
 }
-
-const CATEGORIES = ["Halal", "Pizza", "Burger", "Asiatique", "Traditionnel", "Tacos"];
 
 type CombinedSuggestion =
   | { type: "geo"; label: string; lat: number; lon: number }
   | { type: "restaurant"; id: string; label: string; lat: number; lon: number };
 
 
-export const SearchBar: React.FC<SearchBarProps> = ({ onSelectSuggestion, onFilterChange }) => {
+export const SearchBar: React.FC<SearchBarProps> = ({
+  onSelectSuggestion,
+  onFilterChange,
+  cuisines = [],
+  typeEtablissement = TYPE_ETABLISSEMENT_DEFAUT,
+}) => {
+  const libelles = LIBELLES_TYPE_ETABLISSEMENT[typeEtablissement];
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedCuisine, setSelectedCuisine] = useState<string | null>(null);
@@ -100,7 +113,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectSuggestion, onFilt
         <Search size={20} color="#000" />
         <TextInput
           className="flex-1 text-base text-ink-900 ml-2"
-          placeholder="Établissements, adresses..."
+          placeholder={`${libelles.pluriel.charAt(0).toUpperCase()}${libelles.pluriel.slice(1)}, adresses...`}
           placeholderTextColor="#9ca3af"
           value={query}
           onChangeText={handleChangeText}
@@ -111,9 +124,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectSuggestion, onFilt
         />
       </View>
 
+      {cuisines.length > 0 && (
       <View className="mt-2">
         <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          {CATEGORIES.map((category) => {
+          {cuisines.map((category) => {
             const isSelected = selectedCuisine === category;
             return (
               <TouchableOpacity
@@ -130,6 +144,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSelectSuggestion, onFilt
           })}
         </ScrollView>
       </View>
+      )}
 
 
       {showSuggestions && suggestions && suggestions.length > 0 && (
