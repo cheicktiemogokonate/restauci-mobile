@@ -18,7 +18,6 @@ import {
 import { useCallback, useMemo, useRef } from "react";
 import {
   Alert,
-  FlatList,
   Image,
   Pressable,
   ScrollView,
@@ -294,26 +293,24 @@ export default function PanierScreen() {
         </View>
 
         <View className="mx-4 mt-5 overflow-hidden rounded-2xl bg-white">
-          <FlatList
-            data={items}
-            keyExtractor={(item) => item.platId}
-            scrollEnabled={false}
-            renderItem={({ item }) => (
-              <ArticleRow
-                article={item}
-                onIncrement={() =>
-                  ajouterItem({
-                    id: item.platId,
-                    nom: item.nom,
-                    prix: item.prix,
-                    photoUrl: item.photoUrl,
-                  })
-                }
-                onDecrement={() => retirerItem(item.platId)}
-                onSupprimer={() => retirerItem(item.platId)}
-              />
-            )}
-          />
+          {/* Rendu direct : le panier est court et déjà dans un ScrollView.
+              Une FlatList imbriquée y perdrait sa virtualisation. */}
+          {items.map((item) => (
+            <ArticleRow
+              key={item.platId}
+              article={item}
+              onIncrement={() =>
+                ajouterItem({
+                  id: item.platId,
+                  nom: item.nom,
+                  prix: item.prix,
+                  photoUrl: item.photoUrl,
+                })
+              }
+              onDecrement={() => retirerItem(item.platId)}
+              onSupprimer={() => retirerItem(item.platId)}
+            />
+          ))}
         </View>
 
         {/* Bientôt disponible — ne pas présenter une affordance morte */}
