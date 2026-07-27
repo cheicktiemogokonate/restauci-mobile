@@ -13,7 +13,7 @@ import {
   Star,
 } from "lucide-react-native";
 import { useEffect } from "react";
-import { FlatList, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 interface HeaderRestaurantProps {
   restaurant: Restaurant;
@@ -271,17 +271,21 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
               <Text className="text-xl font-bold text-ink-900 tracking-wider mb-2">
                 Plats populaires
               </Text>
-            <FlatList
-              data={popularPlats}
-              keyExtractor={(p) => p.id}
+            {/* ScrollView horizontal : liste courte, et une FlatList
+                imbriquée dans le ScrollView parent ne virtualise pas. */}
+            <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingRight: 16 }}
-              renderItem={({ item: p }) => (
+            >
+              {popularPlats.map((p) => (
                 <TouchableOpacity
+                  key={p.id}
                   className="w-32 mr-4"
                   onPress={onVoirMenu ?? (() => {})}
                   activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${p.nom}, ${formatPrix(p.prix)}. Voir le menu`}
                 >
                   {p.photoUrl ? (
                     <Image
@@ -310,8 +314,8 @@ export const HeaderRestaurant: React.FC<HeaderRestaurantProps> = ({
                     {formatPrix(p.prix)}
                   </Text>
                 </TouchableOpacity>
-              )}
-            />
+              ))}
+            </ScrollView>
             </View>
           )}
         </View>
