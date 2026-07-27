@@ -3,7 +3,7 @@ import { MenuBottomSheet } from "@/components/menu/MenuBottomSheet";
 import { PanierFAB } from "@/components/menu/PanierFAB";
 import { Button } from "@/components/ui/button";
 import { ErrorView } from "@/components/ui/ErrorView";
-import { SkeletonCard } from "@/components/ui/SkeletonCard";
+import { SkeletonCardList } from "@/components/ui/SkeletonCard";
 import { Text as ButtonText } from "@/components/ui/text";
 import { useMenuRestaurant, useRestaurant } from "@/hooks/useMenuRestaurant";
 import type { Plat } from "@/types";
@@ -12,7 +12,6 @@ import { useLocalSearchParams } from "expo-router";
 import { useCallback, useMemo, useRef } from "react";
 import { Linking, Platform, ScrollView, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
-import { FlatList } from "react-native-gesture-handler";
 
 export default function RestaurantScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -103,13 +102,9 @@ export default function RestaurantScreen() {
           <View className="w-[90px] h-8 rounded-full bg-ink-200 ml-2" />
           <View className="w-[80px] h-8 rounded-full bg-ink-200 ml-2" />
         </View>
-        <FlatList
-          data={Array.from({ length: 4 })}
-          keyExtractor={(_, index) => `skel-${index}`}
-          renderItem={() => <SkeletonCard />}
-          contentContainerStyle={{ paddingBottom: 32 }}
-          scrollEnabled={false}
-        />
+        <View style={{ paddingBottom: 32 }}>
+          <SkeletonCardList count={4} />
+        </View>
       </View>
     );
   }

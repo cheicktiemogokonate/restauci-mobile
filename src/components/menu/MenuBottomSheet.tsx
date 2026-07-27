@@ -2,7 +2,7 @@ import { CartePlatMobile } from "@/components/menu/CartePlatMobile";
 import { FiltreCategoriesMobile } from "@/components/menu/FiltreCategoriesMobile";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorView } from "@/components/ui/ErrorView";
-import { SkeletonCard } from "@/components/ui/SkeletonCard";
+import { SkeletonCardList } from "@/components/ui/SkeletonCard";
 import { useMenuRestaurant } from "@/hooks/useMenuRestaurant";
 import { useStore } from "@/store";
 import type { Categorie, CreneauHoraire, Plat, Restaurant } from "@/types";
@@ -137,7 +137,7 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
         )}
         {isMenuLoading ? (
           <View className="px-4 pb-8">
-            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+            <SkeletonCardList count={6} />
           </View>
         ) : menuError || !categories.length ? (
           <View className="px-4 pb-8">

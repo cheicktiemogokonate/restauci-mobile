@@ -1,4 +1,4 @@
 export { ErrorView } from "./ErrorView";
-export { SkeletonCard } from "./SkeletonCard";
+export { SkeletonCard, SkeletonCardList } from "./SkeletonCard";
 export { OfflineBanner } from "./OfflineBanner";
 export { EmptyState } from "./EmptyState";
