@@ -161,17 +161,21 @@ export default function TabLayout() {
 
       <Tabs
         tabBar={renderTabBar}
-        detachInactiveScreens={false} // Empêche la destruction de la vue native de l'onglet sur Android
+        // Prop de navigateur (non déclinable par écran) : nécessaire pour que la
+        // vue native MapLibre de l'onglet Carte ne soit pas détruite sur Android.
+        detachInactiveScreens={false}
         screenOptions={{
           headerShown: false,
-          // On peut aussi éviter que la vue soit freeze en arrière-plan
-          freezeOnBlur: false,
+          // Par défaut on gèle les onglets inactifs ; seule la Carte est exemptée.
+          freezeOnBlur: true,
         }}
       >
         <Tabs.Screen
           name="index"
           options={{
             title: "Carte",
+            // La carte conserve son état natif (caméra, tuiles) hors focus.
+            freezeOnBlur: false,
             tabBarIcon: ({ color, size }) => (
               <Map color={color} size={size} strokeWidth={2.5} />
             ),
