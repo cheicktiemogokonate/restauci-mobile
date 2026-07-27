@@ -5,8 +5,7 @@ import { ErrorView } from "@/components/ui/ErrorView";
 import { SkeletonCardList } from "@/components/ui/SkeletonCard";
 import { useMenuRestaurant } from "@/hooks/useMenuRestaurant";
 import { useStore } from "@/store";
-import type { Categorie, CreneauHoraire, Plat, Restaurant } from "@/types";
-import { isPlatDisponible } from "@/utils/creneaux";
+import type { Categorie, Plat, Restaurant } from "@/types";
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import * as Haptics from "expo-haptics";
 import { forwardRef, useCallback, useMemo, useState } from "react";
@@ -58,7 +57,12 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
     );
 
     const platsAffiches = useMemo(() => {
-      const creneaux: CreneauHoraire[] = [];
+      // 🔗 réintégrer `isPlatDisponible(plat, cat, creneaux)` quand l'API
+      // exposera les créneaux horaires (absents de docs/openapi.json à ce
+      // jour). Avec un tableau vide, l'appel retournait toujours `true` :
+      // c'était un filtre mort qui masquait l'absence de la donnée.
+      // En attendant, on s'appuie sur le seul champ réellement servi par
+      // l'API : `plat.disponible`.
       let source: Categorie[] = visibleCategories;
       if (selectedCategory) {
         source = source.filter((c) => c.id === selectedCategory);
@@ -67,9 +71,7 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
       for (const cat of source) {
         const plats = Array.isArray(cat.plats) ? cat.plats : [];
         for (const plat of plats) {
-          const creneauIndisponible =
-            !isPlatDisponible(plat, cat, creneaux) && plat.disponible;
-          if (!creneauIndisponible) {
+          if (plat.disponible) {
             result.push({ plat, categorie: cat });
           }
         }

@@ -45,6 +45,14 @@ function isCreneauActif(creneau: CreneauHoraire) {
 }
 
 /**
+ * 🔗 réintégrer quand l'API expose les créneaux horaires.
+ *
+ * Aucun endpoint de `docs/openapi.json` ne renvoie de `CreneauHoraire` : cette
+ * fonction était appelée avec un tableau vide et retournait donc toujours
+ * `true`. Elle est conservée telle quelle (la logique est alignée sur le
+ * backend) mais n'est plus appelée depuis `MenuBottomSheet`. Dès que l'API
+ * servira les créneaux d'un établissement, rebrancher l'appel ici.
+ *
  * Détermine si un plat est disponible selon son créneau horaire.
  *
  * Règles :
