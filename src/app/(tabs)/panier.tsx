@@ -1,14 +1,19 @@
 import { FormulaireCommande } from "@/components/panier/FormulaireCommande";
 import { Button } from "@/components/ui/button";
 import { Text as ButtonText } from "@/components/ui/text";
+import { useRestaurant } from "@/hooks/useMenuRestaurant";
 import { formatPrix } from "@/lib/format";
+import {
+  calculerDetailPanier,
+  SEUIL_LIVRAISON_OFFERTE,
+} from "@/lib/tarification";
 import { useStore } from "@/store";
 import { selectSousTotal } from "@/store/selectors";
 import type { CommandeItem } from "@/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import {
   ArrowRight,
   Minus,
@@ -28,9 +33,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const SEUIL_LIVRAISON_OFFERTE = 2000;
-const FRAIS_LIVRAISON_BASE = 500;
-const FRAIS_EMBALLAGE = 200;
 const PLAT_PLACEHOLDER = require("@/assets/images/plat-placeholder.jpg");
 
 function QuantiteControl({
@@ -178,10 +180,6 @@ function LigneResume({
 export default function PanierScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { frais: fraisStr } = useLocalSearchParams<{
-    frais?: string;
-    nom?: string;
-  }>();
 
   const items = useStore((s) => s.items);
   const client = useStore((s) => s.client);
@@ -192,7 +190,9 @@ export default function PanierScreen() {
 
   const formulaireRef = useRef<BottomSheetModal>(null);
 
-  const fraisLivraison = Number(fraisStr ?? FRAIS_LIVRAISON_BASE);
+  // Les frais de livraison viennent de l'établissement servi par l'API,
+  // jamais d'un paramètre d'URL (que le client pourrait forger).
+  const { data: restaurant } = useRestaurant(restaurantSlug);
 
   const handleCommander = useCallback(() => {
     if (!client) {
@@ -215,7 +215,10 @@ export default function PanierScreen() {
 
   const sousTotal = useStore(selectSousTotal);
 
-  const total = sousTotal + fraisLivraison + FRAIS_EMBALLAGE;
+  const detail = calculerDetailPanier({
+    sousTotal,
+    fraisLivraisonBase: restaurant?.fraisLivraison ?? 0,
+  });
 
   if (items.length === 0) {
     return (
@@ -270,17 +273,27 @@ export default function PanierScreen() {
             }}
           />
           <View className="flex-1">
-            <Text className="text-sm leading-5 text-ink-700">
-              Vous bénéficiez de la{" "}
-              <Text className="font-bold text-green-800">
-                livraison offerte
-              </Text>{" "}
-              dès{" "}
-              <Text className="font-bold text-green-800">
-                {formatPrix(SEUIL_LIVRAISON_OFFERTE)}
-              </Text>{" "}
-              d&apos;achat!
-            </Text>
+            {detail.livraisonOfferte ? (
+              <Text className="text-sm leading-5 text-ink-700">
+                Bonne nouvelle : votre{" "}
+                <Text className="font-bold text-green-800">
+                  livraison est offerte
+                </Text>
+                {" "}sur cette commande.
+              </Text>
+            ) : (
+              <Text className="text-sm leading-5 text-ink-700">
+                Encore{" "}
+                <Text className="font-bold text-green-800">
+                  {formatPrix(detail.resteAvantLivraisonOfferte)}
+                </Text>{" "}
+                et la{" "}
+                <Text className="font-bold text-green-800">
+                  livraison est offerte
+                </Text>{" "}
+                (dès {formatPrix(SEUIL_LIVRAISON_OFFERTE)} d&apos;achat).
+              </Text>
+            )}
           </View>
         </View>
 
@@ -319,15 +332,27 @@ export default function PanierScreen() {
           <LigneResume label="Sous-total" valeur={formatPrix(sousTotal)} />
           <LigneResume
             label="Frais de livraison"
-            valeur={formatPrix(fraisLivraison)}
+            valeur={
+              detail.livraisonOfferte
+                ? "Offerts"
+                : formatPrix(detail.fraisLivraison)
+            }
+          />
+          <LigneResume
+            label="Frais d'emballage"
+            valeur={formatPrix(detail.fraisEmballage)}
           />
 
           <View className="my-2 border-t border-ink-100" />
           <LigneResume
             label="Total à payer"
-            valeur={formatPrix(total)}
+            valeur={formatPrix(detail.total)}
             emphase
           />
+          <Text className="pb-1 text-xs text-ink-500">
+            Montant définitif confirmé par l&apos;établissement à la validation
+            de la commande.
+          </Text>
         </View>
 
         <Button
@@ -347,7 +372,7 @@ export default function PanierScreen() {
         <FormulaireCommande
           ref={formulaireRef}
           restaurantSlug={restaurantSlug}
-          fraisLivraison={fraisLivraison}
+          fraisLivraison={detail.fraisLivraison}
           onSuccess={handleCommandeSuccess}
           onClose={handleConfirmationClose}
         />

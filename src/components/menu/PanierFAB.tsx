@@ -5,25 +5,16 @@ import { ShoppingBag } from "lucide-react-native";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
-interface PanierFABProps {
-  fraisLivraison?: number;
-  restaurantNom?: string;
-}
-
-export const PanierFAB: React.FC<PanierFABProps> = ({
-  fraisLivraison = 0,
-  restaurantNom,
-}) => {
+// Les frais de livraison viennent maintenant de l'API directement depuis
+// panier.tsx (useRestaurant). PanierFAB n'a plus besoin de les transmettre.
+export const PanierFAB: React.FC = () => {
   const router = useRouter();
   const nombre = useStore(selectNombreArticles);
 
   if (nombre === 0) return null;
 
   const handlePress = () => {
-    const params = new URLSearchParams();
-    params.set("frais", String(fraisLivraison));
-    if (restaurantNom) params.set("nom", restaurantNom);
-    router.push(`/(tabs)/panier?${params.toString()}`);
+    router.push("/(tabs)/panier");
   };
 
     return (

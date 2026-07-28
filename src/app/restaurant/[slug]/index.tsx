@@ -145,10 +145,7 @@ export default function RestaurantScreen() {
         </ButtonText>
       </Button>
 
-      <PanierFAB
-        fraisLivraison={restaurant.fraisLivraison}
-        restaurantNom={restaurant.nom}
-      />
+      <PanierFAB />
 
       <MenuBottomSheet
         ref={menuSheetRef}
