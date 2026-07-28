@@ -40,3 +40,14 @@ Convention : une ligne par point traité. ✅ fait / ⏭️ ignoré / 🛑 bloqu
 - ✅ `src/hooks/useCuisinesDisponibles.ts` (nouveau) : dérive les cuisines du champ `cuisines[]` des établissements de l'API. Requête sans le paramètre `cuisine`, donc elle partage le cache de la liste non filtrée (pas d'appel réseau supplémentaire).
 - ✅ `(tabs)/index.tsx` : `showErrorState` distinct de `showEmptyState` — « Chargement impossible » + `refetch` vs « Aucun établissement ici » + recentrer. Classes `bg-[green-500]` / `color="green-500"` remplacées par les tokens (`bg-green-900`, `#14532d`), `text-gray-*` → `text-ink-*`, `accessibilityLabel` + `min-h-[44px]` sur les boutons.
 - ✅ `MenuBottomSheet.tsx` + `utils/creneaux.ts` : aucun endpoint de `docs/openapi.json` ne renvoie de `CreneauHoraire`. `isPlatDisponible` était appelée avec `[]` et retournait donc toujours `true` — filtre mort qui masquait l'absence de donnée. Appel retiré (on filtre sur `plat.disponible`, réellement servi), fonction conservée avec marqueur `// 🔗 réintégrer quand l'API expose les créneaux horaires`.
+
+## Phase 6 — Tunnel de commande
+
+- ✅ `src/lib/tarification.ts` (nouveau) : `calculerDetailPanier()` centralise sousTotal + fraisLivraison (API) + fraisEmballage (200 FCFA) + seuil livraison offerte (2000 FCFA). Aucun calcul dans les composants.
+- ✅ `panier.tsx` : frais de livraison lus depuis `useRestaurant(slug)` (API), jamais depuis un paramètre URL forgeable. Ligne emballage affichée. Bannière livraison offerte réellement conditionnelle (reste à ajouter / déjà offerte). Note de confirmation serveur ajoutée sous le total.
+- ✅ `PanierFAB.tsx` : suppression des props `fraisLivraison`/`restaurantNom` et du passage en params URL. Navigation simple `/(tabs)/panier`.
+- ✅ `store/index.ts` : `zustand/persist` + `@react-native-async-storage/async-storage` installé. Seuls `items` + `restaurantSlug` sont persistés — jamais token/client.
+- ✅ `MenuBottomSheet.tsx` : ajout `viderPanier` dans le store ; `handleAjouter` affiche un `Alert` de confirmation avant de vider le panier pour un autre établissement (au lieu d'un rejet silencieux).
+- ✅ `useEnvoyerCommande.ts` : extraction d'id robuste (`data.id ?? data.commande.id ?? data.numero ?? ""`), type `CommandeCreatedResponse`, log warn si id absent.
+- ✅ `FormulaireCommande.tsx` + `panier.tsx` : `onSuccess` redirige vers `/(tabs)/commandes/[id]` si id présent, sinon vers `/(tabs)/commandes` (liste). `viderPanier()` appelé avant la navigation.
+- ✅ `usePushNotifications.ts` : deep link corrigé `/(tabs)/commandes/${id}` (était `/commandes/${id}`, route inexistante). Fallback liste si pas d'id. Clés alternatives acceptées (`commandeId` | `id` | `orderId`).
