@@ -51,3 +51,17 @@ Convention : une ligne par point traité. ✅ fait / ⏭️ ignoré / 🛑 bloqu
 - ✅ `useEnvoyerCommande.ts` : extraction d'id robuste (`data.id ?? data.commande.id ?? data.numero ?? ""`), type `CommandeCreatedResponse`, log warn si id absent.
 - ✅ `FormulaireCommande.tsx` + `panier.tsx` : `onSuccess` redirige vers `/(tabs)/commandes/[id]` si id présent, sinon vers `/(tabs)/commandes` (liste). `viderPanier()` appelé avant la navigation.
 - ✅ `usePushNotifications.ts` : deep link corrigé `/(tabs)/commandes/${id}` (était `/commandes/${id}`, route inexistante). Fallback liste si pas d'id. Clés alternatives acceptées (`commandeId` | `id` | `orderId`).
+
+## Phase 7 — Robustesse réseau, sécurité, et reste du rapport
+
+- ✅ `src/lib/api.ts` : timeout 10s par défaut + `AbortController` intégré, logs conditionnés `__DEV__`.
+- ✅ `src/store/slices/authSlice.ts` : timeout 5s sur la séquence `loadToken`, bascule en session anonyme au-delà.
+- ✅ `src/app/_layout.tsx` : `QueryClient` avec `defaultOptions` (retry:1, staleTime:30s, gcTime:5m), export `ErrorBoundary` expo-router.
+- ✅ `src/app/+not-found.tsx` (nouveau) : écran de secours pour les routes invalide.
+- ✅ `FormulaireCommande.tsx` : suppression des `console.log` PII, alert() brut retiré du login.
+- ✅ `src/app/index.tsx` (onboarding) : persistance flag "vu" (localStorage/web), boutons avec `accessibilityLabel`, classes Tailwind corrigées (`bg-ink-50`, `text-brand-500`, `rounded-full`).
+- ✅ `src/app/auth/login.tsx` & `register.tsx` : `router.back()` → `router.replace("/(tabs)")`, logos `logo-toutci.png`, classes `bg-brand-700`, `text-brand-700`.
+- ✅ `src/components/ui/button.tsx` : `bg-green-800` → `bg-brand-700` (token valide).
+- ✅ `app.json` : name="Toutci", slug="toutci", scheme="toutci", bundleIdentifier="com.toutci.delivery", splash/backgroundColor="#14532d", userInterfaceStyle="light".
+- ✅ `eas.json` (nouveau) : configuration build/ submit standard.
+- ✅ `panier.tsx` : classes `text-brand-700` pour lignes total, bouton utilise composant Button (brand-700).
