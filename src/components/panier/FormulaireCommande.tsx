@@ -238,8 +238,16 @@ export const FormulaireCommande = forwardRef<
 
         console.log("[FormulaireCommande] Commande créée:", result);
 
-        // Garde-fou : évite un crash si le backend renvoie une réponse sans id
-        onSuccess(result?.id ?? "");
+        // Si l'id est absent (edge case backend), on remonte quand même
+        // onSuccess avec une chaîne vide : l'appelant redirige vers la liste
+        // des commandes plutôt que vers un détail inexistant.
+        const id = result?.id ?? "";
+        if (!id) {
+          console.warn(
+            "[FormulaireCommande] commande sans id, redirection liste",
+          );
+        }
+        onSuccess(id);
       },
 
       onError: async (error) => {

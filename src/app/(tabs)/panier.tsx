@@ -204,9 +204,15 @@ export default function PanierScreen() {
 
   const handleCommandeSuccess = (commandeId: string) => {
     formulaireRef.current?.dismiss();
-
-    router.push(`/(tabs)/commandes/${commandeId}`);
     viderPanier();
+
+    if (commandeId) {
+      // id valide → on navigue vers le suivi de commande
+      router.push(`/(tabs)/commandes/${commandeId}`);
+    } else {
+      // id absent (edge case backend) → on redirige vers la liste des commandes
+      router.push("/(tabs)/commandes");
+    }
   };
 
   const handleConfirmationClose = () => {
