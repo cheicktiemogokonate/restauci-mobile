@@ -1,4 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 import {
   createAdressesSlice,
   type AdressesSlice,
@@ -15,15 +17,31 @@ export type UnifiedStore = AuthSlice &
   AdressesSlice;
 
 /**
- * Store global de l'app, composé de slices indépendantes par domaine
- * (auth, panier, carte). Un seul store zustand reste exposé pour éviter
- * les re-renders multiples liés à plusieurs providers, mais chaque slice
- * est définie et testable séparément dans `./slices`.
+ * Store global de l'app, composé de slices indépendantes par domaine.
+ *
+ * Seul le slice panier (`items` + `restaurantSlug`) est persisté via
+ * AsyncStorage : l'utilisateur retrouve son panier après avoir fermé l'app.
+ * Les données d'authentification (token, client) ne sont PAS dans la liste
+ * `partialize` : elles restent en mémoire uniquement et sont rechargées par
+ * `authSlice` depuis SecureStore au démarrage.
  */
-export const useStore = create<UnifiedStore>()((...args) => ({
-  ...createAuthSlice(...args),
-  ...createPanierSlice(...args),
-  ...createCarteSlice(...args),
-  ...createFavorisSlice(...args),
-  ...createAdressesSlice(...args),
-}));
+export const useStore = create<UnifiedStore>()(
+  persist(
+    (...args) => ({
+      ...createAuthSlice(...args),
+      ...createPanierSlice(...args),
+      ...createCarteSlice(...args),
+      ...createFavorisSlice(...args),
+      ...createAdressesSlice(...args),
+    }),
+    {
+      name: "toutci-panier-v1",
+      storage: createJSONStorage(() => AsyncStorage),
+      // Ne persister QUE le panier — jamais les données sensibles auth.
+      partialize: (state) => ({
+        items: state.items,
+        restaurantSlug: state.restaurantSlug,
+      }),
+    },
+  ),
+);
