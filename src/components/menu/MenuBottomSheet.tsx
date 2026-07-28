@@ -9,7 +9,7 @@ import type { Categorie, Plat, Restaurant } from "@/types";
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import * as Haptics from "expo-haptics";
 import { forwardRef, useCallback, useMemo, useState } from "react";
-import { Text, View } from "react-native";
+import { Alert, Text, View } from "react-native";
 
 type Props = {
   slug: string;
@@ -40,6 +40,7 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
 
     const ajouterItem = useStore((s) => s.ajouterItem);
     const retirerItem = useStore((s) => s.retirerItem);
+    const viderPanier = useStore((s) => s.viderPanier);
     const storeRestaurantSlug = useStore((s) => s.restaurantSlug);
 
     const visibleCategories = useMemo(
@@ -86,12 +87,40 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
     const handleAjouter = useCallback(
       async (plat: Plat) => {
         const cartRestaurantId = slug ?? "";
+
+        // Le panier contient déjà des plats d'un autre établissement :
+        // on demande confirmation avant de le vider.
         if (storeRestaurantSlug && storeRestaurantSlug !== cartRestaurantId) {
           await Haptics.notificationAsync(
             Haptics.NotificationFeedbackType.Warning,
           );
+          Alert.alert(
+            "Nouveau panier",
+            "Votre panier contient des plats d'un autre établissement. Voulez-vous le vider et commander ici ?",
+            [
+              { text: "Annuler", style: "cancel" },
+              {
+                text: "Vider et continuer",
+                style: "destructive",
+                onPress: () => {
+                  viderPanier();
+                  ajouterItem(
+                    {
+                      id: plat.id,
+                      nom: plat.nom,
+                      prix: plat.prix,
+                      photoUrl: plat.photoUrl,
+                    },
+                    1,
+                    cartRestaurantId,
+                  );
+                },
+              },
+            ],
+          );
           return;
         }
+
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         ajouterItem(
           {
@@ -104,7 +133,7 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
           cartRestaurantId,
         );
       },
-      [ajouterItem, slug, storeRestaurantSlug],
+      [ajouterItem, viderPanier, slug, storeRestaurantSlug],
     );
 
     const handleRetirer = useCallback(
