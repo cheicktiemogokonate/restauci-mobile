@@ -59,6 +59,9 @@ export async function getStoredPushToken(): Promise<string | null> {
 
 interface NotificationData {
   commandeId?: string;
+  /** Certains backends envoient l'id sous la clé `id` ou `orderId`. */
+  id?: string;
+  orderId?: string;
 }
 
 export function usePushNotifications() {
@@ -75,8 +78,15 @@ export function usePushNotifications() {
         | NotificationData
         | undefined;
 
-      if (data?.commandeId) {
-        router.push(`/commandes/${data.commandeId}`);
+      // On accepte plusieurs clés possibles pour l'id de commande.
+      const commandeId = data?.commandeId ?? data?.id ?? data?.orderId;
+
+      if (commandeId) {
+        // Route absolue Expo Router vers l'onglet commandes
+        router.push(`/(tabs)/commandes/${commandeId}`);
+      } else {
+        // Pas d'id : on atterrit sur la liste des commandes
+        router.push("/(tabs)/commandes");
       }
     },
     [],
