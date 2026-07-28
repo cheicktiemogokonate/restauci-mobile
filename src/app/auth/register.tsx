@@ -95,7 +95,7 @@ export default function RegisterScreen() {
 
       const { client, tokens } = response.data;
       setClient(client, tokens.accessToken, tokens.refreshToken);
-      router.back();
+      router.replace("/(tabs)");
     } catch (error) {
       if (error instanceof Error) {
         setServerError(error.message);
@@ -123,7 +123,7 @@ export default function RegisterScreen() {
         <View className="items-center -mt-9">
           <View className="items-center justify-center h-28 w-full">
             <Image
-              source={require("@/assets/images/logo-restauci.png")}
+              source={require("@/assets/images/logo-toutci.png")}
               resizeMode="contain"
               style={{ width: "100%", height: "100%" }}
             />
@@ -346,7 +346,7 @@ export default function RegisterScreen() {
             onPress={handleSubmit(onSubmit)}
             disabled={isLoading}
             className={`rounded-2xl h-14 items-center justify-center mt-6 ${
-              isLoading ? "bg-green-900/70" : "bg-green-900"
+              isLoading ? "bg-brand-700/70" : "bg-brand-700"
             }`}
           >
             {isLoading ? (
@@ -362,7 +362,7 @@ export default function RegisterScreen() {
           <View className="items-center mt-8 mb-14">
             <Text className="text-gray-500">Vous avez déjà un compte ?</Text>
             <Link href="/auth/login">
-              <Text className="text-green-800 font-semibold mt-1">
+              <Text className="text-brand-700 font-semibold mt-1">
                 Se connecter
               </Text>
             </Link>

@@ -67,11 +67,10 @@ export default function LoginScreen() {
 
       const { client, tokens } = response.data;
       setClient(client, tokens.accessToken, tokens.refreshToken);
-      router.back();
+      router.replace("/(tabs)");
     } catch (error) {
       if (error instanceof Error) {
         setServerError(error.message);
-        alert(error.message);
       } else {
         setServerError("Une erreur est survenue. Veuillez réessayer.");
       }
@@ -101,7 +100,7 @@ export default function LoginScreen() {
         <View className="items-center -mt-9">
           <View className="items-center justify-center h-28 w-full">
             <Image
-              source={require("@/assets/images/logo-restauci.png")}
+              source={require("@/assets/images/logo-toutci.png")}
               resizeMode="contain"
               style={{ width: "100%", height: "100%" }}
             />

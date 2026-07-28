@@ -13,7 +13,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: cn("bg-green-800"),
+        default: cn("bg-brand-700"),
         destructive: cn(
           "bg-destructive active:bg-destructive/90 dark:bg-destructive/60 shadow-sm shadow-black/5",
           Platform.select({

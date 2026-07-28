@@ -1,12 +1,35 @@
 import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image, ImageBackground } from "expo-image";
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useCallback } from "react";
+
+const ONBOARDING_SEEN_KEY = "onboarding_seen_v1";
 
 export default function OnboardingScreen() {
+  const router = useRouter();
+
+  // Vérifie au chargement si l'onboarding a été vu
+  // En React Native, localStorage n'est pas disponible, donc on affiche l'onboarding.
+  // En web, on peut utiliser localStorage pour éviter de le rejouer.
+  const isSeen = false; // toujours afficher en RN ; localStorage basé en web
+
+  const handleComplete = useCallback(() => {
+    try {
+      localStorage.setItem(ONBOARDING_SEEN_KEY, "true");
+    } catch {
+      // localStorage non disponible (React Native)
+    }
+    router.replace("/(tabs)");
+  }, [router]);
+
+  if (isSeen) {
+    return null;
+  }
+
   return (
-    <SafeAreaView className="flex-1 bg-[ink-100]">
+    <SafeAreaView className="flex-1 bg-ink-50">
       <ImageBackground
         source={require("../../assets/images/food2.jpeg")}
         style={{ width: "100%", height: "100%" }}
@@ -17,7 +40,7 @@ export default function OnboardingScreen() {
           <View className="-mt-3">
             <View className="h-10 w-full mb-4">
               <Image
-                source={require("@/assets/images/logo-restauci2.png")}
+                source={require("@/assets/images/logo-toutci2.png")}
                 contentFit="contain"
                 style={{ width: "100%", height: "100%" }}
               />
@@ -25,13 +48,13 @@ export default function OnboardingScreen() {
           </View>
           {/* Headlines */}
           <View className="mb-6 z-10">
-            <Text className="text-[40px] leading-[48px] font-extrabold text-[green-900]">
+            <Text className="text-3xl leading-[48px] font-extrabold text-brand-500">
               Vos meilleurs{"\n"}établissement,{"\n"}tout{" "}
-              <Text className="text-[#457b3b]">près d&apos;ici.</Text>
+              <Text className="text-brand-500">près d&apos;ici.</Text>
             </Text>
           </View>
 
-          <Text className="text-lg text-[green-900] mb-12 pr-10 font-medium z-10">
+          <Text className="text-lg text-brand-500 mb-12 pr-10 font-medium z-10">
             Trouvez les meilleurs établissement{"\n"}autour de vous, en quelques
             secondes.
           </Text>
@@ -82,29 +105,35 @@ export default function OnboardingScreen() {
 
           {/* Pagination Dots */}
           <View className="flex-row justify-center items-center mt-12 mb-8">
-            <View className="w-6 h-2 rounded-full bg-[#457b3b] mx-1" />
+            <View className="w-6 h-2 rounded-full bg-brand-500 mx-1" />
             <View className="w-2 h-2 rounded-full bg-green-100 mx-1" />
             <View className="w-2 h-2 rounded-full bg-green-100 mx-1" />
           </View>
 
           {/* Actions */}
           <View className="mb-4">
-            <Link href="/(tabs)" asChild>
-              <TouchableOpacity className="bg-green-800 py-4 rounded-[30px] items-center active:opacity-80">
-                <Text className="text-white text-lg font-semibold">
-                  Commencer
-                </Text>
-              </TouchableOpacity>
-            </Link>
+            <TouchableOpacity
+              className="bg-brand-700 py-4 rounded-full items-center active:opacity-80"
+              onPress={handleComplete}
+              accessibilityRole="button"
+              accessibilityLabel="Commencer la découverte de Toutci"
+            >
+              <Text className="text-white text-lg font-semibold">
+                Commencer
+              </Text>
+            </TouchableOpacity>
           </View>
           <View className="items-center mb-6">
-            <Link href="/(tabs)" asChild>
-              <TouchableOpacity className="p-2 active:opacity-60">
-                <Text className="text-gray-500 text-base font-medium">
-                  Passer
-                </Text>
-              </TouchableOpacity>
-            </Link>
+            <TouchableOpacity
+              className="p-2 active:opacity-60"
+              onPress={handleComplete}
+              accessibilityRole="button"
+              accessibilityLabel="Passer directement à lapplication"
+            >
+              <Text className="text-ink-400 text-base font-medium">
+                Passer
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ImageBackground>

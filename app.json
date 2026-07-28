@@ -1,25 +1,25 @@
 {
   "expo": {
-    "name": "test",
-    "slug": "test",
+    "name": "Toutci",
+    "slug": "toutci",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "test",
-    "userInterfaceStyle": "automatic",
+    "scheme": "toutci",
+    "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.tobias-whale.test"
+      "bundleIdentifier": "com.toutci.delivery"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#14532d",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.tobias_whale.test"
+      "package": "com.toutci.delivery"
     },
     "web": {
       "output": "static",
@@ -30,7 +30,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#14532d",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
