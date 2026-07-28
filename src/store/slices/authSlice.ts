@@ -6,6 +6,29 @@ import type { StateCreator } from "zustand";
 const AUTH_ACCESS_TOKEN_KEY = "auth_access_token";
 const AUTH_REFRESH_TOKEN_KEY = "auth_refresh_token";
 
+/**
+ * Timeout global pour la séquence loadToken (ms).
+ * Au-delà, l'app bascule en session anonyme plutôt que de bloquer
+ * l'utilisateur sur un splash écran indéfini.
+ */
+const LOAD_TOKEN_TIMEOUT_MS = 5_000;
+
+/** Exécute `fn` avec un timeout ; résout `null` si le délai est dépassé. */
+async function withTimeout<T>(
+  fn: (signal: AbortSignal) => Promise<T>,
+  ms: number,
+): Promise<T | null> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fn(controller.signal);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(id);
+  }
+}
+
 export interface AuthSlice {
   client: ClientSession | null;
   token: string | null;
@@ -114,32 +137,26 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
   },
 
   async loadToken() {
-    try {
+    const result = await withTimeout(async (signal) => {
       const accessToken = await SecureStore.getItemAsync(AUTH_ACCESS_TOKEN_KEY);
-      const refreshToken = await SecureStore.getItemAsync(
-        AUTH_REFRESH_TOKEN_KEY,
-      );
+      const refreshToken = await SecureStore.getItemAsync(AUTH_REFRESH_TOKEN_KEY);
 
-      if (!accessToken) {
-        set({ isLoading: false });
-        return;
-      }
+      if (!accessToken) return { client: null, token: null };
 
       const meResponse = await fetch(`${API_URL}${ENDPOINTS.authClientMe}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
+        signal,
       });
 
       if (meResponse.ok) {
         const payload = await meResponse.json();
         const client = parseClient(payload);
-        set({ client, token: accessToken, isLoading: false });
-        return;
+        return { client, token: accessToken };
       }
 
       if (!refreshToken) {
         await SecureStore.deleteItemAsync(AUTH_ACCESS_TOKEN_KEY);
-        set({ isLoading: false });
-        return;
+        return { client: null, token: null };
       }
 
       const refreshResponse = await fetch(
@@ -148,14 +165,14 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ refreshToken }),
+          signal,
         },
       );
 
       if (!refreshResponse.ok) {
         await SecureStore.deleteItemAsync(AUTH_ACCESS_TOKEN_KEY);
         await SecureStore.deleteItemAsync(AUTH_REFRESH_TOKEN_KEY);
-        set({ client: null, token: null, isLoading: false });
-        return;
+        return { client: null, token: null };
       }
 
       const refreshPayload = await refreshResponse.json();
@@ -164,40 +181,39 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
       if (!refreshedTokens?.accessToken) {
         await SecureStore.deleteItemAsync(AUTH_ACCESS_TOKEN_KEY);
         await SecureStore.deleteItemAsync(AUTH_REFRESH_TOKEN_KEY);
-        set({ client: null, token: null, isLoading: false });
-        return;
+        return { client: null, token: null };
       }
 
-      await SecureStore.setItemAsync(
-        AUTH_ACCESS_TOKEN_KEY,
-        refreshedTokens.accessToken,
-      );
+      await SecureStore.setItemAsync(AUTH_ACCESS_TOKEN_KEY, refreshedTokens.accessToken);
       if (refreshedTokens.refreshToken) {
-        await SecureStore.setItemAsync(
-          AUTH_REFRESH_TOKEN_KEY,
-          refreshedTokens.refreshToken,
-        );
+        await SecureStore.setItemAsync(AUTH_REFRESH_TOKEN_KEY, refreshedTokens.refreshToken);
       }
 
       const recheckResponse = await fetch(
         `${API_URL}${ENDPOINTS.authClientMe}`,
         {
           headers: { Authorization: `Bearer ${refreshedTokens.accessToken}` },
+          signal,
         },
       );
 
       if (!recheckResponse.ok) {
         await SecureStore.deleteItemAsync(AUTH_ACCESS_TOKEN_KEY);
         await SecureStore.deleteItemAsync(AUTH_REFRESH_TOKEN_KEY);
-        set({ client: null, token: null, isLoading: false });
-        return;
+        return { client: null, token: null };
       }
 
       const recheckPayload = await recheckResponse.json();
       const client = parseClient(recheckPayload);
-      set({ client, token: refreshedTokens.accessToken, isLoading: false });
-    } catch {
-      set({ isLoading: false });
-    }
+      return { client, token: refreshedTokens.accessToken };
+    }, LOAD_TOKEN_TIMEOUT_MS);
+
+    // Timeout dépassé ou erreur → session anonyme (isLoading: false)
+    // pour ne pas bloquer l'app indéfiniment sur le splash.
+    set({
+      client: result?.client ?? null,
+      token: result?.token ?? null,
+      isLoading: false,
+    });
   },
 });

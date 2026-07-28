@@ -5,8 +5,25 @@ import * as SecureStore from 'expo-secure-store';
 const AUTH_ACCESS_TOKEN_KEY = 'auth_access_token';
 const AUTH_REFRESH_TOKEN_KEY = 'auth_refresh_token';
 
-/** Tente de rafraîchir le token si le refreshToken existe en SecureStore */
+/** Timeout par défaut pour tous les appels réseau (ms). */
+const DEFAULT_TIMEOUT_MS = 10_000;
+/** Timeout dédié au refresh de token (plus court : si le serveur est lent, on déconnecte). */
+const REFRESH_TIMEOUT_MS = 5_000;
+
+/**
+ * Crée un AbortController avec timeout automatique.
+ * Retourne le signal ET une fonction de nettoyage à appeler après la requête
+ * pour éviter les fuites mémoire.
+ */
+function withTimeout(ms: number): { signal: AbortSignal; clear: () => void } {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  return { signal: controller.signal, clear: () => clearTimeout(id) };
+}
+
+/** Tente de rafraîchir le token si le refreshToken existe en SecureStore. */
 async function tryRefreshToken(): Promise<string | null> {
+  const { signal, clear } = withTimeout(REFRESH_TIMEOUT_MS);
   try {
     const refreshToken = await SecureStore.getItemAsync(AUTH_REFRESH_TOKEN_KEY);
     if (!refreshToken) return null;
@@ -15,6 +32,7 @@ async function tryRefreshToken(): Promise<string | null> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
+      signal,
     });
 
     if (!res.ok) return null;
@@ -28,7 +46,6 @@ async function tryRefreshToken(): Promise<string | null> {
 
     if (!newAccessToken) return null;
 
-    // Met à jour SecureStore et le store Zustand
     await SecureStore.setItemAsync(AUTH_ACCESS_TOKEN_KEY, newAccessToken);
     if (newRefreshToken) {
       await SecureStore.setItemAsync(AUTH_REFRESH_TOKEN_KEY, newRefreshToken);
@@ -38,22 +55,23 @@ async function tryRefreshToken(): Promise<string | null> {
     return newAccessToken;
   } catch {
     return null;
+  } finally {
+    clear();
   }
 }
 
 export async function apiFetch<T>(
   endpoint: string,
-  options?: RequestInit & { skipAuth?: boolean }
+  options?: RequestInit & { skipAuth?: boolean },
 ): Promise<T> {
   let token = useStore.getState().token;
 
-  // Debug : log si le token est absent (uniquement pour les endpoints auth requis)
   if (!token && !options?.skipAuth) {
-    console.warn('[apiFetch] ⚠️ token absent dans le store pour', endpoint);
-    // Tentative de récupération depuis SecureStore directement
+    if (__DEV__) {
+      console.warn('[apiFetch] token absent dans le store pour', endpoint);
+    }
     const stored = await SecureStore.getItemAsync(AUTH_ACCESS_TOKEN_KEY);
     if (stored) {
-      console.log('[apiFetch] token récupéré depuis SecureStore');
       token = stored;
       useStore.setState({ token: stored });
     }
@@ -68,25 +86,52 @@ export async function apiFetch<T>(
     return h;
   };
 
-  let res = await fetch(`${API_URL}${endpoint}`, {
+  // Utilise le signal passé par TanStack Query (annulation) ou un timeout local.
+  // Si TanStack Query fournit un signal, on l'utilise directement ; le timeout
+  // local est quand même armé pour les appels hors Query (ex. authSlice.loadToken).
+  const callerSignal = options?.signal as AbortSignal | undefined;
+  const { signal: timeoutSignal, clear } = withTimeout(DEFAULT_TIMEOUT_MS);
+
+  // Combine les deux signaux si les deux sont présents.
+  const signal = callerSignal
+    ? AbortSignal.any
+      ? AbortSignal.any([callerSignal, timeoutSignal])
+      : timeoutSignal
+    : timeoutSignal;
+
+  const fetchOptions: RequestInit = {
     ...options,
     headers: buildHeaders(token),
-  });
+    signal,
+  };
 
-  // Si 401, on tente un refresh automatique et on relance une fois
-  // (seulement pour les endpoints auth requis)
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+  } finally {
+    clear();
+  }
+
   if (res.status === 401 && !options?.skipAuth) {
-    console.warn('[apiFetch] 401 reçu, tentative de refresh du token...');
+    if (__DEV__) {
+      console.warn('[apiFetch] 401 — tentative de refresh');
+    }
     const newToken = await tryRefreshToken();
     if (newToken) {
-      console.log('[apiFetch] token rafraîchi, nouvelle tentative...');
-      res = await fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers: buildHeaders(newToken),
-      });
+      const { signal: retrySignal, clear: clearRetry } = withTimeout(DEFAULT_TIMEOUT_MS);
+      try {
+        res = await fetch(`${API_URL}${endpoint}`, {
+          ...fetchOptions,
+          headers: buildHeaders(newToken),
+          signal: retrySignal,
+        });
+      } finally {
+        clearRetry();
+      }
     } else {
-      // Refresh impossible → déconnexion propre
-      console.error('[apiFetch] refresh échoué → déconnexion');
+      if (__DEV__) {
+        console.warn('[apiFetch] refresh échoué — déconnexion');
+      }
       useStore.getState().logout();
     }
   }
@@ -98,7 +143,9 @@ export async function apiFetch<T>(
     } catch {
       // réponse non JSON
     }
-    console.error(`[apiFetch] Erreur ${res.status} sur ${endpoint}:`, err);
+    if (__DEV__) {
+      console.error(`[apiFetch] ${res.status} ${endpoint}`, err);
+    }
     throw new Error(err.error ?? `Erreur ${res.status}`);
   }
 
