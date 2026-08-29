@@ -10,20 +10,10 @@
  * servi par l'API) et jamais d'un paramètre d'URL.
  */
 
-/** Seuil de sous-total à partir duquel la livraison est offerte. */
-export const SEUIL_LIVRAISON_OFFERTE = 2000;
-
-/** Frais d'emballage, appliqués quel que soit le mode de commande. */
-export const FRAIS_EMBALLAGE = 200;
-
 export interface DetailPanier {
   sousTotal: number;
   fraisLivraison: number;
-  fraisEmballage: number;
-  livraisonOfferte: boolean;
   total: number;
-  /** Montant restant à ajouter pour bénéficier de la livraison offerte. */
-  resteAvantLivraisonOfferte: number;
 }
 
 export function calculerDetailPanier({
@@ -36,23 +26,12 @@ export function calculerDetailPanier({
   modeLivraison?: boolean;
 }): DetailPanier {
   const livraisonApplicable = modeLivraison && sousTotal > 0;
-  const livraisonOfferte =
-    livraisonApplicable && sousTotal >= SEUIL_LIVRAISON_OFFERTE;
-
   const fraisLivraison =
-    !livraisonApplicable || livraisonOfferte ? 0 : fraisLivraisonBase;
-
-  const fraisEmballage = sousTotal > 0 ? FRAIS_EMBALLAGE : 0;
+    livraisonApplicable ? fraisLivraisonBase : 0;
 
   return {
     sousTotal,
     fraisLivraison,
-    fraisEmballage,
-    livraisonOfferte,
-    total: sousTotal + fraisLivraison + fraisEmballage,
-    resteAvantLivraisonOfferte: Math.max(
-      0,
-      SEUIL_LIVRAISON_OFFERTE - sousTotal,
-    ),
+    total: sousTotal + fraisLivraison,
   };
 }

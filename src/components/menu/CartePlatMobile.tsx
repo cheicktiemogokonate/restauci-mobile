@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { MAX_ITEM_QUANTITY } from "@/domain/checkout";
 import { formatPrix } from "@/lib/format";
 import { useStore } from "@/store";
 import type { Plat } from "@/types";
@@ -40,6 +41,7 @@ export const CartePlatMobile: React.FC<CartePlatMobileProps> = ({
   }, [onRetirer, plat.id]);
 
   const estIndisponible = !plat.disponible;
+  const quantiteMaxAtteinte = quantite >= MAX_ITEM_QUANTITY;
 
   return (
     <Card
@@ -106,9 +108,12 @@ export const CartePlatMobile: React.FC<CartePlatMobileProps> = ({
                 {quantite}
               </Text>
               <TouchableOpacity
-                className="w-9 h-9 rounded-full bg-brand-900 justify-center items-center"
+                className={`w-9 h-9 rounded-full bg-brand-900 justify-center items-center ${quantiteMaxAtteinte ? "opacity-40" : ""}`}
                 onPress={handleAdd}
+                disabled={quantiteMaxAtteinte}
                 activeOpacity={0.7}
+                accessibilityLabel="Ajouter une unité"
+                accessibilityState={{ disabled: quantiteMaxAtteinte }}
               >
                 <Text className="text-lg font-bold text-white leading-5">
                   +

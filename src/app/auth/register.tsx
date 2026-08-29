@@ -1,9 +1,11 @@
 import { ENDPOINTS } from "@/constants/api";
+import { resolveAuthRedirect } from "@/domain/authRedirect";
 import { apiFetch } from "@/lib/api";
+import { authDataSchema, parseApiSuccess } from "@/lib/apiValidation";
 import { useStore } from "@/store";
 import type { AuthResponse } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import {
   ChevronDown,
   Eye,
@@ -36,7 +38,7 @@ const registerSchema = z
       .string()
       .regex(/^[0-9\s]{8,20}$/, "Numéro de téléphone invalide"),
     email: z.string().email("Email invalide").optional().or(z.literal("")),
-    password: z.string().min(6, "6 caractères minimum").max(100),
+    password: z.string().min(8, "8 caractères minimum").max(100),
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -64,6 +66,10 @@ export default function RegisterScreen() {
 
   const setClient = useStore((s) => s.setClient);
   const router = useRouter();
+  const { redirectTo, resumeCheckout } = useLocalSearchParams<{
+    redirectTo?: string;
+    resumeCheckout?: string;
+  }>();
   const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -82,20 +88,36 @@ export default function RegisterScreen() {
         nom: data.nom,
         telephone: telephoneComplet,
         password: data.password,
+        tokenTransport: "json",
       };
       if (data.email) body.email = data.email;
 
-      const response = await apiFetch<AuthResponse>(
-        ENDPOINTS.authClientRegister,
-        {
-          method: "POST",
-          body: JSON.stringify(body),
-        },
+      const payload = await apiFetch<unknown>(ENDPOINTS.authClientRegister, {
+        method: "POST",
+        body: JSON.stringify(body),
+        skipAuth: true,
+      });
+      const response = parseApiSuccess<AuthResponse["data"]>(
+        payload,
+        authDataSchema,
+        "auth/register",
       );
 
       const { client, tokens } = response.data;
-      setClient(client, tokens.accessToken, tokens.refreshToken);
-      router.replace("/(tabs)");
+      await setClient(client, tokens.accessToken, tokens.refreshToken);
+      const destination = resolveAuthRedirect(redirectTo);
+
+      if (
+        destination === "/panier" &&
+        resumeCheckout === "1"
+      ) {
+        router.replace({
+          pathname: "/panier",
+          params: { resumeCheckout: "1" },
+        });
+      } else {
+        router.replace(destination);
+      }
     } catch (error) {
       if (error instanceof Error) {
         setServerError(error.message);
@@ -123,7 +145,7 @@ export default function RegisterScreen() {
         <View className="items-center -mt-9">
           <View className="items-center justify-center h-28 w-full">
             <Image
-              source={require("@/assets/images/logo-toutci.png")}
+              source={require("@/assets/images/toutci-logo-transparent.png")}
               resizeMode="contain"
               style={{ width: "100%", height: "100%" }}
             />
@@ -361,7 +383,19 @@ export default function RegisterScreen() {
           {/* Se connecter */}
           <View className="items-center mt-8 mb-14">
             <Text className="text-gray-500">Vous avez déjà un compte ?</Text>
-            <Link href="/auth/login">
+            <Link
+              href={{
+                pathname: "/auth/login",
+                params: {
+                  redirectTo:
+                    typeof redirectTo === "string" ? redirectTo : undefined,
+                  resumeCheckout:
+                    typeof resumeCheckout === "string"
+                      ? resumeCheckout
+                      : undefined,
+                },
+              }}
+            >
               <Text className="text-brand-700 font-semibold mt-1">
                 Se connecter
               </Text>

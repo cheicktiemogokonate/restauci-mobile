@@ -1,13 +1,23 @@
-import { useStore } from "@/store";
-import { selectNombreArticles } from "@/store/selectors";
 import { Tabs } from "expo-router";
-import { List, Map, ShoppingBag, User } from "lucide-react-native";
-import { useCallback } from "react";
+import { BedDouble, Map, ShoppingBag, User } from "lucide-react-native";
+import { useCallback, type ComponentProps } from "react";
 import { StatusBar, Text, TouchableOpacity, View } from "react-native";
 import Animated, { LinearTransition } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-function CustomTabBar({ state, descriptors, navigation }: any) {
+type TabsProps = ComponentProps<typeof Tabs>;
+type CustomTabBarProps = Parameters<NonNullable<TabsProps["tabBar"]>>[0];
+
+const ALLOWED_TAB_ROUTES = new Set([
+  "index",
+  "commandes",
+  "commandes/index",
+  "residences",
+  "residences/index",
+  "profil",
+]);
+
+function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -15,8 +25,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
       style={{
         position: "absolute",
         bottom: insets.bottom > 0 ? insets.bottom : 20,
-        left: 20,
-        right: 20,
+        left: 50,
+        right: 50,
         flexDirection: "row",
         backgroundColor: "#f9fafb",
         borderRadius: 40,
@@ -30,17 +40,16 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         elevation: 8,
       }}
     >
-      {state.routes.map((route: any, index: any) => {
+      {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
 
         // Seuls ces écrans apparaîtront dans la tab bar
-        const allowedRoutes = ["index", "commandes/index", "panier", "profil"];
-        if (!allowedRoutes.includes(route.name)) {
+        if (!ALLOWED_TAB_ROUTES.has(route.name)) {
           return null;
         }
 
         const label =
-          options.tabBarLabel !== undefined
+          typeof options.tabBarLabel === "string"
             ? options.tabBarLabel
             : options.title !== undefined
               ? options.title
@@ -73,7 +82,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             accessibilityRole="button"
             accessibilityState={isFocused ? { selected: true } : {}}
             accessibilityLabel={options.tabBarAccessibilityLabel}
-            testID={options.tabBarTestID}
+            testID={options.tabBarButtonTestID}
             onPress={onPress}
             onLongPress={onLongPress}
             style={{ flex: isFocused ? 1 : 0.6, alignItems: "center" }}
@@ -95,10 +104,10 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             >
               {options.tabBarIcon
                 ? options.tabBarIcon({
-                    focused: isFocused,
-                    color: isFocused ? "#ffffff" : "#14532d",
-                    size: 20,
-                  })
+                  focused: isFocused,
+                  color: isFocused ? "#ffffff" : "#14532d",
+                  size: 20,
+                })
                 : null}
               {isFocused && (
                 <Animated.Text
@@ -146,12 +155,10 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 }
 
 export default function TabLayout() {
-  const nombre = useStore(selectNombreArticles);
-
   // Mémoriser la prop tabBar pour éviter de re-monter les écrans
   // (dont la carte) à chaque re-rendu déclenché par le store.
   const renderTabBar = useCallback(
-    (props: any) => <CustomTabBar {...props} />,
+    (props: CustomTabBarProps) => <CustomTabBar {...props} />,
     [],
   );
 
@@ -187,25 +194,17 @@ export default function TabLayout() {
           options={{
             title: "Commandes",
             tabBarIcon: ({ color, size }) => (
-              <List color={color} size={size} strokeWidth={2.5} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="panier"
-          options={{
-            title: "Panier",
-            tabBarBadge: nombre > 0 ? nombre : undefined,
-            tabBarIcon: ({ color, size }) => (
               <ShoppingBag color={color} size={size} strokeWidth={2.5} />
             ),
           }}
         />
         <Tabs.Screen
-          name="itineraire/[id]"
+          name="residences"
           options={{
-            title: "Itinéraire",
-            href: null,
+            title: "Séjours",
+            tabBarIcon: ({ color, size }) => (
+              <BedDouble color={color} size={size} strokeWidth={2.5} />
+            ),
           }}
         />
         <Tabs.Screen

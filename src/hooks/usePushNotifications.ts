@@ -1,87 +1,53 @@
+import { useStore } from "@/store";
 import { ENDPOINTS } from "@/constants/api";
 import { apiFetch } from "@/lib/api";
-import { useStore } from "@/store";
+import { storeExpoPushToken } from "@/lib/pushTokenStorage";
 import Constants from "expo-constants";
-import type { Notification, NotificationResponse } from "expo-notifications";
+import type { NotificationResponse } from "expo-notifications";
 import { router } from "expo-router";
-import * as SecureStore from "expo-secure-store";
-import { useCallback, useEffect } from "react";
-
-const DEVICE_TOKEN_KEY = "push_token";
-
-function getProjectId(): string | undefined {
-  return (
-    Constants.expoConfig?.extra?.eas?.projectId ??
-    Constants.easConfig?.projectId
-  );
-}
-
-export async function registerForPushNotificationsAsync(): Promise<
-  string | null
-> {
-  try {
-    const Notifications = await import("expo-notifications");
-    const { status: existingStatus } =
-      await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-
-    if (existingStatus !== "granted") {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-
-    if (finalStatus !== "granted") {
-      return null;
-    }
-
-    const projectId = getProjectId();
-    const { data: token } = await Notifications.getExpoPushTokenAsync(
-      projectId ? { projectId } : undefined,
-    );
-
-    if (token) {
-      await SecureStore.setItemAsync(DEVICE_TOKEN_KEY, token);
-    }
-
-    return token ?? null;
-  } catch {
-    return null;
-  }
-}
-
-export async function getStoredPushToken(): Promise<string | null> {
-  try {
-    return await SecureStore.getItemAsync(DEVICE_TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
-
-interface NotificationData {
-  commandeId?: string;
-  /** Certains backends envoient l'id sous la clé `id` ou `orderId`. */
-  id?: string;
-  orderId?: string;
-}
+import { useCallback, useEffect, useRef } from "react";
+import { Platform } from "react-native";
 
 export function usePushNotifications() {
-  const client = useStore((s) => s.client);
-
-  const handleNotification = useCallback(
-    (notification: Notification) => {},
-    [],
-  );
+  const isAuthLoading = useStore((s) => s.isLoading);
+  const clientId = useStore((s) => s.client?.id ?? null);
+  const accessToken = useStore((s) => s.token);
+  const lastHandledResponseId = useRef<string | null>(null);
+  const registeredOwnerRef = useRef<string | null>(null);
 
   const handleNotificationResponse = useCallback(
     (response: NotificationResponse) => {
-      const data = response.notification.request.content.data as
-        | NotificationData
-        | undefined;
+      // La navigation n'est disponible qu'après la restauration de la session.
+      // La réponse initiale sera relue lorsque `isAuthLoading` passera à false.
+      if (isAuthLoading) return;
 
-      // On accepte plusieurs clés possibles pour l'id de commande.
-      const commandeId = data?.commandeId ?? data?.id ?? data?.orderId;
+      const responseId = response.notification.request.identifier;
+      if (lastHandledResponseId.current === responseId) return;
+      lastHandledResponseId.current = responseId;
 
-      if (commandeId) {
+      const data = response.notification.request.content.data;
+
+      const linkType = data?.lienType;
+      const linkId = data?.lienId;
+      if (
+        clientId &&
+        linkType === "reservation_residence" &&
+        typeof linkId === "string" &&
+        linkId.trim()
+      ) {
+        router.push(`/reservations/${linkId}`);
+        return;
+      }
+
+      // Compatibilité avec les anciens et nouveaux payloads commande.
+      const rawCommandeId =
+        linkType === "commande" ? linkId : data?.commandeId ?? data?.id ?? data?.orderId;
+      const commandeId =
+        typeof rawCommandeId === "string" && rawCommandeId.trim()
+          ? rawCommandeId
+          : null;
+
+      if (clientId && commandeId) {
         // Route absolue Expo Router vers l'onglet commandes
         router.push(`/(tabs)/commandes/${commandeId}`);
       } else {
@@ -89,21 +55,17 @@ export function usePushNotifications() {
         router.push("/(tabs)/commandes");
       }
     },
-    [],
+    [clientId, isAuthLoading],
   );
 
   useEffect(() => {
-    let notificationListener: { remove: () => void } | null = null;
+    let isActive = true;
     let responseListener: { remove: () => void } | null = null;
-
-    registerForPushNotificationsAsync().then((token) => {
-      if (token && client) {
-        syncPushToken(token);
-      }
-    });
 
     import("expo-notifications")
       .then((Notifications) => {
+        if (!isActive) return;
+
         Notifications.setNotificationHandler({
           handleNotification: async () => ({
             shouldShowAlert: true,
@@ -114,39 +76,80 @@ export function usePushNotifications() {
           }),
         });
 
-        notificationListener =
-          Notifications.addNotificationReceivedListener(handleNotification);
-
         responseListener =
           Notifications.addNotificationResponseReceivedListener(
             handleNotificationResponse,
           );
+
+        const initialResponse = Notifications.getLastNotificationResponse();
+        if (initialResponse) {
+          handleNotificationResponse(initialResponse);
+        }
       })
       .catch(() => {
         // expo-notifications indisponible (ex. Expo Go sans build dev)
       });
 
     return () => {
-      notificationListener?.remove();
+      isActive = false;
       responseListener?.remove();
     };
-  }, [client, handleNotification, handleNotificationResponse]);
+  }, [handleNotificationResponse]);
 
   useEffect(() => {
-    if (!client) return;
-    getStoredPushToken().then((token) => {
-      if (token) syncPushToken(token);
-    });
-  }, [client]);
-}
+    if (isAuthLoading || !clientId || !accessToken) {
+      registeredOwnerRef.current = null;
+      return;
+    }
+    if (registeredOwnerRef.current === clientId) return;
 
-async function syncPushToken(token: string): Promise<void> {
-  try {
-    await apiFetch(ENDPOINTS.pushExpoRegister, {
-      method: "POST",
-      body: JSON.stringify({ expoToken: token }),
-    });
-  } catch {
-    // Ignore token sync errors in non-critical path
-  }
+    let cancelled = false;
+    void import("expo-notifications")
+      .then(async (Notifications) => {
+        const projectId =
+          Constants.expoConfig?.extra?.eas?.projectId ??
+          Constants.easConfig?.projectId;
+        if (typeof projectId !== "string" || !projectId) {
+          throw new Error("ProjectId Expo manquant");
+        }
+
+        if (Platform.OS === "android") {
+          await Notifications.setNotificationChannelAsync("default", {
+            name: "Notifications ToutCi",
+            importance: Notifications.AndroidImportance.HIGH,
+          });
+        }
+
+        const current = await Notifications.getPermissionsAsync();
+        const permission =
+          current.status === "granted"
+            ? current
+            : await Notifications.requestPermissionsAsync();
+        if (permission.status !== "granted" || cancelled) return;
+
+        const expoToken = (
+          await Notifications.getExpoPushTokenAsync({ projectId })
+        ).data;
+        if (cancelled) return;
+
+        await apiFetch(ENDPOINTS.clientPushExpo, {
+          method: "POST",
+          body: JSON.stringify({ expoToken }),
+        });
+        await storeExpoPushToken(expoToken);
+        if (!cancelled) registeredOwnerRef.current = clientId;
+      })
+      .catch((error: unknown) => {
+        if (__DEV__ && !cancelled) {
+          console.warn(
+            "[push] Enregistrement Expo différé",
+            error instanceof Error ? error.message : "Erreur inconnue",
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, clientId, isAuthLoading]);
 }

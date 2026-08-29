@@ -1,11 +1,6 @@
 import * as ExpoLocation from "expo-location";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-// ============================================
-// Flag de test — forcer les coordonnées par défaut
-// ============================================
-const TEST_MODE = true; // 🧪 Mettre à false en production
-
 export const DEFAULT_ZOOM = 13;
 export const RESTAURANT_DETAIL_ZOOM = 15;
 
@@ -21,18 +16,37 @@ interface UsePositionReturn {
   coords: Coords;
   loading: boolean;
   error: Error | null;
-  recentrer: () => void;
+  recentrer: () => Promise<Coords | null>;
 }
 
 export const DEFAULT_COORDS: Coords = {
-  latitude: 5.3599,
-  longitude: -4.0083, // Centre d'Abidjan
+  latitude: 7.6906,
+  longitude: -5.0305, // Centre de Bouaké, ville de lancement.
 };
+
+const LOCATION_TIMEOUT_MS = 10_000;
+
+async function withLocationTimeout<T>(promise: Promise<T>): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(
+      () => reject(new Error("La localisation prend trop de temps.")),
+      LOCATION_TIMEOUT_MS,
+    );
+  });
+
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
 
 export function usePosition(): UsePositionReturn {
   const [coords, setCoords] = useState<Coords>(DEFAULT_COORDS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const requestIdRef = useRef(0);
 
   const requestPermission = useCallback(async () => {
     const { status: existingStatus } =
@@ -44,75 +58,87 @@ export function usePosition(): UsePositionReturn {
     return existingStatus;
   }, []);
 
-  // Garder une référence stable de requestPermission pour éviter
-  // de recréer fetchPosition à chaque rendu.
-  const requestPermissionRef = useRef(requestPermission);
-  useEffect(() => {
-    requestPermissionRef.current = requestPermission;
-  });
-
-  const fetchPosition = useCallback(async () => {
+  const fetchPosition = useCallback(async (): Promise<Coords | null> => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
 
-    // 🧪 En mode test, forcer les coordonnées par défaut (Abidjan)
-    if (TEST_MODE) {
-      setCoords(DEFAULT_COORDS);
-      setLoading(false);
-      return;
-    }
-
     try {
-      const serviceEnabled = await ExpoLocation.getProviderStatusAsync().then(
-        (status) => status.locationServicesEnabled,
+      const providerStatus = await withLocationTimeout(
+        ExpoLocation.getProviderStatusAsync(),
       );
 
-      if (!serviceEnabled) {
-        setLoading(false);
-        // Fallback silently to Abidjan
-        return;
+      if (!providerStatus.locationServicesEnabled) {
+        throw new Error(
+          "Activez la localisation de votre appareil pour voir les établissements autour de vous.",
+        );
       }
 
-      const permissionResult = await requestPermissionRef.current();
+      const permissionResult = await requestPermission();
 
       if (permissionResult !== "granted") {
-        setLoading(false);
-        // Fallback silently to Abidjan
-        return;
+        throw new Error(
+          "Autorisez ToutCi à accéder à votre position dans les réglages de l’appareil.",
+        );
       }
 
       let location: ExpoLocation.LocationObject | null = null;
 
       try {
-        location = await ExpoLocation.getCurrentPositionAsync({
-          accuracy: ExpoLocation.Accuracy.Balanced,
-        });
+        location = await withLocationTimeout(
+          ExpoLocation.getCurrentPositionAsync({
+            accuracy: ExpoLocation.Accuracy.Balanced,
+          }),
+        );
       } catch {
-        // Fallback: last known position (useful on emulators)
-        location = await ExpoLocation.getLastKnownPositionAsync();
+        // Une position récente en cache garde l'app utilisable sur réseau/GPS lent.
+        location = await ExpoLocation.getLastKnownPositionAsync({
+          maxAge: 5 * 60_000,
+          requiredAccuracy: 5_000,
+        });
       }
 
-      if (location?.coords) {
-        setCoords({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        });
-      } else {
-        // Fallback to Abidjan
+      if (!location?.coords) {
+        throw new Error(
+          "Votre position est indisponible pour le moment. Réessayez dans quelques instants.",
+        );
       }
-    } catch {
-      // Fallback silently to Abidjan on error
+
+      const nextCoords = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+
+      if (requestId === requestIdRef.current) {
+        setCoords(nextCoords);
+      }
+      return nextCoords;
+    } catch (cause) {
+      if (requestId === requestIdRef.current) {
+        setError(
+          cause instanceof Error
+            ? cause
+            : new Error("La localisation est indisponible."),
+        );
+      }
+      return null;
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
-  // Dépendances vides — on utilise requestPermissionRef pour éviter
-  // que fetchPosition soit recréée et relance un effet à chaque rendu.
-  }, []);
+  }, [requestPermission]);
 
   // Initial fetch on mount
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchPosition();
+    const frame = requestAnimationFrame(() => {
+      void fetchPosition();
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      // Ignore la résolution tardive d'une permission/position après démontage.
+      requestIdRef.current += 1;
+    };
   }, [fetchPosition]);
 
   return {

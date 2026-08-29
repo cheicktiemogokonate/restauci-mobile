@@ -12,46 +12,69 @@ export const FILTRES: {
   label: string;
   Icon: typeof ClipboardList;
 }[] = [
-  { key: "toutes", label: "Toutes", Icon: ClipboardList },
-  { key: "en_cours", label: "En cours", Icon: Clock },
-  { key: "livrees", label: "Livrées", Icon: CheckCircle2 },
-  { key: "annulees", label: "Annulées", Icon: XCircle },
-];
+    { key: "toutes", label: "Toutes", Icon: ClipboardList },
+    { key: "en_cours", label: "En cours", Icon: Clock },
+    { key: "livrees", label: "Livrées", Icon: CheckCircle2 },
+    { key: "annulees", label: "Annulées", Icon: XCircle },
+  ];
+
+export const FILTRES_HISTORIQUE = FILTRES.filter(
+  ({ key }) => key !== "en_cours",
+);
 
 interface CommandeFiltresProps {
   filtreActif: Filtre;
   onSelectFiltre: (filtre: Filtre) => void;
+  filtres?: typeof FILTRES;
 }
 
 export function CommandeFiltres({
   filtreActif,
   onSelectFiltre,
+  filtres = FILTRES,
 }: CommandeFiltresProps) {
   return (
     <FlatList
       horizontal
-      data={FILTRES}
+      data={filtres}
       keyExtractor={(f) => f.key}
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+      contentContainerStyle={{
+        paddingHorizontal: 20,
+        gap: 8,
+        alignItems: "center",
+      }}
       style={{
         flexGrow: 0,
+        overflow: "visible",
         marginTop: 12,
         marginBottom: 6,
-        paddingHorizontal: 4,
       }}
       renderItem={({ item: f }) => {
         const estActif = filtreActif === f.key;
         return (
           <TouchableOpacity
             onPress={() => onSelectFiltre(f.key)}
-            className={`flex-row items-center rounded-full px-5 py-3 justify-center ${estActif ? "bg-green-900" : "bg-gray-100"}`}
+            activeOpacity={0.7}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 999,
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+              backgroundColor: estActif ? "#14532d" : "#f3f4f6",
+            }}
           >
             <f.Icon size={15} color={estActif ? "#FFFFFF" : "#4B5563"} />
             <Text
-              className={`ml-2 -mt-1.5 font-semibold text-sm ${
-                estActif ? "text-white" : "text-gray-600"
-              }`}
+              style={{
+                marginLeft: 6,
+                fontWeight: "600",
+                fontSize: 13,
+                lineHeight: 16,
+                color: estActif ? "#FFFFFF" : "#4B5563",
+              }}
             >
               {f.label}
             </Text>

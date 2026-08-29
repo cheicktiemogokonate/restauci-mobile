@@ -10,7 +10,7 @@ import type { Plat } from "@/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useMemo, useRef } from "react";
-import { Linking, Platform, ScrollView, View } from "react-native";
+import { Alert, Linking, Platform, ScrollView, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
 export default function RestaurantScreen() {
@@ -68,7 +68,12 @@ export default function RestaurantScreen() {
       android: `geo:0,0?q=${latitude},${longitude}(${encodeURIComponent(nom)})`,
     });
     if (url) {
-      Linking.openURL(url).catch(() => {});
+      Linking.openURL(url).catch(() => {
+        Alert.alert(
+          "Itinéraire indisponible",
+          "Aucune application de cartographie ne peut ouvrir cet itinéraire.",
+        );
+      });
     }
   }, [restaurant]);
 

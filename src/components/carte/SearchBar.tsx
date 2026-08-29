@@ -6,7 +6,13 @@ import {
   type TypeEtablissement,
 } from "@/types/etablissement";
 import { Search } from "lucide-react-native";
-import React, { useCallback, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   FlatList,
   ScrollView,
@@ -20,12 +26,18 @@ import {
 // Composant SearchBar — recherche géographique
 // ============================================
 interface SearchBarProps {
-  onSelectSuggestion: (lat: number, lon: number) => void;
+  onSelectSuggestion: (
+    lat: number,
+    lon: number,
+    restaurantId?: string,
+  ) => void;
   onFilterChange?: (cuisine: string | null) => void;
   /** Catégories de cuisine réellement présentes autour de l'utilisateur. */
   cuisines?: string[];
+  selectedCuisine?: string | null;
   /** Réservé aux verticales à venir (résidences, événements). */
   typeEtablissement?: TypeEtablissement;
+  topOffset?: number;
 }
 
 type CombinedSuggestion =
@@ -37,22 +49,40 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   onSelectSuggestion,
   onFilterChange,
   cuisines = [],
+  selectedCuisine = null,
   typeEtablissement = TYPE_ETABLISSEMENT_DEFAUT,
+  topOffset = 56,
 }) => {
   const libelles = LIBELLES_TYPE_ETABLISSEMENT[typeEtablissement];
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedCuisine, setSelectedCuisine] = useState<string | null>(null);
 
-  const { data: geoSuggestions, isLoading: geoLoading } = useGeoSearch(query);
-  const { data: restaurantSuggestions, isLoading: restaurantLoading } = useRestaurantSearch(query, selectedCuisine);
+  const {
+    data: geoSuggestions,
+    error: geoError,
+    isLoading: geoLoading,
+  } = useGeoSearch(query);
+  const {
+    data: restaurantSuggestions,
+    error: restaurantError,
+    isLoading: restaurantLoading,
+  } = useRestaurantSearch(query, selectedCuisine);
 
   const isLoading = geoLoading || restaurantLoading;
+  const hasSearchError = Boolean(geoError || restaurantError);
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const suggestions: CombinedSuggestion[] = [
     ...(restaurantSuggestions || []),
     ...(geoSuggestions || []).map((s) => ({ ...s, type: "geo" as const })),
   ];
+  const cuisineOptions = useMemo(
+    () =>
+      selectedCuisine && !cuisines.includes(selectedCuisine)
+        ? [selectedCuisine, ...cuisines]
+        : cuisines,
+    [cuisines, selectedCuisine],
+  );
 
   const handleChangeText = useCallback((text: string) => {
     setQuery(text);
@@ -61,7 +91,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   const handleSelect = useCallback(
     (item: CombinedSuggestion) => {
-      onSelectSuggestion(item.lat, item.lon);
+      onSelectSuggestion(
+        item.lat,
+        item.lon,
+        item.type === "restaurant" ? item.id : undefined,
+      );
       setQuery(item.label);
       setShowSuggestions(false);
     },
@@ -70,21 +104,31 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   const handleSelectCategory = useCallback((category: string) => {
     const newCategory = selectedCuisine === category ? null : category;
-    setSelectedCuisine(newCategory);
     if (onFilterChange) {
       onFilterChange(newCategory);
     }
   }, [selectedCuisine, onFilterChange]);
 
   const handleBlur = useCallback(() => {
-    setTimeout(() => setShowSuggestions(false), 200);
+    blurTimeoutRef.current = setTimeout(() => setShowSuggestions(false), 200);
   }, []);
 
   const handleFocus = useCallback(() => {
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
     if (query.trim().length > 2) {
       setShowSuggestions(true);
     }
   }, [query]);
+
+  useEffect(
+    () => () => {
+      if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+    },
+    [],
+  );
 
   const renderItem = useCallback(
     ({ item }: { item: CombinedSuggestion }) => (
@@ -106,7 +150,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   return (
     <View
-      style={{ position: "absolute", top: 56, left: 16, right: 16, zIndex: 10 }
+      style={{ position: "absolute", top: topOffset, left: 16, right: 16, zIndex: 10 }
       }
     >
       <View className="flex-row items-center bg-white rounded-2xl px-3 h-12 shadow-md">
@@ -121,13 +165,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           onFocus={handleFocus}
           returnKeyType="search"
           clearButtonMode="while-editing"
+          maxLength={200}
         />
       </View>
 
-      {cuisines.length > 0 && (
+      {cuisineOptions.length > 0 && (
       <View className="mt-2">
         <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          {cuisines.map((category) => {
+          {cuisineOptions.map((category) => {
             const isSelected = selectedCuisine === category;
             return (
               <TouchableOpacity
@@ -151,7 +196,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         <View className="bg-white rounded-2xl mt-1 max-h-48 shadow-md overflow-hidden">
           <FlatList
             data={suggestions}
-            keyExtractor={(item, index) => `${item.label}-${index}`}
+            keyExtractor={(item) =>
+              item.type === "restaurant"
+                ? `restaurant-${item.id}`
+                : `geo-${item.lat}-${item.lon}-${item.label}`
+            }
             renderItem={renderItem}
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled
@@ -168,7 +217,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           <View className="bg-white rounded-2xl mt-1 shadow-md overflow-hidden">
             <View className="px-3.5 py-3">
               <Text className="text-sm text-ink-400 text-center">
-                Aucun résultat
+                {hasSearchError
+                  ? "Recherche momentanément indisponible"
+                  : "Aucun résultat"}
               </Text>
             </View>
           </View>

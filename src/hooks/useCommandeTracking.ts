@@ -2,9 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { useStore } from "@/store";
 
+import { ENDPOINTS } from "@/constants/api";
+import { isTerminalOrderStatus } from "@/domain/orderStatus";
+import { commandeDetailSchema, parseApiSuccess } from "@/lib/apiValidation";
 import type { CommandeDetail } from "@/types";
 
-const STATUTS_TERMINAUX = new Set(["servie", "annulee"]);
 const POLL_INTERVAL_MS = 5000;
 
 /**
@@ -13,16 +15,27 @@ const POLL_INTERVAL_MS = 5000;
  */
 export function useCommandeTracking(commandeId: string | null) {
   const token = useStore((s) => s.token);
+  const clientId = useStore((s) => s.client?.id);
+
   const query = useQuery<CommandeDetail>({
-    queryKey: ["commande-tracking", commandeId],
-    queryFn: async () => {
-      const response = await apiFetch<any>(`/api/v1/client/commandes/${commandeId}`);
-      return response.data as CommandeDetail;
+    queryKey: ["commande-tracking", clientId, commandeId],
+    queryFn: async ({ signal }) => {
+      const payload = await apiFetch<unknown>(
+        ENDPOINTS.clientCommande(commandeId!),
+        { signal },
+      );
+      const response = parseApiSuccess<CommandeDetail>(
+        payload,
+        commandeDetailSchema,
+        "commandes/detail",
+      );
+      return response.data;
     },
-    enabled: !!commandeId && !!token,
+    enabled: !!commandeId && !!token && !!clientId,
     refetchInterval: (query) => {
+      if (query.state.status === "error") return false;
       const statut = query.state.data?.statut;
-      if (statut && STATUTS_TERMINAUX.has(statut)) return false;
+      if (statut && isTerminalOrderStatus(statut)) return false;
       return POLL_INTERVAL_MS;
     },
   });

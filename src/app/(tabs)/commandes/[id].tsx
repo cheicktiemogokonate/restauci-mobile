@@ -1,21 +1,23 @@
 import { Button } from "@/components/ui/button";
 import { Text as ButtonText } from "@/components/ui/text";
 import { useCommandeTracking } from "@/hooks/useCommandeTracking";
+import { useRetryCommandePayment } from "@/hooks/useRetryCommandePayment";
+import { getOrderStatusLabel } from "@/domain/orderStatus";
 import { formatPrix } from "@/lib/format";
+import { useStore } from "@/store";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
   AlertCircle,
   Check,
   ChevronLeft,
   CircleCheckBig,
-  Headphones,
   ShoppingBag,
-  Smile,
   Truck,
 } from "lucide-react-native";
 import React from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Linking,
   Pressable,
@@ -24,14 +26,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const STATUT_LABELS: Record<string, string> = {
-  recue: "Commande reçue",
-  en_preparation: "En préparation",
-  prete: "Prête pour la livraison",
-  servie: "Livrée",
-  annulee: "Annulée",
-};
 
 const STATUT_ICONS: Record<string, typeof Check> = {
   recue: Check,
@@ -43,16 +37,41 @@ const STATUT_ICONS: Record<string, typeof Check> = {
 export default function CommandeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const client = useStore((state) => state.client);
   const { commande, isLoading, error } = useCommandeTracking(
     id ?? null,
   );
-
-  const appelerSupport = () => Linking.openURL("tel:+2250700000000");
+  const retryPayment = useRetryCommandePayment();
 
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-white justify-center items-center">
         <ActivityIndicator size="large" color="#166534" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!client) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-white px-8">
+        <ShoppingBag size={40} color="#9CA3AF" />
+        <Text className="mt-4 text-lg font-bold text-black">
+          Connexion requise
+        </Text>
+        <Text className="mt-2 mb-6 text-center text-gray-500">
+          Connectez-vous pour consulter cette commande.
+        </Text>
+        <Button
+          className="px-6 py-4"
+          onPress={() =>
+            router.push({
+              pathname: "/auth/login",
+              params: { redirectTo: `/(tabs)/commandes/${id}` },
+            })
+          }
+        >
+          <ButtonText className="font-bold text-white">Se connecter</ButtonText>
+        </Button>
       </SafeAreaView>
     );
   }
@@ -75,7 +94,7 @@ export default function CommandeDetailScreen() {
   }
 
   const estAnnulee = commande.estAnnulee;
-  const statutLabel = STATUT_LABELS[commande.statut] ?? commande.statut;
+  const statutLabel = getOrderStatusLabel(commande.statut, "detail");
   const dateFormatee = new Date(commande.createdAt).toLocaleDateString(
     "fr-FR",
     { day: "2-digit", month: "long", year: "numeric" },
@@ -85,9 +104,6 @@ export default function CommandeDetailScreen() {
     { hour: "2-digit", minute: "2-digit" },
   );
   const totalFormate = formatPrix(commande.total);
-
-  // Le livreur n'est présent que si le backend l'a assigné (mode livraison, commande prise en charge)
-  // const livreur = commande.livreur;
 
   return (
     <>
@@ -103,24 +119,15 @@ export default function CommandeDetailScreen() {
             <ChevronLeft size={26} color="#111111" />
           </Pressable>
 
-          <View className="flex-row items-center">
-            <Text className="text-green-900 text-xl font-extrabold tracking-tight">
-              Restau
-            </Text>
-            <Text className="text-green-800 text-xl font-extrabold">C</Text>
-            <Text className="text-green-900 text-xl font-extrabold tracking-tight">
-              i
-            </Text>
+          <View className="items-center justify-center h-16 w-40 ">
+            <Image
+              source={require("@/assets/images/toutci-logo-transparent.png")}
+              resizeMode="contain"
+              style={{ width: "100%", height: "100%" }}
+            />
           </View>
 
-          <Pressable
-            className="flex-row items-center"
-            hitSlop={10}
-            onPress={appelerSupport}
-          >
-            <Headphones size={18} color="#166534" />
-            <Text className="text-green-800 font-medium ml-1">Aide</Text>
-          </Pressable>
+          <View className="w-9" />
         </View>
 
         <ScrollView
@@ -165,6 +172,28 @@ export default function CommandeDetailScreen() {
             </View>
           )}
 
+          {commande.statut === "en_attente_paiement" && commande.payment ? (
+            <View className="mt-4 rounded-3xl border border-amber-200 bg-amber-50 p-5">
+              <Text className="text-lg font-bold text-ink-900">Paiement requis</Text>
+              <Text className="mt-1 text-sm leading-5 text-ink-600">
+                Votre commande reste réservée mais ne sera transmise au restaurant qu’après confirmation du paiement.
+              </Text>
+              <Button
+                className="mt-4"
+                disabled={retryPayment.isPending}
+                onPress={() => retryPayment.mutate(
+                  { id: commande.id, method: commande.payment!.method },
+                  {
+                    onSuccess: ({ authorizationUrl }) => void Linking.openURL(authorizationUrl).catch(() => Alert.alert("Lien indisponible", "Réessayez dans quelques instants.")),
+                    onError: (paymentError) => Alert.alert("Paiement impossible", paymentError.message),
+                  },
+                )}
+              >
+                {retryPayment.isPending ? <ActivityIndicator color="white" /> : <ButtonText>Reprendre le paiement</ButtonText>}
+              </Button>
+            </View>
+          ) : null}
+
           {/* Timeline horizontale, pilotée par les données réelles du hook */}
           {!estAnnulee && commande.timeline.length > 0 && (
             <View className="flex-row items-start mt-6 px-1">
@@ -176,9 +205,8 @@ export default function CommandeDetailScreen() {
                   <React.Fragment key={etape.etape}>
                     <View className="items-center" style={{ width: 64 }}>
                       <View
-                        className={`w-9 h-9 rounded-full items-center justify-center ${
-                          estAtteinte ? "bg-green-900" : "bg-gray-200"
-                        }`}
+                        className={`w-9 h-9 rounded-full items-center justify-center ${estAtteinte ? "bg-green-900" : "bg-gray-200"
+                          }`}
                       >
                         <Icon
                           size={16}
@@ -186,15 +214,16 @@ export default function CommandeDetailScreen() {
                         />
                       </View>
                       <Text
-                        className={`text-xs mt-2 text-center ${
-                          etape.actif
-                            ? "text-green-800 font-semibold"
-                            : etape.fait
-                              ? "text-black"
-                              : "text-gray-400"
-                        }`}
+                        className={`text-xs mt-2 text-center ${etape.actif
+                          ? "text-green-800 font-semibold"
+                          : etape.fait
+                            ? "text-black"
+                            : "text-gray-400"
+                          }`}
                       >
-                        {etape.label}
+                        {etape.etape === "en_route"
+                          ? "En route"
+                          : etape.label}
                       </Text>
                       {etape.timestamp && (
                         <Text className="text-[11px] text-gray-400 mt-1">
@@ -207,9 +236,8 @@ export default function CommandeDetailScreen() {
                     </View>
                     {index < commande.timeline.length - 1 && (
                       <View
-                        className={`flex-1 h-0.5 mt-4 ${
-                          etape.fait ? "bg-green-900" : "bg-gray-200"
-                        }`}
+                        className={`flex-1 h-0.5 mt-4 ${etape.fait ? "bg-green-900" : "bg-gray-200"
+                          }`}
                       />
                     )}
                   </React.Fragment>
@@ -217,48 +245,6 @@ export default function CommandeDetailScreen() {
               })}
             </View>
           )}
-
-          {/* Livreur partenaire — uniquement si assigné par le backend */}
-          {/* {!estAnnulee && livreur && (
-            <View className="border border-gray-100 rounded-3xl p-5 mt-8">
-              <Text className="text-lg font-bold text-black mb-4">
-                Livreur partenaire
-              </Text>
-              <View className="flex-row items-center">
-                <Image
-                  source={{ uri: livreur.photo }}
-                  style={{ width: 56, height: 56, borderRadius: 28 }}
-                />
-                <View className="flex-1 ml-3">
-                  <Text className="text-black font-semibold text-base">
-                    {livreur.nom}
-                  </Text>
-                  <View className="flex-row items-center mt-1">
-                    <Star size={14} color="#F5A623" fill="#F5A623" />
-                    <Text className="text-black ml-1">{livreur.note}</Text>
-                    <Text className="text-gray-400 ml-1">
-                      ({livreur.avis} avis)
-                    </Text>
-                  </View>
-                  <Text className="text-gray-400 text-sm mt-1">
-                    ID : {livreur.id}
-                  </Text>
-                </View>
-                <Pressable
-                  onPress={() => Linking.openURL(`tel:${livreur.telephone}`)}
-                  className="w-11 h-11 rounded-full bg-green-50 items-center justify-center mr-2"
-                >
-                  <Phone size={18} color="#166534" />
-                </Pressable>
-                <Pressable
-                  onPress={() => router.push(`/`)}
-                  className="w-11 h-11 rounded-full bg-green-900 items-center justify-center"
-                >
-                  <MessageCircle size={18} color="#FFFFFF" />
-                </Pressable>
-              </View>
-            </View>
-          )} */}
 
           {/* Détails de la commande */}
           <View className="border border-gray-100 rounded-3xl p-5 mt-8">
@@ -350,24 +336,6 @@ export default function CommandeDetailScreen() {
             </View>
           )}
 
-          {/* Bandeau avis — uniquement une fois la commande livrée */}
-          {commande.statut === "servie" && (
-            <Pressable
-              onPress={() => router.push(`/`)}
-              className="flex-row items-center bg-green-50 rounded-2xl p-4 mt-6"
-            >
-              <Smile size={26} color="#166534" />
-              <View className="flex-1 ml-3">
-                <Text className="text-black font-medium">
-                  Vous avez aimé notre service ?
-                </Text>
-                <Text className="text-gray-500 text-sm mt-1">
-                  Donnez votre avis sur votre expérience
-                </Text>
-              </View>
-            </Pressable>
-          )}
-
           {/* Actions */}
           <View className="mt-6 gap-3">
             <Button
@@ -375,25 +343,9 @@ export default function CommandeDetailScreen() {
               onPress={() => router.push("/(tabs)")}
             >
               <ButtonText className="text-white font-bold text-base">
-                Commander à nouveau
+                Explorer d’autres établissements
               </ButtonText>
             </Button>
-            {/* <TouchableOpacity
-              className="bg-gray-100 rounded-2xl py-4 items-center"
-              onPress={appelerSupport}
-            >
-              <Text className="text-gray-700 font-semibold text-base">
-                Contacter le support
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="bg-gray-100 rounded-2xl py-4 items-center"
-              onPress={() => router.push("/(tabs)/commandes")}
-            >
-              <Text className="text-gray-700 font-semibold text-base">
-                Mes autres commandes
-              </Text>
-            </TouchableOpacity> */}
           </View>
         </ScrollView>
       </SafeAreaView>

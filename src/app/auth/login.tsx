@@ -1,9 +1,11 @@
 import { ENDPOINTS } from "@/constants/api";
+import { resolveAuthRedirect } from "@/domain/authRedirect";
 import { apiFetch } from "@/lib/api";
+import { authDataSchema, parseApiSuccess } from "@/lib/apiValidation";
 import { useStore } from "@/store";
 import type { AuthResponse } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { ChevronDown, Eye, EyeOff, Lock } from "lucide-react-native";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -44,6 +46,10 @@ export default function LoginScreen() {
 
   const setClient = useStore((s) => s.setClient);
   const router = useRouter();
+  const { redirectTo, resumeCheckout } = useLocalSearchParams<{
+    redirectTo?: string;
+    resumeCheckout?: string;
+  }>();
   const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -57,17 +63,36 @@ export default function LoginScreen() {
       // Le champ ne contient que le numéro local, on préfixe l'indicatif ici
       const telephoneComplet = `+225${data.telephone.replace(/\s/g, "")}`;
 
-      const response = await apiFetch<AuthResponse>(ENDPOINTS.authClientLogin, {
+      const payload = await apiFetch<unknown>(ENDPOINTS.authClientLogin, {
         method: "POST",
         body: JSON.stringify({
           telephone: telephoneComplet,
           password: data.password,
+          tokenTransport: "json",
         }),
+        skipAuth: true,
       });
+      const response = parseApiSuccess<AuthResponse["data"]>(
+        payload,
+        authDataSchema,
+        "auth/login",
+      );
 
       const { client, tokens } = response.data;
-      setClient(client, tokens.accessToken, tokens.refreshToken);
-      router.replace("/(tabs)");
+      await setClient(client, tokens.accessToken, tokens.refreshToken);
+      const destination = resolveAuthRedirect(redirectTo);
+
+      if (
+        destination === "/panier" &&
+        resumeCheckout === "1"
+      ) {
+        router.replace({
+          pathname: "/panier",
+          params: { resumeCheckout: "1" },
+        });
+      } else {
+        router.replace(destination);
+      }
     } catch (error) {
       if (error instanceof Error) {
         setServerError(error.message);
@@ -100,7 +125,7 @@ export default function LoginScreen() {
         <View className="items-center -mt-9">
           <View className="items-center justify-center h-28 w-full">
             <Image
-              source={require("@/assets/images/logo-toutci.png")}
+              source={require("@/assets/images/toutci-logo-transparent.png")}
               resizeMode="contain"
               style={{ width: "100%", height: "100%" }}
             />
@@ -208,15 +233,6 @@ export default function LoginScreen() {
             </Text>
           )}
 
-          <Pressable
-            onPress={() => router.push("/")}
-            className="self-end mt-2 mb-2"
-          >
-            <Text className="text-green-800 font-medium">
-              Mot de passe oublié ?
-            </Text>
-          </Pressable>
-
           {serverError && (
             <View className="mt-2 mb-2 p-4 bg-red-50 rounded-2xl border border-red-200">
               <Text className="text-red-600 text-center">{serverError}</Text>
@@ -243,7 +259,19 @@ export default function LoginScreen() {
           {/* Créer un compte */}
           <View className="items-center mt-8 mb-14">
             <Text className="text-gray-500">Vous n&apos;avez pas de compte ?</Text>
-            <Link href="/auth/register">
+            <Link
+              href={{
+                pathname: "/auth/register",
+                params: {
+                  redirectTo:
+                    typeof redirectTo === "string" ? redirectTo : undefined,
+                  resumeCheckout:
+                    typeof resumeCheckout === "string"
+                      ? resumeCheckout
+                      : undefined,
+                },
+              }}
+            >
               <Text className="text-green-800 font-semibold mt-1">
                 Créer un compte
               </Text>

@@ -1,4 +1,3 @@
-import type { Restaurant } from "@/types";
 import { useMemo } from "react";
 import { useRestaurantsProches } from "./useRestaurantsProches";
 
@@ -25,7 +24,7 @@ export function useCuisinesDisponibles(
     if (!restaurants?.length) return [];
 
     const uniques = new Set<string>();
-    for (const r of restaurants as Restaurant[]) {
+    for (const r of restaurants) {
       for (const c of r.cuisines ?? []) {
         const label = c?.trim();
         if (label) uniques.add(label);

@@ -58,12 +58,8 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
     );
 
     const platsAffiches = useMemo(() => {
-      // 🔗 réintégrer `isPlatDisponible(plat, cat, creneaux)` quand l'API
-      // exposera les créneaux horaires (absents de docs/openapi.json à ce
-      // jour). Avec un tableau vide, l'appel retournait toujours `true` :
-      // c'était un filtre mort qui masquait l'absence de la donnée.
-      // En attendant, on s'appuie sur le seul champ réellement servi par
-      // l'API : `plat.disponible`.
+      // Le contrat mobile actuel expose directement `plat.disponible` et ne
+      // fournit pas les créneaux nécessaires à un second calcul local.
       let source: Categorie[] = visibleCategories;
       if (selectedCategory) {
         source = source.filter((c) => c.id === selectedCategory);
@@ -121,7 +117,6 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
           return;
         }
 
-        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         ajouterItem(
           {
             id: plat.id,
@@ -137,10 +132,7 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
     );
 
     const handleRetirer = useCallback(
-      async (platId: string) => {
-        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        retirerItem(platId);
-      },
+      (platId: string) => retirerItem(platId),
       [retirerItem],
     );
 
@@ -148,13 +140,13 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
       <BottomSheetModal
         ref={ref}
         snapPoints={["70%"]}
-        enableDynamicSizing={false} // 👈 ajoute cette ligne
+        enableDynamicSizing={false}
         enablePanDownToClose
         enableOverDrag={false}
         onDismiss={onClose}
         backgroundStyle={{ backgroundColor: "#ffffff" }}
         handleIndicatorStyle={{ backgroundColor: "#D1D5DB" }}
-        backdropComponent={(props) => (<CustomBackdrop {...props} />)}
+        backdropComponent={(props) => <CustomBackdrop {...props} />}
       >
         <Text className="text-xl text-center font-bold text-ink-900 mb-2">
           Menu {restaurant.nom}
@@ -170,12 +162,20 @@ export const MenuBottomSheet = forwardRef<BottomSheetModal, Props>(
           <View className="px-4 pb-8">
             <SkeletonCardList count={6} />
           </View>
-        ) : menuError || !categories.length ? (
+        ) : menuError ? (
           <View className="px-4 pb-8">
             <ErrorView
               message={menuError?.message}
               onRetry={refetchMenu}
               title="Menu indisponible"
+            />
+          </View>
+        ) : categories.length === 0 ? (
+          <View className="px-4 pb-8">
+            <EmptyState
+              emoji="📋"
+              title="Menu vide"
+              message="Cet établissement n’a encore aucun plat disponible."
             />
           </View>
         ) : (

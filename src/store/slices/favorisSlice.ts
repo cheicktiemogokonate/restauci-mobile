@@ -1,8 +1,12 @@
+import {
+  GUEST_LOCAL_DATA_OWNER,
+  readFavorites,
+  writeFavorites,
+} from "@/lib/localDataStorage";
 import type { FavoriteRestaurant } from "@/types";
-import * as SecureStore from "expo-secure-store";
 import type { StateCreator } from "zustand";
 
-const FAVORITES_STORAGE_KEY = "favorite_restaurants_v1";
+import type { UnifiedStore } from "..";
 
 export interface FavorisSlice {
   favorites: FavoriteRestaurant[];
@@ -12,29 +16,38 @@ export interface FavorisSlice {
   loadFavorites: () => Promise<void>;
 }
 
-export const createFavorisSlice: StateCreator<FavorisSlice> = (set, get) => ({
+export const createFavorisSlice: StateCreator<
+  UnifiedStore,
+  [],
+  [],
+  FavorisSlice
+> = (set, get) => ({
   favorites: [],
   isLoadingFavorites: true,
 
   async loadFavorites() {
-    try {
-      const stored = await SecureStore.getItemAsync(FAVORITES_STORAGE_KEY);
-      if (!stored) {
-        set({ favorites: [], isLoadingFavorites: false });
-        return;
-      }
+    const ownerId = get().localDataOwner;
+    if (!ownerId) return;
 
-      const parsed = JSON.parse(stored) as FavoriteRestaurant[];
+    set({ isLoadingFavorites: true });
+
+    try {
+      const favorites = await readFavorites(ownerId);
+      if (get().localDataOwner !== ownerId) return;
+
       set({
-        favorites: Array.isArray(parsed) ? parsed : [],
+        favorites,
         isLoadingFavorites: false,
       });
     } catch {
+      if (get().localDataOwner !== ownerId) return;
       set({ favorites: [], isLoadingFavorites: false });
     }
   },
 
   async toggleFavorite(restaurant) {
+    const ownerId =
+      get().localDataOwner ?? GUEST_LOCAL_DATA_OWNER;
     const current = get().favorites;
     const exists = current.some(
       (favorite) =>
@@ -49,10 +62,18 @@ export const createFavorisSlice: StateCreator<FavorisSlice> = (set, get) => ({
       : [...current, restaurant];
 
     set({ favorites: nextFavorites });
-    await SecureStore.setItemAsync(
-      FAVORITES_STORAGE_KEY,
-      JSON.stringify(nextFavorites),
-    );
+    try {
+      await writeFavorites(ownerId, nextFavorites);
+    } catch (error) {
+      // Ne pas annuler une modification plus récente terminée entre-temps.
+      if (
+        get().localDataOwner === ownerId &&
+        get().favorites === nextFavorites
+      ) {
+        set({ favorites: current });
+      }
+      throw error;
+    }
   },
 
   isFavorite(restaurantId) {

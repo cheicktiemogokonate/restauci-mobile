@@ -1,5 +1,6 @@
 import { ENDPOINTS } from "@/constants/api";
 import { apiFetch } from "@/lib/api";
+import { parseApiSuccess, restaurantSchema } from "@/lib/apiValidation";
 import type { Restaurant } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 
@@ -11,27 +12,28 @@ export function useRestaurantsProches(
 ) {
   return useQuery<Restaurant[]>({
     queryKey: ["restaurants-proches", lat, lon, rayon, cuisine],
-    queryFn: async () => {
-      let url = `${ENDPOINTS.restaurantsProches}?lat=${lat}&lng=${lon}&rayon=${rayon}`;
+    queryFn: async ({ signal }) => {
+      const params = new URLSearchParams({
+        lat: String(lat),
+        lng: String(lon),
+        rayon: String(Math.min(50, Math.max(0.5, rayon))),
+        page: "1",
+        limit: "100",
+      });
       if (cuisine) {
-        url += `&cuisine=${encodeURIComponent(cuisine)}`;
+        params.set("cuisine", cuisine.slice(0, 100));
       }
 
-      const response = await apiFetch<any>(url, { skipAuth: true });
-
-      // L'API structure: {success: true, data: Restaurant | Restaurant[] | any, meta: {...}}
-      let restaurants: Restaurant[] = [];
-
-      if (response?.data) {
-        if (Array.isArray(response.data)) {
-          restaurants = response.data;
-        } else if (typeof response.data === "object") {
-          // Si c'est un objet unique, le mettre dans un array
-          restaurants = [response.data];
-        }
-      }
-
-      return restaurants;
+      const payload = await apiFetch<unknown>(
+        `${ENDPOINTS.restaurants}?${params.toString()}`,
+        { skipAuth: true, signal },
+      );
+      const response = parseApiSuccess<Restaurant[]>(
+        payload,
+        restaurantSchema.array(),
+        "restaurants/proches",
+      );
+      return response.data;
     },
     enabled: typeof lat === "number" && typeof lon === "number",
   });

@@ -3,6 +3,23 @@
 // Régénérés d'après les réponses API réelles
 // ============================================
 
+export type ModeCommande = "sur_place" | "livraison" | "emporter";
+
+export type StatutCommande =
+  | "en_attente_paiement"
+  | "recue"
+  | "en_preparation"
+  | "prete"
+  | "servie"
+  | "annulee";
+
+export type StatutLivraison =
+  | "en_attente"
+  | "assignee"
+  | "en_route"
+  | "livree"
+  | "echouee";
+
 // --- Temps d'attente et détails du restaurant ---
 export interface RestaurantTempsAttenteDetail {
   preparation: number;
@@ -25,19 +42,19 @@ export interface Restaurant {
   logoUrl: string | null;
   banniereUrl: string | null;
   adresse: string;
-  ville: string;
+  ville: string | null;
   latitude: number;
   longitude: number;
-  cuisines: string[];
-  modesCommande: string[]; // ["sur_place", "livraison", "emporter"] ou ["takeout", "delivery"]
+  cuisines: string[] | null;
+  modesCommande: ModeCommande[];
   fraisLivraison: number;
   commandeMinimum: number;
-  tempsPreparationMoyen: number; // en minutes
-  noteMoyenne: number;
+  tempsPreparationMoyen: number | null; // en minutes
+  noteMoyenne: number | null;
   nombreAvis: number;
   enLigne: boolean;
   accepteCommandes: boolean;
-  distanceKm: number;
+  distanceKm?: number;
   // Champs optionnels (endpoint détail vs liste)
   actif?: boolean;
   pays?: string | null;
@@ -47,15 +64,22 @@ export interface Restaurant {
   nombreCommandes?: number;
   tempsAttente?: RestaurantTempsAttente;
   commandesEnCours?: number;
-  geo?: { latitude: number; longitude: number };
+  geo?: null | {
+    distanceKm: number;
+    itineraire: null | {
+      distanceKm: number;
+      dureeMinutes: number;
+      geometrie?: number[][];
+    };
+  };
 }
 
 // --- Plat (dans Categorie.plats du menu GET /api/v1/client/restaurants/{slug}/menu) ---
 export interface Nutrition {
-  lipides?: number | null;
-  calories?: number | null;
-  glucides?: number | null;
-  proteines?: number | null;
+  lipides: number;
+  calories: number;
+  glucides: number;
+  proteines: number;
 }
 
 export interface Plat {
@@ -69,11 +93,11 @@ export interface Plat {
   photoUrl: string | null;
   disponible: boolean;
   ordre: number;
-  tags: string[];
-  allergenes: string[];
+  tags: string[] | null;
+  allergenes: string[] | null;
   nutrition: Nutrition | null;
   nombreCommandes: number;
-  noteMoyenne: number;
+  noteMoyenne: number | null;
   nombreAvis: number;
   createdAt: string;
   updatedAt: string;
@@ -92,17 +116,6 @@ export interface Categorie {
   createdAt: string;
   updatedAt: string;
   plats: Plat[];
-}
-
-// --- Créneaux (n'apparaît pas dans les réponses réelles, à valider) ---
-export interface CreneauHoraire {
-  id: string;
-  restaurantId: string;
-  nom: string;
-  heureOuverture: string;
-  heureFermeture: string;
-  joursActifs: string[];
-  actif: boolean;
 }
 
 // --- Menu (réponse de GET /api/v1/client/restaurants/{slug}/menu) ---
@@ -166,7 +179,7 @@ export interface AdresseLocale {
 }
 
 export interface AuthResponse {
-  success: boolean;
+  success: true;
   data: {
     client: Omit<
       Client,
@@ -182,7 +195,7 @@ export interface AuthResponse {
   };
 }
 
-// Ancien alias, à supprimer
+// Snapshot minimal conservé localement pour restaurer la session hors ligne.
 export interface ClientSession {
   id: string;
   nom: string;
@@ -199,69 +212,65 @@ export interface CommandeItem {
   nom: string;
   prix: number;
   quantite: number;
+  note?: string;
+}
+
+/** Article enrichi localement pour l'affichage du panier. */
+export interface PanierItem extends CommandeItem {
   photoUrl: string | null;
 }
 
 // Payload pour créer une commande (POST /api/v1/client/commandes)
 export interface CommandePayload {
-  restaurantId?: string;
-  restaurantSlug?: string; // Pas restaurantId !
-  modeCommande?: string; // "emporter", "livraison", "sur_place" ou "takeout", "delivery"
+  restaurantSlug: string;
+  modeCommande: ModeCommande;
   items: {
     platId: string;
     quantite: number;
   }[];
+  idempotencyKey: string;
+  paymentMethod: "cash" | "mobile_money" | "card";
+  paymentReturnChannel: "mobile";
   adresseLivraison?: string;
+  latitudeLivraison?: number;
+  longitudeLivraison?: number;
   numeroTable?: string;
-  notes?: string;
-  telephone?: string;
+  noteClient?: string;
 }
-
-// Types utilitaires pour les valeurs de mode et de statut de commande.
-// Conservés dans le code client pour la saisie, mais le DTO complet utilise `string`.
-export type ModeCommande =
-  | "livraison"
-  | "sur_place"
-  | "emporter"
-  | "takeout"
-  | "delivery";
-export type StatutCommande =
-  | "recue"
-  | "en_preparation"
-  | "prete"
-  | "servie"
-  | "annulee";
 
 // Réponse POST /api/v1/client/commandes
 export interface CommandeCreatedResponse {
   id: string;
   numero: string; // ex: "CMD-20260703-QGTC"
-  statut: string;
+  statut: StatutCommande;
   total: number;
   fraisLivraison: number;
   sousTotal: number;
   items: CommandeItem[];
-  modeCommande: string;
+  modeCommande: ModeCommande;
   createdAt: string;
+}
+
+export interface CommandePaymentResponse {
+  authorizationUrl: string | null;
+  reference: string | null;
 }
 
 // Résumé d'une commande dans la liste (GET /api/v1/client/commandes)
 export interface CommandeSummary {
   id: string;
   numero: string;
-  statut: string;
+  statut: StatutCommande;
   total: number;
-  fraisLivraison?: number;
-  sousTotal?: number;
-  items?: CommandeItem[];
-  modeCommande: string;
+  items: CommandeItem[];
+  modeCommande: ModeCommande;
   createdAt: string;
-  restaurantNom?: string;
+  restaurantId: string;
 }
 
 // Timeline event pour CommandeDetail
 export interface TimelineEvent {
-  etape: string; // "recue", "en_preparation", "prete", "servie"
+  etape: "en_attente_paiement" | "recue" | "en_preparation" | "prete" | "en_route" | "servie";
   label: string;
   fait: boolean;
   actif: boolean;
@@ -272,8 +281,8 @@ export interface TimelineEvent {
 export interface CommandeDetail {
   id: string;
   numero: string;
-  statut: string;
-  modeCommande: string;
+  statut: StatutCommande;
+  modeCommande: ModeCommande;
   items: CommandeItem[];
   sousTotal: number;
   fraisLivraison: number;
@@ -287,13 +296,20 @@ export interface CommandeDetail {
   heureServie: string | null;
   restaurantId: string;
   clientId: string;
-  restaurant: {
+  restaurant: null | {
     nom: string;
-    logoUrl?: string | null;
+    logoUrl: string | null;
   };
   statutLabel: string;
+  livraisonStatut: StatutLivraison | null;
   estAnnulee: boolean;
   timeline: TimelineEvent[];
+  payment: null | {
+    provider: "paystack";
+    method: "mobile_money" | "card";
+    status: "pending" | "confirmed" | "failed" | "cancelled";
+    checkoutUrl: string | null;
+  };
 }
 
 // --- Pagination ---
@@ -307,26 +323,32 @@ export interface PaginationMeta {
 }
 
 // --- Enveloppes API génériques ---
-export interface ApiResponse<T> {
-  success: boolean;
+export interface ApiSuccess<T> {
+  success: true;
   data: T;
   meta?: PaginationMeta;
 }
 
+export type ApiErrorCode =
+  | "UNAUTHORIZED"
+  | "FORBIDDEN"
+  | "NOT_FOUND"
+  | "VALIDATION_ERROR"
+  | "RATE_LIMIT_EXCEEDED"
+  | "INTERNAL_ERROR"
+  | "CONFLICT"
+  | "BAD_REQUEST"
+  | "SERVICE_UNAVAILABLE";
+
 export interface ApiError {
   success: false;
   error: string;
-  code?: string;
-  details?: Record<string, unknown>;
+  code?: ApiErrorCode;
+  details?: Record<string, string[]>;
+  retryAfter?: number;
 }
 
 // --- Autres ---
-export interface RegionVisible {
-  latitude: number;
-  longitude: number;
-  zoom: number;
-}
-
 export interface ErrorViewProps {
   message?: string;
   onRetry?: () => void;

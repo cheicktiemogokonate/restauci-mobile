@@ -14,15 +14,15 @@ export const PanierFAB: React.FC = () => {
   if (nombre === 0) return null;
 
   const handlePress = () => {
-    router.push("/(tabs)/panier");
+    router.push("/panier");
   };
 
-    return (
-      <TouchableOpacity
-        className="absolute bottom-8 right-4 w-14 h-14 rounded-full bg-brand-900 justify-center items-center shadow-lg z-20"
-        onPress={handlePress}
-        activeOpacity={0.8}
-      >
+  return (
+    <TouchableOpacity
+      className="absolute bottom-8 right-4 w-14 h-14 rounded-full bg-brand-900 justify-center items-center shadow-lg z-20"
+      onPress={handlePress}
+      activeOpacity={0.8}
+    >
       <ShoppingBag color="white" />
       <View className="absolute -top-2 -right-1">
         <View className="bg-danger-600 min-w-5 h-5 px-1 rounded-full justify-center items-center">

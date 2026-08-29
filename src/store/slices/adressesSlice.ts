@@ -1,14 +1,24 @@
+import {
+  GUEST_LOCAL_DATA_OWNER,
+  readAddresses,
+  writeAddresses,
+} from "@/lib/localDataStorage";
+import {
+  MAX_ADRESSES_LOCALES,
+  normaliserAdresses,
+} from "@/lib/adresses";
 import type { AdresseLocale } from "@/types";
-import * as SecureStore from "expo-secure-store";
 import type { StateCreator } from "zustand";
 
-const ADRESSES_STORAGE_KEY = "saved_addresses_v1";
+import type { UnifiedStore } from "..";
 
 export interface AdressesSlice {
   adresses: AdresseLocale[];
   isLoadingAdresses: boolean;
   loadAdresses: () => Promise<void>;
-  ajouterAdresse: (adresse: AdresseLocale) => Promise<void>;
+  ajouterAdresse: (
+    adresse: Omit<AdresseLocale, "id"> & { id?: string },
+  ) => Promise<void>;
   supprimerAdresse: (id: string) => Promise<void>;
   mettreAJourAdresse: (
     id: string,
@@ -16,54 +26,98 @@ export interface AdressesSlice {
   ) => Promise<void>;
 }
 
-export const createAdressesSlice: StateCreator<AdressesSlice> = (set, get) => ({
+export const createAdressesSlice: StateCreator<
+  UnifiedStore,
+  [],
+  [],
+  AdressesSlice
+> = (set, get) => ({
   adresses: [],
   isLoadingAdresses: true,
 
   async loadAdresses() {
-    try {
-      const stored = await SecureStore.getItemAsync(ADRESSES_STORAGE_KEY);
-      if (!stored) {
-        set({ adresses: [], isLoadingAdresses: false });
-        return;
-      }
+    const ownerId = get().localDataOwner;
+    if (!ownerId) return;
 
-      const parsed = JSON.parse(stored) as AdresseLocale[];
+    set({ isLoadingAdresses: true });
+
+    try {
+      const adresses = await readAddresses(ownerId);
+      if (get().localDataOwner !== ownerId) return;
+
       set({
-        adresses: Array.isArray(parsed) ? parsed : [],
+        adresses,
         isLoadingAdresses: false,
       });
     } catch {
+      if (get().localDataOwner !== ownerId) return;
       set({ adresses: [], isLoadingAdresses: false });
     }
   },
 
   async ajouterAdresse(adresse) {
+    const ownerId =
+      get().localDataOwner ?? GUEST_LOCAL_DATA_OWNER;
     const current = get().adresses;
-    const next = [
-      {
-        ...adresse,
-        id:
-          adresse.id ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      },
-      ...current,
-    ];
+    if (current.length >= MAX_ADRESSES_LOCALES) {
+      throw new Error(
+        `Vous pouvez enregistrer jusqu’à ${MAX_ADRESSES_LOCALES} adresses.`,
+      );
+    }
 
-    set({ adresses: next });
-    await SecureStore.setItemAsync(ADRESSES_STORAGE_KEY, JSON.stringify(next));
+    const nouvelleAdresse: AdresseLocale = {
+      ...adresse,
+      id:
+        adresse.id ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    };
+    const next = normaliserAdresses(
+      [nouvelleAdresse, ...current],
+      current.length === 0 || adresse.estParDefaut
+        ? nouvelleAdresse.id
+        : undefined,
+    );
+
+    await writeAddresses(ownerId, next);
+    if (get().localDataOwner === ownerId) {
+      set({ adresses: next });
+    }
   },
 
   async supprimerAdresse(id) {
-    const next = get().adresses.filter((adresse) => adresse.id !== id);
-    set({ adresses: next });
-    await SecureStore.setItemAsync(ADRESSES_STORAGE_KEY, JSON.stringify(next));
+    const ownerId =
+      get().localDataOwner ?? GUEST_LOCAL_DATA_OWNER;
+    const next = normaliserAdresses(
+      get().adresses.filter((adresse) => adresse.id !== id),
+    );
+
+    await writeAddresses(ownerId, next);
+    if (get().localDataOwner === ownerId) {
+      set({ adresses: next });
+    }
   },
 
   async mettreAJourAdresse(id, updates) {
-    const next = get().adresses.map((adresse) =>
+    const ownerId =
+      get().localDataOwner ?? GUEST_LOCAL_DATA_OWNER;
+    const current = get().adresses;
+    const adresseActuelle = current.find((adresse) => adresse.id === id);
+    const prochaineAdresseParDefaut =
+      updates.estParDefaut === true
+        ? id
+        : updates.estParDefaut === false &&
+            adresseActuelle?.estParDefaut
+          ? current.find((adresse) => adresse.id !== id)?.id
+          : undefined;
+    const next = normaliserAdresses(
+      current.map((adresse) =>
       adresse.id === id ? { ...adresse, ...updates } : adresse,
+      ),
+      prochaineAdresseParDefaut,
     );
-    set({ adresses: next });
-    await SecureStore.setItemAsync(ADRESSES_STORAGE_KEY, JSON.stringify(next));
+
+    await writeAddresses(ownerId, next);
+    if (get().localDataOwner === ownerId) {
+      set({ adresses: next });
+    }
   },
 });

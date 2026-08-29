@@ -1,5 +1,6 @@
 import React, { useCallback } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 
 // ============================================
 // Composant FiltreCategoriesMobile — filtres
@@ -22,15 +23,16 @@ export const FiltreCategoriesMobile: React.FC<FiltreCategoriesMobileProps> = ({
     <View className="bg-white py-3 border-b border-ink-100">
       <ScrollView
         horizontal
+        nestedScrollEnabled
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+        contentContainerStyle={{ paddingHorizontal: 16 }}
       >
         <TouchableOpacity
           className={`mr-2 px-4 py-1.5 rounded-full border ${
             selectedCategory === null
               ? "bg-brand-900 border-brand-900"
               : "bg-white border-gray-200"
-          } shadow-sm`}
+          }`}
           onPress={handleSelectAll}
         >
           <Text
@@ -47,7 +49,7 @@ export const FiltreCategoriesMobile: React.FC<FiltreCategoriesMobileProps> = ({
               selectedCategory === cat.id
                 ? "bg-brand-900 border-brand-900"
                 : "bg-white border-gray-200"
-            } shadow-sm`}
+            }`}
             onPress={() => handleSelectCat(cat.id)}
           >
             <Text

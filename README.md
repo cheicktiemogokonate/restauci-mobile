@@ -1,56 +1,110 @@
-# Welcome to your Expo app 👋
+# ToutCi — application mobile client
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Application Expo/React Native destinée aux clients ToutCi. Le projet est lié à EAS sous `@tobias_whale/toutci`; les émulateurs restent utilisables sans compte Store.
 
-## Get started
+## Prérequis
 
-1. Install dependencies
+- Node.js compatible avec Expo SDK 57 (une version LTS est recommandée)
+- npm
+- Android Studio avec un émulateur et Java 17 pour Android
+- Xcode et CocoaPods pour iOS Simulator
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Installation
 
 ```bash
-npm run reset-project
+npm ci
+cp .env.example .env
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Définir `EXPO_PUBLIC_API_URL` avec l’origine du backend. Le client ajoute automatiquement `/api/v1` lorsque l’URL ne le contient pas déjà.
 
-### Other setup steps
+Exemples pour un backend local :
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+- iOS Simulator : `http://127.0.0.1:3000`
+- Android Emulator : `http://10.0.2.2:3000`
+- appareil physique : URL HTTPS ou adresse IP accessible sur le réseau local
 
-## Learn more
+Ne placer aucun secret dans une variable `EXPO_PUBLIC_*` : ces valeurs sont incluses dans l’application.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Développement local
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npm start
+```
 
-## Join the community
+Pour régénérer les projets natifs :
 
-Join our community of developers creating universal apps.
+```bash
+npm run prebuild
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Expo SDK 57 régénère les dossiers natifs pendant le prebuild, même sans l’option `--clean`. Sauvegarder ou reporter toute personnalisation native dans un config plugin avant d’exécuter cette commande. Ne pas utiliser `npx expo prebuild --clean` sans sauvegarde supplémentaire.
+
+Compiler et lancer sur les émulateurs :
+
+```bash
+npm run android
+npm run ios
+```
+
+Les dossiers `android/` et `ios/` sont générés localement et ignorés par Git dans ce dépôt.
+
+## Contrôles qualité
+
+```bash
+npm run check
+```
+
+Cette commande exécute TypeScript, ESLint et les tests des règles critiques : checkout, tarification, statuts de commande, persistance locale, validation API et redirections d’authentification. Les contrôles peuvent aussi être lancés séparément avec `npm run typecheck`, `npm run lint` et `npm test`.
+
+Vérifier la résolution des dépendances Expo avec :
+
+```bash
+npx expo install --check
+```
+
+Créer un export Metro local :
+
+```bash
+npx expo export --platform android --output-dir /tmp/toutci-android
+npx expo export --platform ios --output-dir /tmp/toutci-ios
+```
+
+## Builds locaux proches de la production
+
+Après un prebuild vérifié :
+
+```bash
+npx expo run:android --variant release --no-bundler
+npx expo run:ios --configuration Release --no-bundler
+```
+
+Ces commandes valident le code natif localement. Les comptes développeur seront nécessaires plus tard pour signer et distribuer l’application sur les stores, pas pour les Simulators/émulateurs.
+
+## Contrat backend
+
+Le client utilise les routes versionnées `/api/v1`. Le backend génère la source de vérité OpenAPI et le mobile en conserve une copie synchronisée :
+
+```bash
+npm run api:sync
+```
+
+Cette commande régénère `openapi/openapi-v1.json` et `src/generated/api-v1.ts` depuis le dépôt backend frère. Les montants envoyés par le mobile ne sont jamais autoritaires : le backend recalcule tous les totaux.
+
+## Authentification, paiements et notifications
+
+- L’access token et le refresh token natifs sont transportés en JSON puis stockés avec SecureStore. Le refresh est renouvelé en rotation et la déconnexion révoque la session distante.
+- Les paiements Paystack utilisent le canal `mobile` et reviennent vers `toutci://payments/callback`. L’application relit ensuite la commande ou la réservation depuis l’API ; le deep link seul n’est jamais une preuve de paiement.
+- Le token Expo Push est enregistré sur l’API après authentification et retiré lors de la déconnexion. Un development build ou un build EAS est requis pour valider les push réelles.
+- Les commandes en attente et les réservations permettent de reprendre un paiement interrompu.
+
+## Builds EAS
+
+```bash
+npx eas-cli build --profile development --platform android
+npx eas-cli build --profile preview --platform all
+```
+
+Les profils sont définis dans `eas.json`. La publication Store nécessite toujours les comptes Apple/Google et leurs informations de signature.
+
+Le suivi de commande conserve volontairement le polling authentifié tant qu’un transport SSE natif n’a pas été adopté comme contrat officiel.

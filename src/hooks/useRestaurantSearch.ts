@@ -1,5 +1,7 @@
 import { useDebounce } from "@/hooks/useDebounce";
+import { ENDPOINTS } from "@/constants/api";
 import { apiFetch } from "@/lib/api";
+import { parseApiSuccess, restaurantSchema } from "@/lib/apiValidation";
 import { useQuery } from "@tanstack/react-query";
 
 import type { Restaurant, Suggestion } from "@/types";
@@ -14,26 +16,27 @@ export function useRestaurantSearch(q: string, cuisine?: string | null) {
 
   return useQuery<RestaurantSuggestion[]>({
     queryKey: ["restaurant-search", debouncedQ, cuisine],
-    queryFn: async () => {
-      // Assuming ENDPOINTS.restaurants is the generic listing endpoint
-      // that we can filter
-      let url = `/api/v1/client/restaurants?search=${encodeURIComponent(debouncedQ)}`;
+    queryFn: async ({ signal }) => {
+      const params = new URLSearchParams({
+        search: debouncedQ.trim().slice(0, 100),
+        page: "1",
+        limit: "20",
+      });
       if (cuisine) {
-        url += `&cuisine=${encodeURIComponent(cuisine)}`;
+        params.set("cuisine", cuisine.slice(0, 100));
       }
 
-      const response = await apiFetch<any>(url, { skipAuth: true });
-      
-      let restaurants: Restaurant[] = [];
-      if (response?.data) {
-        if (Array.isArray(response.data)) {
-          restaurants = response.data;
-        } else if (typeof response.data === "object") {
-          restaurants = [response.data];
-        }
-      }
+      const payload = await apiFetch<unknown>(
+        `${ENDPOINTS.restaurants}?${params.toString()}`,
+        { skipAuth: true, signal },
+      );
+      const response = parseApiSuccess<Restaurant[]>(
+        payload,
+        restaurantSchema.array(),
+        "restaurants/recherche",
+      );
 
-      return restaurants.map((r) => ({
+      return response.data.map((r) => ({
         id: r.id,
         label: r.nom,
         lat: r.latitude,

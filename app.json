@@ -1,45 +1,71 @@
 {
   "expo": {
-    "name": "Toutci",
+    "name": "ToutCi",
     "slug": "toutci",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/app-icon.png",
     "scheme": "toutci",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/app-icon.png",
       "bundleIdentifier": "com.toutci.delivery"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#14532d",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#ffffff",
+        "foregroundImage": "./assets/images/toutci-symbol-transparent.png",
+        "monochromeImage": "./assets/images/notification-icon.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.toutci.delivery"
+      "package": "com.toutci.delivery",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/app-icon.png"
     },
     "plugins": [
       "expo-router",
+      "expo-secure-store",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#14532d",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#ffffff",
+          "image": "./assets/images/toutci-logo-transparent.png",
+          "imageWidth": 220
         }
       ],
-      "@maplibre/maplibre-react-native"
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#14532d"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Autorisez ToutCi à utiliser votre position pour afficher les établissements autour de vous."
+        }
+      ],
+      "@maplibre/maplibre-react-native",
+      "expo-image",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "225c2865-a3f2-413d-b240-4dd01f13a2e4"
+      }
+    },
+    "owner": "tobias_whale"
   }
 }

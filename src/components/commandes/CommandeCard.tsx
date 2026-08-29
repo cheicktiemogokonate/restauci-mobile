@@ -1,4 +1,11 @@
 import type { CommandeSummary } from "@/types";
+import {
+  categorizeOrderStatus,
+  getOngoingOrderMessage,
+  getOrderStatusLabel,
+  isTerminalOrderStatus,
+  type OrderFilter,
+} from "@/domain/orderStatus";
 import { formatPrix } from "@/lib/format";
 import {
   Bike,
@@ -11,35 +18,21 @@ import {
 import { Text, TouchableOpacity, View } from "react-native";
 import { Card } from "@/components/ui/card";
 
-export const STATUT_LABELS: Record<string, string> = {
-  recue: "Reçue",
-  en_preparation: "En préparation",
-  prete: "En route",
-  servie: "Livrée",
-  annulee: "Annulée",
-};
-
-export type Filtre = "toutes" | "en_cours" | "livrees" | "annulees";
-
-export function categoriser(statut: string): Filtre {
-  if (statut === "servie") return "livrees";
-  if (statut === "annulee") return "annulees";
-  return "en_cours";
-}
+export type Filtre = OrderFilter;
+export const estCommandeTerminee = isTerminalOrderStatus;
+export const categoriser = categorizeOrderStatus;
 
 interface CommandeCardProps {
   item: CommandeSummary;
   onPress: (id: string) => void;
-  onActionLivreeOuAnnulee: () => void;
 }
 
 export function CommandeCard({
   item,
   onPress,
-  onActionLivreeOuAnnulee,
 }: CommandeCardProps) {
   const categorie = categoriser(item.statut);
-const totalFormate = formatPrix(item.total);
+  const totalFormate = formatPrix(item.total);
   const dateFormatee = new Date(item.createdAt).toLocaleDateString("fr-FR", {
     day: "2-digit",
     month: "long",
@@ -50,7 +43,11 @@ const totalFormate = formatPrix(item.total);
     minute: "2-digit",
   });
 
-  const nombreArticles = (item as { nombreArticles?: number }).nombreArticles;
+  const nombreArticles = item.items.reduce(
+    (total, article) => total + article.quantite,
+    0,
+  );
+  const ongoingMessage = getOngoingOrderMessage(item.statut);
 
   const getBadgeStyle = () => {
     switch (categorie) {
@@ -88,8 +85,8 @@ const totalFormate = formatPrix(item.total);
           iconColor: "#166534",
           Icon: CheckCircle2,
           message: "Commandée et livrée",
-          actionLabel: "Commander à nouveau",
-          onAction: onActionLivreeOuAnnulee,
+          actionLabel: "Voir le détail",
+          onAction: () => onPress(item.id),
         };
       case "annulees":
         return {
@@ -99,8 +96,8 @@ const totalFormate = formatPrix(item.total);
           iconColor: "#DC2626",
           Icon: XCircle,
           message: "Commande annulée",
-          actionLabel: "Commander à nouveau",
-          onAction: onActionLivreeOuAnnulee,
+          actionLabel: "Voir le détail",
+          onAction: () => onPress(item.id),
         };
       default:
         return {
@@ -109,7 +106,7 @@ const totalFormate = formatPrix(item.total);
           border: "border-warning",
           iconColor: "#CA8A04",
           Icon: Bike,
-          message: "Votre commande est en route",
+          message: ongoingMessage,
           actionLabel: "Suivre ma commande",
           onAction: () => onPress(item.id),
         };
@@ -135,20 +132,20 @@ const totalFormate = formatPrix(item.total);
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center flex-1 mr-2">
                 <Text className="font-bold text-black text-base" numberOfLines={1}>
-                  {item.restaurantNom ?? `Commande ${item.numero}`}
+                  {`Commande ${item.numero}`}
                 </Text>
                 {/* <ChevronRight size={16} color="#111111" /> */}
               </View>
               <View className={`flex-row items-center rounded-full px-3 py-1 ${badge.bg}`}>
                 <Text className={`font-semibold text-xs mr-1 ${badge.text}`}>
-                  {STATUT_LABELS[item.statut] ?? item.statut}
+                  {getOrderStatusLabel(item.statut)}
                 </Text>
                 <badge.Icon size={12} color={badge.iconColor} />
               </View>
             </View>
 
             <Text className="text-gray-500 text-sm mt-1">
-              {nombreArticles
+              {nombreArticles > 0
                 ? `${nombreArticles} article${nombreArticles > 1 ? "s" : ""}`
                 : item.modeCommande === "livraison"
                   ? "Livraison"

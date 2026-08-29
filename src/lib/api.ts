@@ -1,9 +1,13 @@
-import { API_URL, ENDPOINTS } from '@/constants/api';
-import { useStore } from '@/store';
-import * as SecureStore from 'expo-secure-store';
-
-const AUTH_ACCESS_TOKEN_KEY = 'auth_access_token';
-const AUTH_REFRESH_TOKEN_KEY = 'auth_refresh_token';
+import { API_URL, ENDPOINTS } from "@/constants/api";
+import { parseApiSuccess, refreshDataSchema } from "@/lib/apiValidation";
+import { useStore } from "@/store";
+import type { ApiError, ApiErrorCode } from "@/types";
+import * as SecureStore from "expo-secure-store";
+import {
+  AUTH_ACCESS_TOKEN_KEY,
+  AUTH_REFRESH_TOKEN_KEY,
+  storeNativeTokens,
+} from "@/lib/authSessionStorage";
 
 /** Timeout par défaut pour tous les appels réseau (ms). */
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -21,35 +25,142 @@ function withTimeout(ms: number): { signal: AbortSignal; clear: () => void } {
   return { signal: controller.signal, clear: () => clearTimeout(id) };
 }
 
-/** Tente de rafraîchir le token si le refreshToken existe en SecureStore. */
-async function tryRefreshToken(): Promise<string | null> {
+function requestSignal(
+  callerSignal: AbortSignal | null | undefined,
+  timeoutMs: number,
+): { signal: AbortSignal; clear: () => void } {
+  const timeout = withTimeout(timeoutMs);
+  if (!callerSignal) return timeout;
+
+  const combineSignals = AbortSignal.any;
+  if (typeof combineSignals === "function") {
+    return {
+      signal: combineSignals([callerSignal, timeout.signal]),
+      clear: timeout.clear,
+    };
+  }
+
+  // Compatibilité avec les runtimes RN sans AbortSignal.any : ne jamais
+  // perdre l'annulation fournie par TanStack Query au profit du timeout.
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  if (callerSignal.aborted || timeout.signal.aborted) {
+    abort();
+  } else {
+    callerSignal.addEventListener("abort", abort, { once: true });
+    timeout.signal.addEventListener("abort", abort, { once: true });
+  }
+
+  return {
+    signal: controller.signal,
+    clear: () => {
+      callerSignal.removeEventListener("abort", abort);
+      timeout.signal.removeEventListener("abort", abort);
+      timeout.clear();
+    },
+  };
+}
+
+async function readResponseBody(response: Response): Promise<unknown> {
+  if (response.status === 204) return undefined;
+
+  const text = await response.text();
+  if (!text) return undefined;
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
+}
+
+function retryAfterSeconds(response: Response, body: unknown): number | null {
+  if (body && typeof body === "object") {
+    const value = (body as { retryAfter?: unknown }).retryAfter;
+    if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+      return value;
+    }
+  }
+
+  const header = response.headers.get("Retry-After");
+  if (!header) return null;
+
+  const seconds = Number(header);
+  if (Number.isFinite(seconds) && seconds >= 0) return seconds;
+
+  const date = Date.parse(header);
+  return Number.isNaN(date)
+    ? null
+    : Math.max(0, Math.ceil((date - Date.now()) / 1000));
+}
+
+export class ApiClientError extends Error {
+  readonly status: number;
+  readonly code?: ApiErrorCode;
+  readonly details?: Record<string, string[]>;
+  readonly retryAfter: number | null;
+
+  constructor({
+    status,
+    message,
+    code,
+    details,
+    retryAfter,
+  }: {
+    status: number;
+    message: string;
+    code?: ApiErrorCode;
+    details?: Record<string, string[]>;
+    retryAfter?: number | null;
+  }) {
+    super(message);
+    this.name = "ApiClientError";
+    this.status = status;
+    this.code = code;
+    this.details = details;
+    this.retryAfter = retryAfter ?? null;
+  }
+}
+
+async function performRefresh(): Promise<string | null> {
+  const sessionAtStart = useStore.getState();
+  const refreshToken = await SecureStore.getItemAsync(AUTH_REFRESH_TOKEN_KEY);
+  if (!refreshToken) return null;
   const { signal, clear } = withTimeout(REFRESH_TIMEOUT_MS);
   try {
-    const refreshToken = await SecureStore.getItemAsync(AUTH_REFRESH_TOKEN_KEY);
-    if (!refreshToken) return null;
-
     const res = await fetch(`${API_URL}${ENDPOINTS.authClientRefresh}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tokenTransport: "json",
+        refreshToken,
+      }),
       signal,
     });
 
     if (!res.ok) return null;
 
-    const data = (await res.json()) as {
-      data?: { tokens?: { accessToken?: string; refreshToken?: string } };
-    };
+    const response = parseApiSuccess<{
+      accessToken: string;
+      refreshToken: string;
+      expiresIn: number;
+    }>(await readResponseBody(res), refreshDataSchema, "auth/refresh");
+    const newAccessToken = response.data.accessToken;
 
-    const newAccessToken = data?.data?.tokens?.accessToken;
-    const newRefreshToken = data?.data?.tokens?.refreshToken;
-
-    if (!newAccessToken) return null;
-
-    await SecureStore.setItemAsync(AUTH_ACCESS_TOKEN_KEY, newAccessToken);
-    if (newRefreshToken) {
-      await SecureStore.setItemAsync(AUTH_REFRESH_TOKEN_KEY, newRefreshToken);
+    const currentSession = useStore.getState();
+    if (
+      currentSession.client?.id !== sessionAtStart.client?.id ||
+      currentSession.token !== sessionAtStart.token
+    ) {
+      return currentSession.client && currentSession.token
+        ? currentSession.token
+        : null;
     }
+
+    await storeNativeTokens({
+      accessToken: newAccessToken,
+      refreshToken: response.data.refreshToken,
+    });
     useStore.setState({ token: newAccessToken });
 
     return newAccessToken;
@@ -60,13 +171,73 @@ async function tryRefreshToken(): Promise<string | null> {
   }
 }
 
+let refreshInFlight: Promise<string | null> | null = null;
+
+/** Mutualise la rotation du cookie et du token entre toutes les requêtes 401. */
+function refreshAccessToken(): Promise<string | null> {
+  if (!refreshInFlight) {
+    refreshInFlight = performRefresh().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+function buildHeaders(
+  headersInit: HeadersInit | undefined,
+  token: string | null,
+  hasBody: boolean,
+  skipAuth: boolean,
+): Headers {
+  const headers = new Headers(headersInit);
+  if (hasBody && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (skipAuth) {
+    headers.delete("Authorization");
+  } else if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  return headers;
+}
+
+async function executeRequest(
+  endpoint: string,
+  requestOptions: RequestInit,
+  token: string | null,
+  skipAuth: boolean,
+): Promise<{ response: Response; body: unknown }> {
+  const { signal, clear } = requestSignal(
+    requestOptions.signal,
+    DEFAULT_TIMEOUT_MS,
+  );
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...requestOptions,
+      credentials: requestOptions.credentials ?? "include",
+      headers: buildHeaders(
+        requestOptions.headers,
+        token,
+        requestOptions.body != null,
+        skipAuth,
+      ),
+      signal,
+    });
+    const body = await readResponseBody(response);
+    return { response, body };
+  } finally {
+    clear();
+  }
+}
+
 export async function apiFetch<T>(
   endpoint: string,
   options?: RequestInit & { skipAuth?: boolean },
 ): Promise<T> {
+  const { skipAuth = false, ...requestOptions } = options ?? {};
   let token = useStore.getState().token;
 
-  if (!token && !options?.skipAuth) {
+  if (!token && !skipAuth) {
     if (__DEV__) {
       console.warn('[apiFetch] token absent dans le store pour', endpoint);
     }
@@ -77,77 +248,52 @@ export async function apiFetch<T>(
     }
   }
 
-  const buildHeaders = (t: string | null): Record<string, string> => {
-    const h: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...((options?.headers as Record<string, string>) ?? {}),
-    };
-    if (t) h.Authorization = `Bearer ${t}`;
-    return h;
-  };
+  const tokenUsed = token;
+  let result = await executeRequest(endpoint, requestOptions, token, skipAuth);
 
-  // Utilise le signal passé par TanStack Query (annulation) ou un timeout local.
-  // Si TanStack Query fournit un signal, on l'utilise directement ; le timeout
-  // local est quand même armé pour les appels hors Query (ex. authSlice.loadToken).
-  const callerSignal = options?.signal as AbortSignal | undefined;
-  const { signal: timeoutSignal, clear } = withTimeout(DEFAULT_TIMEOUT_MS);
-
-  // Combine les deux signaux si les deux sont présents.
-  const signal = callerSignal
-    ? AbortSignal.any
-      ? AbortSignal.any([callerSignal, timeoutSignal])
-      : timeoutSignal
-    : timeoutSignal;
-
-  const fetchOptions: RequestInit = {
-    ...options,
-    headers: buildHeaders(token),
-    signal,
-  };
-
-  let res: Response;
-  try {
-    res = await fetch(`${API_URL}${endpoint}`, fetchOptions);
-  } finally {
-    clear();
-  }
-
-  if (res.status === 401 && !options?.skipAuth) {
+  if (result.response.status === 401 && !skipAuth) {
     if (__DEV__) {
       console.warn('[apiFetch] 401 — tentative de refresh');
     }
-    const newToken = await tryRefreshToken();
+    const currentToken = useStore.getState().token;
+    const newToken =
+      currentToken && currentToken !== tokenUsed
+        ? currentToken
+        : await refreshAccessToken();
     if (newToken) {
-      const { signal: retrySignal, clear: clearRetry } = withTimeout(DEFAULT_TIMEOUT_MS);
-      try {
-        res = await fetch(`${API_URL}${endpoint}`, {
-          ...fetchOptions,
-          headers: buildHeaders(newToken),
-          signal: retrySignal,
-        });
-      } finally {
-        clearRetry();
-      }
+      result = await executeRequest(endpoint, requestOptions, newToken, false);
     } else {
       if (__DEV__) {
         console.warn('[apiFetch] refresh échoué — déconnexion');
       }
-      useStore.getState().logout();
+      await useStore.getState().logout({ revokeRemote: false });
     }
   }
+
+  const { response: res, body } = result;
 
   if (!res.ok) {
-    let err: { error?: string } = {};
-    try {
-      err = (await res.json()) as { error?: string };
-    } catch {
-      // réponse non JSON
-    }
+    const err =
+      body && typeof body === "object" ? (body as Partial<ApiError>) : null;
+    const message =
+      typeof err?.error === "string"
+        ? err.error
+        : typeof body === "string"
+          ? body
+          : `Erreur ${res.status}`;
+    const retryAfter = retryAfterSeconds(res, body);
     if (__DEV__) {
-      console.error(`[apiFetch] ${res.status} ${endpoint}`, err);
+      const log = res.status >= 500 ? console.error : console.warn;
+      log(`[apiFetch] ${res.status} ${endpoint}`, body);
     }
-    throw new Error(err.error ?? `Erreur ${res.status}`);
+    throw new ApiClientError({
+      status: res.status,
+      message,
+      code: err?.code,
+      details: err?.details,
+      retryAfter,
+    });
   }
 
-  return res.json() as T;
+  return body as T;
 }
