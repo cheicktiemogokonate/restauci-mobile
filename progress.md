@@ -1,5 +1,20 @@
 # Journal d’exécution — Stabilisation de ToutCi
 
+## Sprint 0 — base protégée — 19 septembre 2026
+
+Exécution de la Passe 0 du plan (Sprint 0 de la feuille de route production).
+
+| Contrôle | Résultat |
+|---|---|
+| Commit des chemins locaux | 103 chemins répartis en 12 commits logiques (contrat, domaine, itinéraire, Mood, checkout, résidences, activité, restaurant/menu, profil/auth, UI, config, docs) |
+| Scan de secrets | Aucun secret suivi ; `.env` ignoré ; les fichiers signalés ne contiennent que des bornes de validation et fixtures de test |
+| Tag de baseline | `baseline-2026-09-19` posé sur l'état final |
+| `npm run check` sur la baseline commitée | TypeScript, ESLint, 31/31 tests verts |
+| Export Android | Réussi, bundle HBC 7,8 Mo |
+| Export iOS | Réussi, bundle HBC 7,6 Mo |
+
+Le working tree est propre ; l'état est récupérable via le tag. Prochain sprint : Sprint 1 (décisions V1, masquage Paiement/Support, recette native fraîche).
+
 ## Certification des parcours authentifiés — 19 septembre 2026
 
 Un compte client de test a été fourni (`+2250777945714`). La matrice authentifiée déclarée incertaine depuis le 1er août a été exécutée contre le backend réel via HTTP, sans modifier le code.
