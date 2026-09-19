@@ -1,5 +1,10 @@
 import { Button } from "@/components/ui/button";
+import { LivraisonCard } from "@/components/commandes/LivraisonCard";
 import { Text as ButtonText } from "@/components/ui/text";
+import {
+  useClientDelivery,
+  useConfirmClientDelivery,
+} from "@/hooks/useClientDelivery";
 import { useCommandeTracking } from "@/hooks/useCommandeTracking";
 import { useRetryCommandePayment } from "@/hooks/useRetryCommandePayment";
 import { getOrderStatusLabel } from "@/domain/orderStatus";
@@ -41,11 +46,17 @@ export default function CommandeDetailScreen() {
   const { commande, isLoading, error } = useCommandeTracking(
     id ?? null,
   );
+  const delivery = useClientDelivery(
+    id ?? null,
+    commande?.modeCommande === "livraison" &&
+      commande.livraisonStatut !== null,
+  );
+  const confirmDelivery = useConfirmClientDelivery();
   const retryPayment = useRetryCommandePayment();
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
+      <SafeAreaView className="flex-1 justify-center items-center">
         <ActivityIndicator size="large" color="#166534" />
       </SafeAreaView>
     );
@@ -53,7 +64,7 @@ export default function CommandeDetailScreen() {
 
   if (!client) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white px-8">
+      <SafeAreaView className="flex-1 items-center justify-center px-8">
         <ShoppingBag size={40} color="#9CA3AF" />
         <Text className="mt-4 text-lg font-bold text-black">
           Connexion requise
@@ -78,7 +89,7 @@ export default function CommandeDetailScreen() {
 
   if (error || !commande) {
     return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center px-8">
+      <SafeAreaView className="flex-1 justify-center items-center px-8">
         <AlertCircle size={40} color="#DC2626" />
         <Text className="text-lg font-bold text-black mt-4 mb-2">
           Commande introuvable
@@ -108,11 +119,11 @@ export default function CommandeDetailScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <SafeAreaView className="flex-1 bg-white pb-14">
+      <SafeAreaView className="flex-1 pb-14">
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 py-3">
           <Pressable
-            onPress={() => router.push("/(tabs)/commandes")}
+            onPress={() => router.push("/(tabs)/activite")}
             hitSlop={10}
             className="w-9"
           >
@@ -245,6 +256,48 @@ export default function CommandeDetailScreen() {
               })}
             </View>
           )}
+
+          {commande.modeCommande === "livraison" &&
+          commande.livraisonStatut !== null ? (
+            delivery.isPending ? (
+              <View className="mt-6 items-center rounded-3xl border border-green-100 bg-green-50 p-6">
+                <ActivityIndicator color="#166534" />
+                <Text className="mt-3 text-sm text-ink-500">
+                  Chargement du suivi de livraison…
+                </Text>
+              </View>
+            ) : delivery.isError ? (
+              <View className="mt-6 rounded-3xl border border-red-100 bg-red-50 p-5">
+                <Text className="font-bold text-red-700">
+                  Suivi de livraison indisponible
+                </Text>
+                <Text className="mt-1 text-sm leading-5 text-ink-600">
+                  {delivery.error.message}
+                </Text>
+                <Button
+                  className="mt-4"
+                  variant="outline"
+                  onPress={() => void delivery.refetch()}
+                >
+                  <ButtonText>Réessayer</ButtonText>
+                </Button>
+              </View>
+            ) : delivery.data ? (
+              <LivraisonCard
+                delivery={delivery.data}
+                isConfirming={confirmDelivery.isPending}
+                onConfirm={() =>
+                  confirmDelivery.mutate(commande.id, {
+                    onError: (confirmationError) =>
+                      Alert.alert(
+                        "Confirmation impossible",
+                        confirmationError.message,
+                      ),
+                  })
+                }
+              />
+            ) : null
+          ) : null}
 
           {/* Détails de la commande */}
           <View className="border border-gray-100 rounded-3xl p-5 mt-8">

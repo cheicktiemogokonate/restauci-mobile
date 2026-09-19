@@ -52,7 +52,7 @@ export default function CommandesScreen() {
 
   if (!client) {
     return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center px-8">
+      <SafeAreaView className="flex-1 justify-center items-center px-8">
         <ClipboardList size={36} color="#9CA3AF" />
         <Text className="text-lg font-bold text-black mt-3 mb-2">
           Vos commandes
@@ -77,7 +77,7 @@ export default function CommandesScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
+      <SafeAreaView className="flex-1 justify-center items-center">
         <ActivityIndicator size="large" color="#166534" />
       </SafeAreaView>
     );
@@ -85,7 +85,7 @@ export default function CommandesScreen() {
 
   if (error && commandes.length === 0) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white px-8">
+      <SafeAreaView className="flex-1 items-center justify-center px-8">
         <AlertCircle size={42} color="#DC2626" />
         <Text className="mt-4 text-lg font-bold text-black">
           Chargement impossible
@@ -108,7 +108,7 @@ export default function CommandesScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1">
       <View className="px-5 pt-4 pb-2 flex-row items-start justify-between">
         <View>
           <Text className="text-3xl font-extrabold text-black">

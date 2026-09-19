@@ -1,6 +1,7 @@
 import { ENDPOINTS } from "@/constants/api";
 import { apiFetch } from "@/lib/api";
 import { parseApiSuccess, paymentInitializationSchema } from "@/lib/apiValidation";
+import { invalidateCommandeQueries } from "@/lib/commandeQueryCache";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function useRetryCommandePayment() {
@@ -17,9 +18,8 @@ export function useRetryCommandePayment() {
         "commandes/paiement",
       ).data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["commandes"] });
-      queryClient.invalidateQueries({ queryKey: ["commande-tracking"] });
+    onSuccess: async () => {
+      await invalidateCommandeQueries(queryClient);
     },
   });
 }

@@ -25,7 +25,7 @@ async function fetchCommandesPage({
 }): Promise<ApiSuccess<CommandeSummary[]>> {
   const params = new URLSearchParams({
     page: String(Math.max(1, page)),
-    limit: String(Math.min(100, Math.max(1, limit))),
+    limit: String(Math.min(20, Math.max(1, limit))),
   });
   if (search && search.length >= 3) {
     params.set("search", search.slice(0, 80));
@@ -43,7 +43,7 @@ async function fetchCommandesPage({
 
 export function useCommandesClient({
   page = 1,
-  limit = 100,
+  limit = 20,
   search,
 }: CommandesClientParams = {}) {
   const token = useStore((s) => s.token);
