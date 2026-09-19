@@ -7,7 +7,11 @@ import { Text, TouchableOpacity, View } from "react-native";
 
 // Les frais de livraison viennent maintenant de l'API directement depuis
 // panier.tsx (useRestaurant). PanierFAB n'a plus besoin de les transmettre.
-export const PanierFAB: React.FC = () => {
+interface PanierFABProps {
+  bottomOffset?: number;
+}
+
+export const PanierFAB: React.FC<PanierFABProps> = ({ bottomOffset = 32 }) => {
   const router = useRouter();
   const nombre = useStore(selectNombreArticles);
 
@@ -19,9 +23,10 @@ export const PanierFAB: React.FC = () => {
 
   return (
     <TouchableOpacity
-      className="absolute bottom-8 right-4 w-14 h-14 rounded-full bg-brand-900 justify-center items-center shadow-lg z-20"
+      className="absolute right-4 w-14 h-14 rounded-full bg-brand-900 justify-center items-center shadow-lg z-20"
       onPress={handlePress}
       activeOpacity={0.8}
+      style={{ bottom: bottomOffset }}
     >
       <ShoppingBag color="white" />
       <View className="absolute -top-2 -right-1">

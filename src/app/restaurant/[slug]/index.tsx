@@ -1,21 +1,51 @@
-import { HeaderRestaurant } from "@/components/menu/HeaderRestaurant";
-import { MenuBottomSheet } from "@/components/menu/MenuBottomSheet";
+import { RestaurantDetailContent } from "@/components/restaurant-detail/restaurant-detail-content";
 import { PanierFAB } from "@/components/menu/PanierFAB";
-import { Button } from "@/components/ui/button";
+import { RestaurantMenuSheet } from "@/components/restaurant-menu/restaurant-menu-sheet";
 import { ErrorView } from "@/components/ui/ErrorView";
 import { SkeletonCardList } from "@/components/ui/SkeletonCard";
-import { Text as ButtonText } from "@/components/ui/text";
-import { useMenuRestaurant, useRestaurant } from "@/hooks/useMenuRestaurant";
-import type { Plat } from "@/types";
+import { useRestaurant } from "@/hooks/useMenuRestaurant";
+import { usePosition } from "@/hooks/usePosition";
+import { useItineraryRequestStore } from "@/store/itinerary-request-store";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useRef } from "react";
-import { Alert, Linking, Platform, ScrollView, View } from "react-native";
+import { Alert, ScrollView, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
 export default function RestaurantScreen() {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
+  const { slug, lat, lng } = useLocalSearchParams<{
+    slug: string;
+    lat?: string;
+    lng?: string;
+  }>();
+  const router = useRouter();
   const menuSheetRef = useRef<BottomSheetModal>(null);
+  const requestItinerary = useItineraryRequestStore(
+    (state) => state.requestItinerary,
+  );
+  const {
+    coords,
+    loading: positionLoading,
+    error: positionError,
+  } = usePosition();
+
+  const restaurantCoordinates = useMemo(() => {
+    const routeLatitude = Number(lat);
+    const routeLongitude = Number(lng);
+
+    if (Number.isFinite(routeLatitude) && Number.isFinite(routeLongitude)) {
+      return { latitude: routeLatitude, longitude: routeLongitude };
+    }
+
+    if (!positionLoading && !positionError) {
+      return {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      };
+    }
+
+    return undefined;
+  }, [coords.latitude, coords.longitude, lat, lng, positionError, positionLoading]);
   // const [showQuickPreview, setShowQuickPreview] = useState(true);
 
   const {
@@ -23,7 +53,7 @@ export default function RestaurantScreen() {
     isLoading: isRestaurantLoading,
     refetch: refetchRestaurant,
     error: restaurantError,
-  } = useRestaurant(slug ?? null);
+  } = useRestaurant(slug ?? null, restaurantCoordinates);
 
   const isLoading = isRestaurantLoading;
   const error = restaurantError;
@@ -31,26 +61,6 @@ export default function RestaurantScreen() {
   const refetch = async () => {
     await refetchRestaurant();
   };
-  const { data: categories = [] } = useMenuRestaurant(slug ?? null);
-
-  const visibleCategories = useMemo(
-    () => categories.filter((category) => category.visible !== false),
-    [categories],
-  );
-
-  const popularPlats = useMemo(() => {
-    const list: Plat[] = [];
-    for (const cat of visibleCategories) {
-      const plats = Array.isArray(cat.plats) ? cat.plats : [];
-      for (const p of plats) {
-        if (list.length < 3) list.push(p);
-        else break;
-      }
-      if (list.length >= 3) break;
-    }
-    return list;
-  }, [visibleCategories]);
-
   const handleVoirMenu = useCallback(() => {
     // setShowQuickPreview(false);
     menuSheetRef.current?.present();
@@ -62,39 +72,32 @@ export default function RestaurantScreen() {
 
   const handleItineraire = useCallback(() => {
     if (!restaurant) return;
-    const { latitude, longitude, nom } = restaurant;
-    const url = Platform.select({
-      ios: `maps:0,0?q=${nom}@${latitude},${longitude}`,
-      android: `geo:0,0?q=${latitude},${longitude}(${encodeURIComponent(nom)})`,
-    });
-    if (url) {
-      Linking.openURL(url).catch(() => {
-        Alert.alert(
-          "Itinéraire indisponible",
-          "Aucune application de cartographie ne peut ouvrir cet itinéraire.",
-        );
-      });
-    }
-  }, [restaurant]);
 
-  const ListHeader = useMemo(() => {
-    return (
-      <View>
-        {restaurant && (
-          <HeaderRestaurant
-            restaurant={restaurant}
-            onItineraire={handleItineraire}
-            onVoirMenu={handleVoirMenu}
-            popularPlats={popularPlats}
-          />
-        )}
-      </View>
-    );
-  }, [restaurant, handleItineraire, handleVoirMenu, popularPlats]);
+    if (!restaurantCoordinates) {
+      Alert.alert(
+        "Position requise",
+        "Une position est nécessaire pour tracer l’itinéraire sur la carte.",
+      );
+      return;
+    }
+
+    requestItinerary({
+      geometry: restaurant.geo?.itineraire?.geometrie,
+      origin: restaurantCoordinates,
+      restaurant: {
+        id: restaurant.id,
+        latitude: restaurant.latitude,
+        longitude: restaurant.longitude,
+        nom: restaurant.nom,
+        slug: restaurant.slug,
+      },
+    });
+    router.back();
+  }, [requestItinerary, restaurant, restaurantCoordinates, router]);
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-ink-50 pt-10">
+      <View className="flex-1 pt-10">
         <View className="flex-row items-center px-4 py-3 bg-white border-b border-ink-100">
           <View className="w-14 h-14 rounded-[14px] bg-ink-200" />
           <View className="flex-1 ml-3">
@@ -116,7 +119,7 @@ export default function RestaurantScreen() {
 
   if (error || !restaurant) {
     return (
-      <View className="flex-1 bg-ink-50">
+      <View className="flex-1">
         <ErrorView
           message={error?.message}
           onRetry={refetch}
@@ -129,30 +132,26 @@ export default function RestaurantScreen() {
   return (
     <Animated.View
       entering={FadeIn.duration(200)}
-      className="flex-1 bg-ink-50"
+      className="flex-1"
     >
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 72 }}
         // refreshControl={
         //   <RefreshControl refreshing={isFetching} onRefresh={refetch} />
         // }
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
       >
-        {ListHeader}
+        <RestaurantDetailContent
+          restaurant={restaurant}
+          onItineraire={handleItineraire}
+          onVoirMenu={handleVoirMenu}
+        />
       </ScrollView>
-      <Button
-        className="items-center w-[90%] self-center mb-4 h-12 justify-center"
-        onPress={handleVoirMenu}
-      >
-        <ButtonText className="text-white text-lg font-semibold">
-          Voir le menu
-        </ButtonText>
-      </Button>
 
       <PanierFAB />
 
-      <MenuBottomSheet
+      <RestaurantMenuSheet
         ref={menuSheetRef}
         slug={slug ?? ""}
         restaurant={restaurant}
