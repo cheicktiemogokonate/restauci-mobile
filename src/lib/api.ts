@@ -122,10 +122,15 @@ export class ApiClientError extends Error {
   }
 }
 
-async function performRefresh(): Promise<string | null> {
+type RefreshAttempt =
+  | { status: "invalid" }
+  | { status: "refreshed"; token: string }
+  | { status: "unavailable" };
+
+async function performRefresh(): Promise<RefreshAttempt> {
   const sessionAtStart = useStore.getState();
   const refreshToken = await SecureStore.getItemAsync(AUTH_REFRESH_TOKEN_KEY);
-  if (!refreshToken) return null;
+  if (!refreshToken) return { status: "invalid" };
   const { signal, clear } = withTimeout(REFRESH_TIMEOUT_MS);
   try {
     const res = await fetch(`${API_URL}${ENDPOINTS.authClientRefresh}`, {
@@ -138,7 +143,11 @@ async function performRefresh(): Promise<string | null> {
       signal,
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      return res.status === 401 || res.status === 403
+        ? { status: "invalid" }
+        : { status: "unavailable" };
+    }
 
     const response = parseApiSuccess<{
       accessToken: string;
@@ -153,8 +162,8 @@ async function performRefresh(): Promise<string | null> {
       currentSession.token !== sessionAtStart.token
     ) {
       return currentSession.client && currentSession.token
-        ? currentSession.token
-        : null;
+        ? { status: "refreshed", token: currentSession.token }
+        : { status: "invalid" };
     }
 
     await storeNativeTokens({
@@ -163,18 +172,18 @@ async function performRefresh(): Promise<string | null> {
     });
     useStore.setState({ token: newAccessToken });
 
-    return newAccessToken;
+    return { status: "refreshed", token: newAccessToken };
   } catch {
-    return null;
+    return { status: "unavailable" };
   } finally {
     clear();
   }
 }
 
-let refreshInFlight: Promise<string | null> | null = null;
+let refreshInFlight: Promise<RefreshAttempt> | null = null;
 
 /** Mutualise la rotation du cookie et du token entre toutes les requêtes 401. */
-function refreshAccessToken(): Promise<string | null> {
+function refreshAccessToken(): Promise<RefreshAttempt> {
   if (!refreshInFlight) {
     refreshInFlight = performRefresh().finally(() => {
       refreshInFlight = null;
@@ -256,17 +265,26 @@ export async function apiFetch<T>(
       console.warn('[apiFetch] 401 — tentative de refresh');
     }
     const currentToken = useStore.getState().token;
-    const newToken =
+    const refreshAttempt =
       currentToken && currentToken !== tokenUsed
-        ? currentToken
+        ? { status: "refreshed" as const, token: currentToken }
         : await refreshAccessToken();
-    if (newToken) {
-      result = await executeRequest(endpoint, requestOptions, newToken, false);
-    } else {
+    if (refreshAttempt.status === "refreshed") {
+      result = await executeRequest(
+        endpoint,
+        requestOptions,
+        refreshAttempt.token,
+        false,
+      );
+    } else if (refreshAttempt.status === "invalid") {
       if (__DEV__) {
-        console.warn('[apiFetch] refresh échoué — déconnexion');
+        console.warn('[apiFetch] refresh refusé — déconnexion');
       }
       await useStore.getState().logout({ revokeRemote: false });
+    } else if (__DEV__) {
+      console.warn(
+        '[apiFetch] refresh temporairement indisponible — session conservée',
+      );
     }
   }
 

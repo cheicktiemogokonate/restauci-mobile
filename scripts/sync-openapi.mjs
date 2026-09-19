@@ -1,7 +1,13 @@
 import { spawnSync } from "node:child_process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  assertMobileOpenApiContract,
+  renderGeneratedApiDocument,
+  renderOpenApiDocument,
+} from "./openapi-contract.mjs";
 
 const mobileRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const backendRoot = path.resolve(
@@ -9,22 +15,53 @@ const backendRoot = path.resolve(
 );
 const jsonPath = path.join(mobileRoot, "openapi", "openapi-v1.json");
 const generatedPath = path.join(mobileRoot, "src", "generated", "api-v1.ts");
-
-const exported = spawnSync(
-  "npm",
-  ["run", "api:openapi:export", "--", "--output", jsonPath],
-  { cwd: backendRoot, stdio: "inherit" },
+const checkOnly = process.argv.includes("--check");
+const temporaryDirectory = await mkdtemp(
+  path.join(os.tmpdir(), "toutci-openapi-sync-"),
 );
-if (exported.status !== 0) {
-  process.exit(exported.status ?? 1);
+const exportedJsonPath = path.join(temporaryDirectory, "openapi-v1.json");
+
+try {
+  const exported = spawnSync(
+    "npm",
+    ["run", "api:openapi:export", "--", "--output", exportedJsonPath],
+    { cwd: backendRoot, stdio: "inherit" },
+  );
+  if (exported.status !== 0) {
+    process.exitCode = exported.status ?? 1;
+  } else {
+    const document = JSON.parse(await readFile(exportedJsonPath, "utf8"));
+    assertMobileOpenApiContract(document);
+
+    const openApiSource = renderOpenApiDocument(document);
+    const generatedSource = renderGeneratedApiDocument(document);
+
+    if (checkOnly) {
+      const [currentOpenApi, currentGenerated] = await Promise.all([
+        readFile(jsonPath, "utf8"),
+        readFile(generatedPath, "utf8"),
+      ]);
+      const drift = [];
+      if (currentOpenApi !== openApiSource) drift.push(jsonPath);
+      if (currentGenerated !== generatedSource) drift.push(generatedPath);
+      if (drift.length > 0) {
+        throw new Error(
+          `Artefacts OpenAPI désynchronisés: ${drift.join(", ")}. Exécutez npm run api:sync.`,
+        );
+      }
+      console.log("Contrat OpenAPI mobile synchronisé avec le backend.");
+    } else {
+      await Promise.all([
+        mkdir(path.dirname(jsonPath), { recursive: true }),
+        mkdir(path.dirname(generatedPath), { recursive: true }),
+      ]);
+      await Promise.all([
+        writeFile(jsonPath, openApiSource, "utf8"),
+        writeFile(generatedPath, generatedSource, "utf8"),
+      ]);
+      console.log(`Contrat mobile généré dans ${generatedPath}`);
+    }
+  }
+} finally {
+  await rm(temporaryDirectory, { recursive: true, force: true });
 }
-
-const document = JSON.parse(await readFile(jsonPath, "utf8"));
-const generated = `// Généré par npm run api:sync. Ne pas modifier manuellement.\n` +
-  `export const apiV1Document = ${JSON.stringify(document, null, 2)} as const;\n\n` +
-  `export type ApiV1Path = keyof typeof apiV1Document.paths;\n` +
-  `export type ApiV1Method<Path extends ApiV1Path> = keyof typeof apiV1Document.paths[Path];\n`;
-
-await mkdir(path.dirname(generatedPath), { recursive: true });
-await writeFile(generatedPath, generated, "utf8");
-console.log(`Contrat mobile généré dans ${generatedPath}`);

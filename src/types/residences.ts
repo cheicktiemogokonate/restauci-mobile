@@ -7,6 +7,9 @@ export type ResidenceReservationTemporalStatus =
   | "a_venir"
   | "en_cours"
   | "terminee";
+export type ResidenceBookabilityBlocker =
+  | "not_public"
+  | "provider_account_missing";
 
 export interface ResidencePhoto {
   id: string;
@@ -24,11 +27,14 @@ export interface PublicResidence {
   maxGuests: number;
   city: string;
   country: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
   firstPublishedAt: string;
   photos: ResidencePhoto[];
   bookability: {
     isBookable: boolean;
-    blockers: string[];
+    blockers: ResidenceBookabilityBlocker[];
   };
   placement: "promoted" | "organic";
   partnerBadgeEnabled: boolean;
@@ -45,7 +51,16 @@ export interface ResidenceStayQuote {
   subtotalFcfa: number;
   totalFcfa: number;
   available: boolean;
-  bookabilityBlockers: string[];
+  bookabilityBlockers: ResidenceBookabilityBlocker[];
+}
+
+export interface ResidenceAvailability {
+  residenceId: string;
+  unavailable: {
+    checkIn: string;
+    checkOut: string;
+    source: "reservation" | "owner_block";
+  }[];
 }
 
 export interface ResidenceReservation {
@@ -55,6 +70,7 @@ export interface ResidenceReservation {
   residenceTitle: string;
   residenceCity: string;
   residenceCoverUrl: string | null;
+  residenceMaxGuests: number;
   partnerAccountId: string;
   clientId: string;
   clientName: string;
@@ -75,5 +91,7 @@ export interface ResidenceReservation {
   checkoutUrl: string | null;
   confirmedAt: string | null;
   cancelledAt: string | null;
+  cancellationSource: string | null;
+  cancellationReason: string | null;
   createdAt: string;
 }

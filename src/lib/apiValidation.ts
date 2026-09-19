@@ -77,6 +77,9 @@ export const restaurantSchema = z
     enLigne: z.boolean(),
     accepteCommandes: z.boolean(),
     distanceKm: finiteNumber.nonnegative().optional(),
+    placement: z.enum(["promoted", "organic"]).optional(),
+    partnerBadgeEnabled: z.boolean().optional(),
+    discoveryToken: z.string().optional(),
     actif: z.boolean().optional(),
     pays: nullableString.optional(),
     telephone: nullableString.optional(),
@@ -157,7 +160,9 @@ export const categorieSchema = z
     description: nullableString,
     imageUrl: nullableString,
     ordre: integer,
-    visible: z.boolean(),
+    // Certaines versions déployées du menu client omettent ce champ.
+    // Une catégorie renvoyée par cet endpoint est visible par défaut.
+    visible: z.boolean().optional().default(true),
     createdAt: z.string().min(1),
     updatedAt: z.string().min(1),
     plats: z.array(platSchema),
@@ -215,6 +220,14 @@ export const commandeCreationDataSchema = z
 
 export const commandeSummarySchema = commandeBaseSchema.extend({
   restaurantId: z.string().min(1),
+  restaurant: z
+    .object({
+      nom: z.string().min(1),
+      logoUrl: z.string().url().nullable(),
+    })
+    .passthrough()
+    .nullable()
+    .optional(),
 });
 
 const timelineEventSchema = z
@@ -251,7 +264,14 @@ export const commandeDetailSchema = commandeBaseSchema.extend({
     .nullable(),
   statutLabel: z.string(),
   livraisonStatut: z
-    .enum(["en_attente", "assignee", "en_route", "livree", "echouee"])
+    .enum([
+      "en_attente",
+      "assignee",
+      "en_route",
+      "livree",
+      "echouee",
+      "annulee",
+    ])
     .nullable(),
   estAnnulee: z.boolean(),
   timeline: z.array(timelineEventSchema),
@@ -265,6 +285,90 @@ export const commandeDetailSchema = commandeBaseSchema.extend({
     .passthrough()
     .nullable(),
 });
+
+export const clientDeliverySchema = z
+  .object({
+    id: z.string().min(1),
+    status: z.enum([
+      "en_attente",
+      "assignee",
+      "en_route",
+      "livree",
+      "echouee",
+      "annulee",
+    ]),
+    driver: z
+      .object({
+        name: z.string().min(1),
+        phone: z.string().min(1),
+        photoUrl: nullableString,
+        vehicle: z.string().min(1),
+        vehicleNumber: nullableString,
+        restaurantName: z.string().min(1),
+      })
+      .passthrough()
+      .nullable(),
+    proofRequired: z.boolean(),
+    proofCode: z.string().regex(/^\d{6}$/).nullable(),
+    assignedAt: nullableString,
+    startedAt: nullableString,
+    completedAt: nullableString,
+  })
+  .passthrough();
+
+export const clientDeliveryConfirmationSchema = z
+  .object({ verified: z.literal(true) })
+  .passthrough();
+
+export const restaurantSearchDataSchema = z
+  .object({
+    items: z.array(restaurantSchema),
+    market: z.unknown().nullable(),
+    capability: z.unknown().nullable(),
+    policyMode: z.enum(["off", "shadow", "enforce"]),
+  })
+  .passthrough();
+
+export const etablissementItemSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.enum(["restaurant", "residence"]),
+    nom: z.string().min(1),
+    slug: z.string().min(1),
+    description: nullableString.optional(),
+    adresse: z.string(),
+    ville: nullableString.optional(),
+    latitude: finiteNumber,
+    longitude: finiteNumber,
+    distanceKm: finiteNumber.nonnegative().nullable().optional(),
+    imageUrl: nullableString.optional(),
+    banniereUrl: nullableString.optional(),
+    noteMoyenne: finiteNumber.nonnegative().nullable().optional(),
+    nombreAvis: integer.nonnegative().optional(),
+    enLigne: z.boolean(),
+    prixAffiche: nullableString.optional(),
+    prixFcfa: finiteNumber.nullable().optional(),
+    tags: z.array(z.string()).optional(),
+    placement: z.enum(["promoted", "organic"]).optional(),
+    partnerBadgeEnabled: z.boolean().optional(),
+    discoveryToken: z.string().optional(),
+    recommendationReason: nullableString.optional(),
+  })
+  .passthrough();
+
+export const etablissementSearchDataSchema = z
+  .object({
+    items: z.array(etablissementItemSchema),
+    meta: z
+      .object({
+        total: integer.nonnegative(),
+        page: integer.positive(),
+        limit: integer.positive(),
+      })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
 
 export const paymentInitializationSchema = z.object({
   authorizationUrl: z.string().url(),

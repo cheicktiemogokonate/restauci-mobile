@@ -18,7 +18,8 @@ export type StatutLivraison =
   | "assignee"
   | "en_route"
   | "livree"
-  | "echouee";
+  | "echouee"
+  | "annulee";
 
 // --- Temps d'attente et détails du restaurant ---
 export interface RestaurantTempsAttenteDetail {
@@ -33,7 +34,7 @@ export interface RestaurantTempsAttente {
   detail: RestaurantTempsAttenteDetail;
 }
 
-// --- Restaurant (GET /api/v1/client/restaurants?lat=...&lng=...&rayon=...) ---
+// --- Restaurant (POST /api/v1/public/restaurants/search) ---
 export interface Restaurant {
   id: string;
   nom: string;
@@ -55,6 +56,9 @@ export interface Restaurant {
   enLigne: boolean;
   accepteCommandes: boolean;
   distanceKm?: number;
+  placement?: "promoted" | "organic";
+  partnerBadgeEnabled?: boolean;
+  discoveryToken?: string;
   // Champs optionnels (endpoint détail vs liste)
   actif?: boolean;
   pays?: string | null;
@@ -266,6 +270,10 @@ export interface CommandeSummary {
   modeCommande: ModeCommande;
   createdAt: string;
   restaurantId: string;
+  restaurant?: null | {
+    nom: string;
+    logoUrl: string | null;
+  };
 }
 
 // Timeline event pour CommandeDetail
@@ -310,6 +318,24 @@ export interface CommandeDetail {
     status: "pending" | "confirmed" | "failed" | "cancelled";
     checkoutUrl: string | null;
   };
+}
+
+export interface ClientDelivery {
+  id: string;
+  status: StatutLivraison;
+  driver: null | {
+    name: string;
+    phone: string;
+    photoUrl: string | null;
+    vehicle: string;
+    vehicleNumber: string | null;
+    restaurantName: string;
+  };
+  proofRequired: boolean;
+  proofCode: string | null;
+  assignedAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
 }
 
 // --- Pagination ---

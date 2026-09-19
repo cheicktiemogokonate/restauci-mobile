@@ -22,7 +22,7 @@ export const API_URL = normalizeApiUrl(
 );
 
 export const ENDPOINTS = {
-  restaurants: "/client/restaurants",
+  publicRestaurantsSearch: "/public/restaurants/search",
   restaurantMenu: (slug: string) =>
     `/client/restaurants/${encodeURIComponent(slug)}/menu`,
   restaurantDetail: (slug: string) =>
@@ -35,6 +35,10 @@ export const ENDPOINTS = {
     `/client/commandes/${encodeURIComponent(id)}/stream`,
   clientCommandePayment: (id: string) =>
     `/client/commandes/${encodeURIComponent(id)}/paiement`,
+  clientCommandeLivraison: (id: string) =>
+    `/client/commandes/${encodeURIComponent(id)}/livraison`,
+  clientCommandeLivraisonConfirmation: (id: string) =>
+    `/client/commandes/${encodeURIComponent(id)}/livraison/confirmation`,
   authClientLogin: "/client/auth/login",
   authClientRegister: "/client/auth/register",
   authClientMe: "/client/auth/me",
@@ -49,6 +53,7 @@ export const ENDPOINTS = {
     `/public/residences/${encodeURIComponent(id)}/availability`,
   publicResidenceQuote: (id: string) =>
     `/public/residences/${encodeURIComponent(id)}/quote`,
+  publicDiscoveryEvents: "/public/discovery/events",
   clientReservations: "/client/reservations",
   clientReservation: (id: string) =>
     `/client/reservations/${encodeURIComponent(id)}`,
@@ -56,4 +61,6 @@ export const ENDPOINTS = {
     `/client/reservations/${encodeURIComponent(id)}/cancel`,
   clientReservationPayment: (id: string) =>
     `/client/reservations/${encodeURIComponent(id)}/payment`,
+  publicEtablissementsSearch: "/public/etablissements/search",
+  publicDiscoveryMood: "/public/discovery/mood",
 } as const;
