@@ -1,169 +1,22 @@
+import {
+  FloatingTabBar,
+  type FloatingTabBarProps,
+} from "@/components/navigation/floating-tab-bar";
 import { Tabs } from "expo-router";
-import { BedDouble, Map, ShoppingBag, User } from "lucide-react-native";
-import { useCallback, type ComponentProps } from "react";
-import { StatusBar, Text, TouchableOpacity, View } from "react-native";
-import Animated, { LinearTransition } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-type TabsProps = ComponentProps<typeof Tabs>;
-type CustomTabBarProps = Parameters<NonNullable<TabsProps["tabBar"]>>[0];
-
-const ALLOWED_TAB_ROUTES = new Set([
-  "index",
-  "commandes",
-  "commandes/index",
-  "residences",
-  "residences/index",
-  "profil",
-]);
-
-function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
-  const insets = useSafeAreaInsets();
-
-  return (
-    <View
-      style={{
-        position: "absolute",
-        bottom: insets.bottom > 0 ? insets.bottom : 20,
-        left: 50,
-        right: 50,
-        flexDirection: "row",
-        backgroundColor: "#f9fafb",
-        borderRadius: 40,
-        padding: 6,
-        justifyContent: "space-between",
-        alignItems: "center",
-        shadowColor: "#111827",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 10,
-        elevation: 8,
-      }}
-    >
-      {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key];
-
-        // Seuls ces écrans apparaîtront dans la tab bar
-        if (!ALLOWED_TAB_ROUTES.has(route.name)) {
-          return null;
-        }
-
-        const label =
-          typeof options.tabBarLabel === "string"
-            ? options.tabBarLabel
-            : options.title !== undefined
-              ? options.title
-              : route.name;
-
-        const isFocused = state.index === index;
-
-        const onPress = () => {
-          const event = navigation.emit({
-            type: "tabPress",
-            target: route.key,
-            canPreventDefault: true,
-          });
-
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name, route.params);
-          }
-        };
-
-        const onLongPress = () => {
-          navigation.emit({
-            type: "tabLongPress",
-            target: route.key,
-          });
-        };
-
-        return (
-          <TouchableOpacity
-            key={route.key}
-            accessibilityRole="button"
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={options.tabBarAccessibilityLabel}
-            testID={options.tabBarButtonTestID}
-            onPress={onPress}
-            onLongPress={onLongPress}
-            style={{ flex: isFocused ? 1 : 0.6, alignItems: "center" }}
-            activeOpacity={0.8}
-          >
-            <Animated.View
-              layout={LinearTransition.springify().damping(15).stiffness(150)}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: isFocused ? "#14532d" : "transparent",
-                borderRadius: 30,
-                paddingVertical: 10,
-                paddingHorizontal: isFocused ? 16 : 10,
-                borderWidth: isFocused ? 1 : 0,
-                borderColor: "#14532d",
-              }}
-            >
-              {options.tabBarIcon
-                ? options.tabBarIcon({
-                  focused: isFocused,
-                  color: isFocused ? "#ffffff" : "#14532d",
-                  size: 20,
-                })
-                : null}
-              {isFocused && (
-                <Animated.Text
-                  style={{
-                    color: "#ffffff",
-                    marginLeft: 6,
-                    fontWeight: "600",
-                    fontSize: 13,
-                  }}
-                  numberOfLines={1}
-                >
-                  {label}
-                </Animated.Text>
-              )}
-              {/* Optional: Add badge if required by design. Right now keeping it minimal or handling via a small dot. */}
-              {options.tabBarBadge !== undefined && (
-                <View
-                  style={{
-                    position: "absolute",
-                    top: 6,
-                    right: 6,
-                    backgroundColor: "#DC2626",
-                    borderRadius: 10,
-                    width: 14,
-                    height: 14,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    borderWidth: 1.5,
-                    borderColor: isFocused ? "#386b2a" : "#14532d",
-                  }}
-                >
-                  <Text
-                    style={{ color: "white", fontSize: 8, fontWeight: "bold" }}
-                  >
-                    {options.tabBarBadge}
-                  </Text>
-                </View>
-              )}
-            </Animated.View>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
-}
+import { Clock3, Compass, User } from "lucide-react-native";
+import { useCallback } from "react";
+import { StatusBar, View } from "react-native";
 
 export default function TabLayout() {
   // Mémoriser la prop tabBar pour éviter de re-monter les écrans
   // (dont la carte) à chaque re-rendu déclenché par le store.
   const renderTabBar = useCallback(
-    (props: CustomTabBarProps) => <CustomTabBar {...props} />,
+    (props: FloatingTabBarProps) => <FloatingTabBar {...props} />,
     [],
   );
 
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <StatusBar barStyle={"dark-content"} />
 
       <Tabs
@@ -173,6 +26,7 @@ export default function TabLayout() {
         detachInactiveScreens={false}
         screenOptions={{
           headerShown: false,
+          sceneStyle: { backgroundColor: "transparent" },
           // Par défaut on gèle les onglets inactifs ; seule la Carte est exemptée.
           freezeOnBlur: true,
         }}
@@ -180,30 +34,21 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: "Carte",
+            title: "Explorer",
             // La carte conserve son état natif (caméra, tuiles) hors focus.
             freezeOnBlur: false,
             tabBarIcon: ({ color, size }) => (
-              <Map color={color} size={size} strokeWidth={2.5} />
+              <Compass color={color} size={size} strokeWidth={2.1} />
             ),
           }}
         />
 
         <Tabs.Screen
-          name="commandes"
+          name="activite"
           options={{
-            title: "Commandes",
+            title: "Activité",
             tabBarIcon: ({ color, size }) => (
-              <ShoppingBag color={color} size={size} strokeWidth={2.5} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="residences"
-          options={{
-            title: "Séjours",
-            tabBarIcon: ({ color, size }) => (
-              <BedDouble color={color} size={size} strokeWidth={2.5} />
+              <Clock3 color={color} size={size} strokeWidth={2.1} />
             ),
           }}
         />
@@ -212,11 +57,14 @@ export default function TabLayout() {
           options={{
             title: "Profil",
             tabBarIcon: ({ color, size }) => (
-              <User color={color} size={size} strokeWidth={2.5} />
+              <User color={color} size={size} strokeWidth={2.1} />
             ),
           }}
         />
+
+        <Tabs.Screen name="commandes" options={{ href: null }} />
+        <Tabs.Screen name="residences" options={{ href: null }} />
       </Tabs>
-    </>
+    </View>
   );
 }
