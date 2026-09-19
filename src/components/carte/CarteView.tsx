@@ -1,3 +1,4 @@
+import { ITINERARY_VISUAL_CONFIG } from "@/constants/itinerary-style";
 import { DEFAULT_COORDS, DEFAULT_ZOOM } from "@/hooks/usePosition";
 import type { Restaurant } from "@/types";
 import {
@@ -8,6 +9,7 @@ import {
   Map,
   type CameraRef,
   type CircleLayerSpecification,
+  type LineLayerSpecification,
   type PressEvent,
   type PressEventWithFeatures,
   type SymbolLayerSpecification,
@@ -19,18 +21,22 @@ import React, {
   useMemo,
   useRef,
 } from "react";
+import { LocateFixed, Minus, Plus } from "lucide-react-native";
 import {
   Linking,
   NativeSyntheticEvent,
   Pressable,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 
 // ============================================
 // Constantes stables — hors composant pour ne jamais être recréées
 // ============================================
+import type { Etablissement } from "@/types/etablissement";
+
+import { getVerticalDefinition, VERTICALS } from "@/constants/verticals";
+
 const INITIAL_VIEW_STATE = {
   zoom: DEFAULT_ZOOM,
   center: [DEFAULT_COORDS.longitude, DEFAULT_COORDS.latitude] as [
@@ -39,82 +45,123 @@ const INITIAL_VIEW_STATE = {
   ],
 };
 
-const MARKER_IMAGES = {
-  "restaurant-marker": require("../../../assets/images/restaurant-marker.png"),
-};
+const MARKER_IMAGES: Record<string, number> = Object.fromEntries(
+  Object.values(VERTICALS).map((v) => [v.markerIcon, v.markerAsset]),
+);
 
 // ============================================
 // Styles de couches (objets stables, hors rendu)
 // ============================================
-const restaurantSymbolLayout: NonNullable<
+const etablissementSymbolLayout: NonNullable<
   SymbolLayerSpecification["layout"]
 > = {
-  "icon-image": "restaurant-marker",
-  "icon-size": 0.13,
+  "icon-image": ["get", "markerIcon"],
+  "icon-size": 0.115,
   "icon-allow-overlap": true,
   "icon-ignore-placement": true,
-};
-
-const restaurantSymbolPaint: NonNullable<
-  SymbolLayerSpecification["paint"]
-> = {
-  "icon-color": "#457b3b",
 };
 
 const userOuterCirclePaint: NonNullable<
   CircleLayerSpecification["paint"]
 > = {
   "circle-radius": 14,
-  "circle-color": "rgba(56, 107, 42, 0.25)",
+  "circle-color": "rgba(17, 17, 17, 0.16)",
 };
 
 const userInnerCirclePaint: NonNullable<
   CircleLayerSpecification["paint"]
 > = {
   "circle-radius": 7,
-  "circle-color": "#386b2a",
+  "circle-color": "#111111",
   "circle-stroke-color": "#ffffff",
   "circle-stroke-width": 2,
 };
 
-// ============================================
-// Types
-// ============================================
+const itineraryDashPaint =
+  ITINERARY_VISUAL_CONFIG.strokeStyle === "dashed"
+    ? { "line-dasharray": ITINERARY_VISUAL_CONFIG.dashArray }
+    : {};
+
+const itineraryCasingPaint: NonNullable<
+  LineLayerSpecification["paint"]
+> = {
+  "line-color": "#ffffff",
+  "line-width": ITINERARY_VISUAL_CONFIG.casingWidth,
+  "line-opacity": 0.9,
+  ...itineraryDashPaint,
+};
+
+const itineraryLinePaint: NonNullable<LineLayerSpecification["paint"]> = {
+  "line-color": ITINERARY_VISUAL_CONFIG.color,
+  "line-width": ITINERARY_VISUAL_CONFIG.width,
+  "line-opacity": ITINERARY_VISUAL_CONFIG.opacity,
+  ...itineraryDashPaint,
+};
+
 interface CarteViewProps {
-  restaurants: Restaurant[];
+  restaurants?: Restaurant[];
+  etablissements?: Etablissement[];
   userLocation: { latitude: number; longitude: number } | null;
   itineraireGeoJSON?: GeoJSON.FeatureCollection<GeoJSON.LineString> | null;
   selectedRestaurantId?: string | null;
+  selectedEtablissementId?: string | null;
   controlsBottom?: number;
+  onRecenter?: () => void;
   onRestaurantSelect?: (restaurant: Restaurant) => void;
+  onEtablissementSelect?: (etablissement: Etablissement) => void;
   onMapPress?: () => void;
   onViewportChange?: (center: [number, number]) => void;
 }
 
 export interface CarteViewRef {
   flyTo: (lngLat: [number, number], zoom?: number) => void;
-  fitBounds: (bounds: [number, number, number, number], padding?: number) => void;
+  fitBounds: (
+    bounds: [number, number, number, number],
+    padding?: number,
+    duration?: number,
+  ) => void;
 }
 
 // ============================================
 // Helpers GeoJSON — fonctions pures hors composant
 // ============================================
-function toRestaurantsGeoJSON(restaurants: Restaurant[]): GeoJSON.FeatureCollection {
+function toMarkersGeoJSON(
+  items: (Etablissement | Restaurant)[],
+  selectedId: string | null,
+): GeoJSON.FeatureCollection {
+  const selectedItem = items.find((item) => item.id === selectedId);
+
   return {
     type: "FeatureCollection",
-    features: restaurants.map((r) => ({
-      type: "Feature",
-      id: r.id,
-      geometry: {
-        type: "Point",
-        coordinates: [r.longitude, r.latitude],
-      },
-      properties: {
+    features: items.map((r) => {
+      const type = "type" in r ? r.type : "restaurant";
+      const markerIcon = getVerticalDefinition(type).markerIcon;
+      const isAvailable =
+        "accepteCommandes" in r
+          ? Boolean(r.enLigne && r.accepteCommandes)
+          : Boolean(r.enLigne);
+
+      return {
+        type: "Feature",
         id: r.id,
-        slug: r.slug,
-        isAvailable: r.enLigne && r.accepteCommandes,
-      },
-    })),
+        geometry: {
+          type: "Point",
+          coordinates: [r.longitude, r.latitude],
+        },
+        properties: {
+          id: r.id,
+          slug: r.slug,
+          type,
+          markerIcon,
+          isAvailable,
+          isHiddenBySelection:
+            Boolean(selectedItem) &&
+            r.id !== selectedId &&
+            r.latitude === selectedItem?.latitude &&
+            r.longitude === selectedItem?.longitude,
+        },
+      };
+    }),
   };
 }
 
@@ -145,43 +192,53 @@ export const CarteView = React.forwardRef<CarteViewRef, CarteViewProps>(
   (
     {
       restaurants,
+      etablissements,
       userLocation,
       itineraireGeoJSON,
       selectedRestaurantId = null,
+      selectedEtablissementId = null,
       controlsBottom = 120,
+      onRecenter,
       onRestaurantSelect,
+      onEtablissementSelect,
       onMapPress,
       onViewportChange,
     },
     ref,
   ) => {
     const cameraRef = useRef<CameraRef>(null);
-
-    // useRef pour le zoom courant : évite tout setState pendant les gestes
-    // de déplacement de la carte → aucun re-render, 100% fluide.
     const currentZoomRef = useRef(DEFAULT_ZOOM);
 
     useImperativeHandle(ref, () => ({
       flyTo: (lngLat: [number, number], zoom = DEFAULT_ZOOM) => {
+        currentZoomRef.current = zoom;
         cameraRef.current?.flyTo({
           center: lngLat,
           zoom,
           duration: 1500,
         });
       },
-      fitBounds: (bounds: [number, number, number, number], padding = 40) => {
+      fitBounds: (
+        bounds: [number, number, number, number],
+        padding = 40,
+        duration = 850,
+      ) => {
         cameraRef.current?.fitBounds(bounds, {
           padding: { top: padding, right: padding, bottom: padding, left: padding },
-          duration: 1500
+          duration,
         });
       },
     }));
 
+
+    const effectiveSelectedId =
+      selectedEtablissementId ?? selectedRestaurantId ?? null;
+
     // GeoJSON mémorisé — recalculé uniquement si les données changent
-    const restaurantsGeoJSON = useMemo(
-      () => toRestaurantsGeoJSON(restaurants),
-      [restaurants],
-    );
+    const markersGeoJSON = useMemo(() => {
+      const items = etablissements ?? restaurants ?? [];
+      return toMarkersGeoJSON(items, effectiveSelectedId);
+    }, [effectiveSelectedId, etablissements, restaurants]);
 
     const userLocationGeoJSON = useMemo(
       () => toUserLocationGeoJSON(userLocation),
@@ -189,17 +246,29 @@ export const CarteView = React.forwardRef<CarteViewRef, CarteViewProps>(
     );
 
     // Gestion des taps sans re-render du composant
-    const handleRestaurantPress = useCallback(
+    const handleMarkerPress = useCallback(
       (e: NativeSyntheticEvent<PressEventWithFeatures>) => {
         e.stopPropagation();
         const feature = e.nativeEvent.features[0];
         const id = feature?.properties?.id;
-        const restaurant = restaurants.find((item) => item.id === id);
-        if (restaurant) {
-          onRestaurantSelect?.(restaurant);
+        if (!id) return;
+
+        if (etablissements && onEtablissementSelect) {
+          const etablissement = etablissements.find((item) => item.id === id);
+          if (etablissement) {
+            onEtablissementSelect(etablissement);
+            return;
+          }
+        }
+
+        if (restaurants && onRestaurantSelect) {
+          const restaurant = restaurants.find((item) => item.id === id);
+          if (restaurant) {
+            onRestaurantSelect(restaurant);
+          }
         }
       },
-      [onRestaurantSelect, restaurants],
+      [etablissements, onEtablissementSelect, onRestaurantSelect, restaurants],
     );
 
     const handleMapPress = useCallback(
@@ -212,12 +281,10 @@ export const CarteView = React.forwardRef<CarteViewRef, CarteViewProps>(
       [onMapPress],
     );
 
-    // Suivi du zoom via ref uniquement (pas de setState)
     const handleRegionChange = useCallback(
       (e: NativeSyntheticEvent<ViewStateChangeEvent>) => {
-        const zoom = e.nativeEvent.zoom;
-        if (typeof zoom === "number") {
-          currentZoomRef.current = zoom;
+        if (typeof e.nativeEvent.zoom === "number") {
+          currentZoomRef.current = e.nativeEvent.zoom;
         }
         if (e.nativeEvent.userInteraction) {
           onViewportChange?.(e.nativeEvent.center);
@@ -237,6 +304,9 @@ export const CarteView = React.forwardRef<CarteViewRef, CarteViewProps>(
           compass={false}
           scaleBar={false}
           logo={false}
+          touchZoom
+          doubleTapZoom
+          doubleTapHoldZoom
           onPress={handleMapPress}
           onRegionDidChange={handleRegionChange}
         >
@@ -246,29 +316,28 @@ export const CarteView = React.forwardRef<CarteViewRef, CarteViewProps>(
           <Images images={MARKER_IMAGES} />
 
           <GeoJSONSource
-            id="restaurants-source"
-            data={restaurantsGeoJSON}
-            onPress={handleRestaurantPress}
+            id="etablissements-source"
+            data={markersGeoJSON}
+            onPress={handleMarkerPress}
           >
             <Layer
-              id="restaurant-icons"
+              id="etablissement-icons"
               type="symbol"
               layout={{
-                ...restaurantSymbolLayout,
+                ...etablissementSymbolLayout,
                 "icon-size": [
                   "case",
-                  ["==", ["get", "id"], selectedRestaurantId ?? ""],
-                  0.18,
-                  0.13,
+                  ["==", ["get", "id"], effectiveSelectedId ?? ""],
+                  0.16,
+                  0.115,
                 ],
               }}
               paint={{
-                ...restaurantSymbolPaint,
                 "icon-opacity": [
                   "case",
-                  ["==", ["get", "isAvailable"], true],
+                  ["==", ["get", "isHiddenBySelection"], true],
+                  0,
                   1,
-                  0.45,
                 ],
               }}
             />
@@ -290,54 +359,76 @@ export const CarteView = React.forwardRef<CarteViewRef, CarteViewProps>(
           {itineraireGeoJSON && (
             <GeoJSONSource id="itineraire-source" data={itineraireGeoJSON}>
               <Layer
+                id="itineraire-contour"
+                type="line"
+                layout={{ "line-cap": "round", "line-join": "round" }}
+                paint={itineraryCasingPaint}
+              />
+              <Layer
                 id="itineraire-layer"
                 type="line"
-                paint={{
-                  "line-color": "#14532d",
-                  "line-width": 4,
-                  "line-opacity": 0.8,
-                }}
+                layout={{ "line-cap": "round", "line-join": "round" }}
+                paint={itineraryLinePaint}
               />
             </GeoJSONSource>
           )}
         </Map>
 
-        {/* Contrôles de zoom */}
         <View
-          style={{ position: "absolute", right: 16, bottom: controlsBottom }}
-          className="overflow-hidden rounded-2xl bg-white shadow-md"
+          className="overflow-hidden rounded-2xl bg-white"
+          style={{
+            position: "absolute",
+            right: 16,
+            bottom: controlsBottom + 34,
+            boxShadow: "0 5px 16px rgba(17, 24, 39, 0.16)",
+          }}
         >
-          <TouchableOpacity
-            className="h-11 w-11 items-center justify-center"
-            onPress={() =>
-              cameraRef.current?.zoomTo(currentZoomRef.current + 1, {
-                duration: 300,
-              })
-            }
-            activeOpacity={0.7}
+          <Pressable
+            onPress={() => {
+              const zoom = Math.min(20, currentZoomRef.current + 1);
+              currentZoomRef.current = zoom;
+              cameraRef.current?.zoomTo(zoom, { duration: 260 });
+            }}
             accessibilityRole="button"
             accessibilityLabel="Zoomer"
+            className="h-10 w-10 items-center justify-center"
           >
-            <Text className="text-2xl font-light text-ink-700">+</Text>
-          </TouchableOpacity>
-          <View className="h-px w-8 self-center bg-ink-200" />
-          <TouchableOpacity
-            className="h-11 w-11 items-center justify-center"
-            onPress={() =>
-              cameraRef.current?.zoomTo(currentZoomRef.current - 1, {
-                duration: 300,
-              })
-            }
-            activeOpacity={0.7}
+            <Plus size={19} color="#111827" strokeWidth={2} />
+          </Pressable>
+          <View className="h-px w-6 self-center bg-ink-200" />
+          <Pressable
+            onPress={() => {
+              const zoom = Math.max(2, currentZoomRef.current - 1);
+              currentZoomRef.current = zoom;
+              cameraRef.current?.zoomTo(zoom, { duration: 260 });
+            }}
             accessibilityRole="button"
             accessibilityLabel="Dézoomer"
+            className="h-10 w-10 items-center justify-center"
           >
-            <Text className="text-2xl font-light text-ink-700">−</Text>
-          </TouchableOpacity>
+            <Minus size={19} color="#111827" strokeWidth={2} />
+          </Pressable>
+          {onRecenter && (
+            <>
+              <View className="h-px w-6 self-center bg-ink-200" />
+              <Pressable
+                onPress={onRecenter}
+                accessibilityRole="button"
+                accessibilityLabel="Recentrer sur ma position"
+                className="h-10 w-10 items-center justify-center"
+              >
+                <LocateFixed size={18} color="#111827" strokeWidth={2} />
+              </Pressable>
+            </>
+          )}
         </View>
 
         <View
-          style={{ position: "absolute", right: 16, bottom: 90 }}
+          style={{
+            position: "absolute",
+            right: 12,
+            bottom: controlsBottom + 8,
+          }}
           className="flex-row items-center rounded-md bg-white/90 px-2 py-1"
         >
           <Pressable

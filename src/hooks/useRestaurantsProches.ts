@@ -1,40 +1,53 @@
 import { ENDPOINTS } from "@/constants/api";
+import {
+  buildRestaurantSearchRequest,
+  type RestaurantDiscoveryLocation,
+} from "@/domain/restaurantSearch";
 import { apiFetch } from "@/lib/api";
-import { parseApiSuccess, restaurantSchema } from "@/lib/apiValidation";
+import {
+  parseApiSuccess,
+  restaurantSearchDataSchema,
+} from "@/lib/apiValidation";
 import type { Restaurant } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 
 export function useRestaurantsProches(
-  lat: number | undefined,
-  lon: number | undefined,
-  rayon: number = 5,
+  location: RestaurantDiscoveryLocation | null,
   cuisine?: string | null,
 ) {
   return useQuery<Restaurant[]>({
-    queryKey: ["restaurants-proches", lat, lon, rayon, cuisine],
+    queryKey: [
+      "restaurants-proches",
+      location?.latitude,
+      location?.longitude,
+      location?.accuracyMeters,
+      location?.capturedAt,
+      cuisine,
+    ],
     queryFn: async ({ signal }) => {
-      const params = new URLSearchParams({
-        lat: String(lat),
-        lng: String(lon),
-        rayon: String(Math.min(50, Math.max(0.5, rayon))),
-        page: "1",
-        limit: "100",
-      });
-      if (cuisine) {
-        params.set("cuisine", cuisine.slice(0, 100));
-      }
-
       const payload = await apiFetch<unknown>(
-        `${ENDPOINTS.restaurants}?${params.toString()}`,
-        { skipAuth: true, signal },
+        ENDPOINTS.publicRestaurantsSearch,
+        {
+          method: "POST",
+          skipAuth: true,
+          signal,
+          body: JSON.stringify(
+            buildRestaurantSearchRequest({
+              location: location!,
+              cuisine,
+              page: 1,
+              limit: 100,
+            }),
+          ),
+        },
       );
-      const response = parseApiSuccess<Restaurant[]>(
+      const response = parseApiSuccess<{ items: Restaurant[] }>(
         payload,
-        restaurantSchema.array(),
+        restaurantSearchDataSchema,
         "restaurants/proches",
       );
-      return response.data;
+      return response.data.items;
     },
-    enabled: typeof lat === "number" && typeof lon === "number",
+    enabled: Boolean(location),
   });
 }

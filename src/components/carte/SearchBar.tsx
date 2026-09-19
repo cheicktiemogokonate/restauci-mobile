@@ -1,11 +1,30 @@
 import { useGeoSearch } from "@/hooks/useGeoSearch";
 import { useRestaurantSearch } from "@/hooks/useRestaurantSearch";
+import type {
+  DiscoveryLocation,
+  TypeEtablissement,
+} from "@/types/etablissement";
 import {
   LIBELLES_TYPE_ETABLISSEMENT,
   TYPE_ETABLISSEMENT_DEFAUT,
-  type TypeEtablissement,
 } from "@/types/etablissement";
-import { Search } from "lucide-react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import {
+  Hash,
+  Home,
+  Map as MapIcon,
+  MapPin,
+  Search,
+  UtensilsCrossed,
+} from "lucide-react-native";
 import React, {
   useCallback,
   useEffect,
@@ -13,28 +32,35 @@ import React, {
   useRef,
   useState,
 } from "react";
-import {
-  FlatList,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
-} from "react-native";
 
 // ============================================
 // Composant SearchBar — recherche géographique
 // ============================================
+import {
+  VERTICAL_FILTER_OPTIONS,
+  type VerticalFilter,
+} from "@/constants/verticals";
+
 interface SearchBarProps {
   onSelectSuggestion: (
     lat: number,
     lon: number,
-    restaurantId?: string,
+    etablissementId?: string,
   ) => void;
   onFilterChange?: (cuisine: string | null) => void;
+  selectedVertical?: VerticalFilter;
+  onVerticalChange?: (vertical: VerticalFilter) => void;
+  verticalCounts?: Record<VerticalFilter, number>;
   /** Catégories de cuisine réellement présentes autour de l'utilisateur. */
   cuisines?: string[];
   selectedCuisine?: string | null;
+  currentLocation: DiscoveryLocation | null;
+  /** Action de tête réutilisable, par exemple l'alternance map/liste. */
+  onLeadingPress?: () => void;
+  leadingBadge?: number;
+  leadingSelected?: boolean;
+  /** Ouvre l'expérience Mood à la place de la recherche classique. */
+  onMoodPress?: () => void;
   /** Réservé aux verticales à venir (résidences, événements). */
   typeEtablissement?: TypeEtablissement;
   topOffset?: number;
@@ -42,14 +68,28 @@ interface SearchBarProps {
 
 type CombinedSuggestion =
   | { type: "geo"; label: string; lat: number; lon: number }
-  | { type: "restaurant"; id: string; label: string; lat: number; lon: number };
-
+  | {
+      type: "etablissement" | "restaurant";
+      id: string;
+      label: string;
+      lat: number;
+      lon: number;
+      verticalType?: TypeEtablissement;
+    };
 
 export const SearchBar: React.FC<SearchBarProps> = ({
   onSelectSuggestion,
   onFilterChange,
+  selectedVertical = "tous",
+  onVerticalChange,
+  verticalCounts,
   cuisines = [],
   selectedCuisine = null,
+  currentLocation,
+  onLeadingPress,
+  leadingBadge = 0,
+  leadingSelected = false,
+  onMoodPress,
   typeEtablissement = TYPE_ETABLISSEMENT_DEFAUT,
   topOffset = 56,
 }) => {
@@ -66,7 +106,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     data: restaurantSuggestions,
     error: restaurantError,
     isLoading: restaurantLoading,
-  } = useRestaurantSearch(query, selectedCuisine);
+  } = useRestaurantSearch(query, selectedCuisine, currentLocation);
 
   const isLoading = geoLoading || restaurantLoading;
   const hasSearchError = Boolean(geoError || restaurantError);
@@ -94,7 +134,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       onSelectSuggestion(
         item.lat,
         item.lon,
-        item.type === "restaurant" ? item.id : undefined,
+        item.type !== "geo" ? item.id : undefined,
       );
       setQuery(item.label);
       setShowSuggestions(false);
@@ -133,14 +173,20 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   const renderItem = useCallback(
     ({ item }: { item: CombinedSuggestion }) => (
       <TouchableOpacity
-        className="flex-row items-center px-3 py-3 border-b border-ink-100"
+        className="flex-row items-center border-b border-ink-100 px-4 py-3"
         onPress={() => handleSelect(item)}
         activeOpacity={0.6}
+        accessibilityRole="button"
+        accessibilityLabel={`Choisir ${item.label}`}
       >
-        <Text className="mr-2 text-base">
-          {item.type === "restaurant" ? "🍽️" : "📍"}
-        </Text>
-        <Text className="flex-1 text-sm text-ink-700 mr-2" numberOfLines={1}>
+        {item.type === "geo" ? (
+          <MapPin size={18} color="#374151" />
+        ) : item.verticalType === "residence" ? (
+          <Home size={18} color="#14532d" />
+        ) : (
+          <UtensilsCrossed size={18} color="#374151" />
+        )}
+        <Text className="ml-3 mr-2 flex-1 text-sm text-ink-700" numberOfLines={1}>
           {item.label}
         </Text>
       </TouchableOpacity>
@@ -150,50 +196,187 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   return (
     <View
-      style={{ position: "absolute", top: topOffset, left: 16, right: 16, zIndex: 10 }
-      }
+      style={{
+        position: "absolute",
+        top: topOffset,
+        right: 20,
+        left: 20,
+        zIndex: 30,
+      }}
     >
-      <View className="flex-row items-center bg-white rounded-2xl px-3 h-12 shadow-md">
-        <Search size={20} color="#000" />
-        <TextInput
-          className="flex-1 text-base text-ink-900 ml-2"
-          placeholder={`${libelles.pluriel.charAt(0).toUpperCase()}${libelles.pluriel.slice(1)}, adresses...`}
-          placeholderTextColor="#9ca3af"
-          value={query}
-          onChangeText={handleChangeText}
-          onBlur={handleBlur}
-          onFocus={handleFocus}
-          returnKeyType="search"
-          clearButtonMode="while-editing"
-          maxLength={200}
-        />
-      </View>
+      {onMoodPress ? (
+        <TouchableOpacity
+          onPress={onMoodPress}
+          activeOpacity={0.82}
+          accessibilityRole="button"
+          accessibilityLabel="Ouvrir la recherche Mood"
+          className="h-16 flex-row items-center justify-center bg-white px-5"
+          style={{
+            borderRadius: 32,
+            borderCurve: "continuous",
+            borderWidth: 1,
+            borderColor: "rgba(255, 255, 255, 0.72)",
+            boxShadow: "0 10px 28px rgba(17, 24, 39, 0.13)",
+          }}
+        >
+          <Search size={23} color="#111827" strokeWidth={1.9} />
+          <Text className="ml-3 text-[16px] font-medium text-ink-700">
+            Rechercher...
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <View
+          className="h-16 flex-row items-center bg-white px-5"
+          style={{
+            borderRadius: 32,
+            borderCurve: "continuous",
+            boxShadow: "0 8px 24px rgba(17, 24, 39, 0.14)",
+          }}
+        >
+          <Search size={23} color="#111827" strokeWidth={2} />
+          <TextInput
+            className="ml-3 flex-1 text-base text-ink-900"
+            placeholder={`Rechercher ${libelles.pluriel}, une adresse...`}
+            placeholderTextColor="#6B7280"
+            value={query}
+            onChangeText={handleChangeText}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+            autoCorrect={false}
+            accessibilityLabel="Rechercher un établissement ou une adresse"
+            maxLength={200}
+          />
+          {isLoading && <ActivityIndicator size="small" color="#111827" />}
+        </View>
+      )}
 
-      {cuisineOptions.length > 0 && (
-      <View className="mt-2">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          {cuisineOptions.map((category) => {
-            const isSelected = selectedCuisine === category;
+      <View className="mt-3">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ alignItems: "center", gap: 10, paddingRight: 24 }}
+        >
+          {onLeadingPress && (
+            <TouchableOpacity
+              onPress={onLeadingPress}
+              activeOpacity={0.74}
+              accessibilityRole="button"
+              accessibilityLabel={
+                leadingSelected
+                  ? "Revenir à la map"
+                  : "Afficher les établissements en liste"
+              }
+              className="h-12 w-12 items-center justify-center rounded-full bg-black"
+              style={{ boxShadow: "0 4px 14px rgba(17, 24, 39, 0.18)" }}
+            >
+              {leadingSelected ? (
+                <MapIcon size={22} color="#FFFFFF" />
+              ) : (
+                <Hash size={22} color="#FFFFFF" />
+              )}
+              {leadingBadge > 0 && (
+                <View className="absolute -bottom-1 -right-1 min-h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-ink-700 px-1">
+                  <Text
+                    className="text-[10px] font-bold text-white"
+                    style={{ fontVariant: ["tabular-nums"] }}
+                  >
+                    {leadingBadge > 99 ? "99+" : leadingBadge}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
+
+          {/* Filtres de verticales unifiées */}
+          {VERTICAL_FILTER_OPTIONS.map((option) => {
+            const isSelected = selectedVertical === option.id;
+            const count = verticalCounts?.[option.id];
             return (
               <TouchableOpacity
-                key={category}
-                onPress={() => handleSelectCategory(category)}
-                className={`mr-2 px-4 py-1.5 rounded-full border ${isSelected ? 'bg-brand-900 border-brand-900' : 'bg-white border-gray-200'
-                  } shadow-sm`}
+                key={option.id}
+                onPress={() => onVerticalChange?.(option.id)}
+                activeOpacity={0.74}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
+                accessibilityLabel={`Filtrer par ${option.label}`}
+                className={`h-12 flex-row items-center justify-center rounded-full border px-4 ${
+                  isSelected
+                    ? "border-black bg-black"
+                    : "border-white bg-white"
+                }`}
+                style={{ boxShadow: "0 4px 14px rgba(17, 24, 39, 0.10)" }}
               >
-                <Text className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-gray-700'}`}>
-                  {category}
+                <Text
+                  className={`text-[15px] font-semibold ${
+                    isSelected ? "text-white" : "text-ink-900"
+                  }`}
+                >
+                  {option.label}
                 </Text>
+                {typeof count === "number" && (
+                  <View
+                    className={`ml-1.5 h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 ${
+                      isSelected ? "bg-white/25" : "bg-ink-100"
+                    }`}
+                  >
+                    <Text
+                      className={`text-[11px] font-bold ${
+                        isSelected ? "text-white" : "text-ink-700"
+                      }`}
+                      style={{ fontVariant: ["tabular-nums"] }}
+                    >
+                      {count}
+                    </Text>
+                  </View>
+                )}
               </TouchableOpacity>
             );
           })}
+
+          {/* Filtres de cuisine lorsque pertinent */}
+          {selectedVertical !== "residence" &&
+            cuisineOptions.map((category) => {
+              const isSelected = selectedCuisine === category;
+              return (
+                <TouchableOpacity
+                  key={category}
+                  onPress={() => handleSelectCategory(category)}
+                  activeOpacity={0.74}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected }}
+                  accessibilityLabel={`Filtrer par ${category}`}
+                  className={`h-12 justify-center rounded-full border px-5 ${
+                    isSelected
+                      ? "border-black bg-black"
+                      : "border-white bg-white"
+                  }`}
+                  style={{ boxShadow: "0 4px 14px rgba(17, 24, 39, 0.10)" }}
+                >
+                  <Text
+                    className={`text-[15px] font-semibold ${
+                      isSelected ? "text-white" : "text-ink-900"
+                    }`}
+                  >
+                    {category}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
         </ScrollView>
       </View>
-      )}
-
 
       {showSuggestions && suggestions && suggestions.length > 0 && (
-        <View className="bg-white rounded-2xl mt-1 max-h-48 shadow-md overflow-hidden">
+        <View
+          className="mt-2 max-h-56 overflow-hidden bg-white"
+          style={{
+            borderRadius: 22,
+            borderCurve: "continuous",
+            boxShadow: "0 8px 24px rgba(17, 24, 39, 0.14)",
+          }}
+        >
           <FlatList
             data={suggestions}
             keyExtractor={(item) =>
@@ -214,7 +397,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         suggestions &&
         suggestions.length === 0 &&
         !isLoading && (
-          <View className="bg-white rounded-2xl mt-1 shadow-md overflow-hidden">
+          <View
+            className="mt-2 overflow-hidden bg-white"
+            style={{
+              borderRadius: 22,
+              borderCurve: "continuous",
+              boxShadow: "0 8px 24px rgba(17, 24, 39, 0.14)",
+            }}
+          >
             <View className="px-3.5 py-3">
               <Text className="text-sm text-ink-400 text-center">
                 {hasSearchError

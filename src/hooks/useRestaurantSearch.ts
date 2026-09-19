@@ -1,7 +1,14 @@
 import { useDebounce } from "@/hooks/useDebounce";
 import { ENDPOINTS } from "@/constants/api";
+import {
+  buildRestaurantSearchRequest,
+  type RestaurantDiscoveryLocation,
+} from "@/domain/restaurantSearch";
 import { apiFetch } from "@/lib/api";
-import { parseApiSuccess, restaurantSchema } from "@/lib/apiValidation";
+import {
+  parseApiSuccess,
+  restaurantSearchDataSchema,
+} from "@/lib/apiValidation";
 import { useQuery } from "@tanstack/react-query";
 
 import type { Restaurant, Suggestion } from "@/types";
@@ -11,32 +18,48 @@ export interface RestaurantSuggestion extends Suggestion {
   type: "restaurant";
 }
 
-export function useRestaurantSearch(q: string, cuisine?: string | null) {
+export function useRestaurantSearch(
+  q: string,
+  cuisine: string | null | undefined,
+  location: RestaurantDiscoveryLocation | null,
+) {
   const debouncedQ = useDebounce(q, 400);
 
   return useQuery<RestaurantSuggestion[]>({
-    queryKey: ["restaurant-search", debouncedQ, cuisine],
+    queryKey: [
+      "restaurant-search",
+      debouncedQ,
+      cuisine,
+      location?.latitude,
+      location?.longitude,
+      location?.accuracyMeters,
+      location?.capturedAt,
+    ],
     queryFn: async ({ signal }) => {
-      const params = new URLSearchParams({
-        search: debouncedQ.trim().slice(0, 100),
-        page: "1",
-        limit: "20",
-      });
-      if (cuisine) {
-        params.set("cuisine", cuisine.slice(0, 100));
-      }
-
       const payload = await apiFetch<unknown>(
-        `${ENDPOINTS.restaurants}?${params.toString()}`,
-        { skipAuth: true, signal },
+        ENDPOINTS.publicRestaurantsSearch,
+        {
+          method: "POST",
+          skipAuth: true,
+          signal,
+          body: JSON.stringify(
+            buildRestaurantSearchRequest({
+              location: location!,
+              query: debouncedQ,
+              cuisine,
+              page: 1,
+              limit: 20,
+            }),
+          ),
+        },
       );
-      const response = parseApiSuccess<Restaurant[]>(
+      const response = parseApiSuccess<{ items: Restaurant[] }>(
         payload,
-        restaurantSchema.array(),
+        restaurantSearchDataSchema,
         "restaurants/recherche",
       );
 
-      return response.data.map((r) => ({
+      return response.data.items.map((r) => ({
         id: r.id,
         label: r.nom,
         lat: r.latitude,
@@ -44,6 +67,6 @@ export function useRestaurantSearch(q: string, cuisine?: string | null) {
         type: "restaurant",
       }));
     },
-    enabled: debouncedQ.trim().length > 1,
+    enabled: debouncedQ.trim().length > 1 && Boolean(location),
   });
 }

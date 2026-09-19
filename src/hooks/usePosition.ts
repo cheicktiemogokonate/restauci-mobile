@@ -1,16 +1,16 @@
 import * as ExpoLocation from "expo-location";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getDevelopmentLocation } from "@/constants/development-locations";
+import type { DiscoveryLocation } from "@/types/etablissement";
 
 export const DEFAULT_ZOOM = 13;
-export const RESTAURANT_DETAIL_ZOOM = 15;
+export const ETABLISSEMENT_DETAIL_ZOOM = 15;
+export const RESTAURANT_DETAIL_ZOOM = ETABLISSEMENT_DETAIL_ZOOM;
 
 // ============================================
 // Hook géolocalisation — expo-location
 // ============================================
-export interface Coords {
-  latitude: number;
-  longitude: number;
-}
+export type Coords = DiscoveryLocation;
 
 interface UsePositionReturn {
   coords: Coords;
@@ -19,9 +19,13 @@ interface UsePositionReturn {
   recentrer: () => Promise<Coords | null>;
 }
 
+const DEFAULT_DEVELOPMENT_LOCATION = getDevelopmentLocation("abidjan");
+
 export const DEFAULT_COORDS: Coords = {
-  latitude: 7.6906,
-  longitude: -5.0305, // Centre de Bouaké, ville de lancement.
+  latitude: DEFAULT_DEVELOPMENT_LOCATION.latitude,
+  longitude: DEFAULT_DEVELOPMENT_LOCATION.longitude,
+  accuracyMeters: 100_000,
+  capturedAt: "1970-01-01T00:00:00.000Z",
 };
 
 const LOCATION_TIMEOUT_MS = 10_000;
@@ -107,6 +111,8 @@ export function usePosition(): UsePositionReturn {
       const nextCoords = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
+        accuracyMeters: Math.max(0, location.coords.accuracy ?? 100_000),
+        capturedAt: new Date(location.timestamp).toISOString(),
       };
 
       if (requestId === requestIdRef.current) {

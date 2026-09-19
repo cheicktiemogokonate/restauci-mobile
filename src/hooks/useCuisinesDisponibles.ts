@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { RestaurantDiscoveryLocation } from "@/domain/restaurantSearch";
 import { useRestaurantsProches } from "./useRestaurantsProches";
 
 /**
@@ -10,15 +11,9 @@ import { useRestaurantsProches } from "./useRestaurantsProches";
  * `cuisine`, donc elle partage le cache TanStack Query de la liste non filtrée.
  */
 export function useCuisinesDisponibles(
-  lat: number | undefined,
-  lon: number | undefined,
-  rayon: number = 10,
+  location: RestaurantDiscoveryLocation | null,
 ) {
-  const { data: restaurants, isLoading } = useRestaurantsProches(
-    lat,
-    lon,
-    rayon,
-  );
+  const { data: restaurants, isLoading } = useRestaurantsProches(location);
 
   const cuisines = useMemo(() => {
     if (!restaurants?.length) return [];
