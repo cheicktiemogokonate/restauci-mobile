@@ -188,14 +188,14 @@ export default function AdressesScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-ink-50">
+      <View className="flex-1 items-center justify-center">
         <ActivityIndicator size="large" color="#166534" />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-ink-50">
+    <View className="flex-1">
       <FlatList
         data={adresses}
         keyExtractor={(item) => item.id}

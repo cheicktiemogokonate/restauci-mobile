@@ -9,7 +9,7 @@ export default function NotFoundScreen() {
   return (
     <>
       <Stack.Screen options={{ title: "Page introuvable" }} />
-      <View className="flex-1 items-center justify-center bg-white px-8">
+      <View className="flex-1 items-center justify-center px-8">
         <Text className="mb-2 text-[48px]">🔍</Text>
         <Text className="mb-2 text-xl font-bold text-ink-900">
           Page introuvable

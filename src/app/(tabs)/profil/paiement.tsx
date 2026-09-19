@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 
 export default function PaiementScreen() {
   return (
-    <View className="flex-1 bg-ink-50">
+    <View className="flex-1">
       <View className="mx-4 mt-4 rounded-2xl border border-ink-200 bg-info p-4">
         <Text className="text-sm font-semibold text-ink-50">
           Ajoutez ou gérez vos moyens de paiement ici.

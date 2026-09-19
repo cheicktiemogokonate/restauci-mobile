@@ -29,6 +29,7 @@ const LOAD_TOKEN_TIMEOUT_MS = 5_000;
 const LOGOUT_TIMEOUT_MS = 5_000;
 
 let authOperationVersion = 0;
+let loadTokenInFlight: Promise<void> | null = null;
 
 /** Exécute `fn` avec un timeout ; résout `null` si le délai est dépassé. */
 async function withTimeout<T>(
@@ -300,64 +301,76 @@ export const createAuthSlice: StateCreator<
   },
 
   async loadToken() {
-    const operationVersion = ++authOperationVersion;
-    const storedSession = await withTimeout(async () => {
-      const [{ accessToken, refreshToken }, clientValue] = await Promise.all([
-        readNativeTokens(),
-        SecureStore.getItemAsync(AUTH_CLIENT_KEY),
-      ]);
-      return {
-        accessToken,
-        refreshToken,
-        cachedClient: parseStoredClient(clientValue),
-      };
-    }, LOAD_TOKEN_TIMEOUT_MS);
+    if (loadTokenInFlight) return loadTokenInFlight;
 
-    if (operationVersion !== authOperationVersion) return;
+    const operation = (async () => {
+      const operationVersion = ++authOperationVersion;
+      const storedSession = await withTimeout(async () => {
+        const [{ accessToken, refreshToken }, clientValue] = await Promise.all([
+          readNativeTokens(),
+          SecureStore.getItemAsync(AUTH_CLIENT_KEY),
+        ]);
+        return {
+          accessToken,
+          refreshToken,
+          cachedClient: parseStoredClient(clientValue),
+        };
+      }, LOAD_TOKEN_TIMEOUT_MS);
 
-    const accessToken = storedSession?.accessToken ?? null;
-    const refreshToken = storedSession?.refreshToken ?? null;
-    const cachedClient = storedSession?.cachedClient ?? null;
-    let usableAccessToken = accessToken;
-    const result = refreshToken
-      ? await withTimeout(
-          (signal) =>
-            restoreRemoteSession({
-              accessToken,
-              refreshToken,
-              signal,
-              operationVersion,
-              onTokenRotated: (token) => {
-                usableAccessToken = token;
-              },
-            }),
-          LOAD_TOKEN_TIMEOUT_MS,
-        )
-      : { client: null, token: null };
+      if (operationVersion !== authOperationVersion) return;
 
-    if (operationVersion !== authOperationVersion) return;
+      const accessToken = storedSession?.accessToken ?? null;
+      const refreshToken = storedSession?.refreshToken ?? null;
+      const cachedClient = storedSession?.cachedClient ?? null;
+      let usableAccessToken = accessToken;
+      const result = refreshToken
+        ? await withTimeout(
+            (signal) =>
+              restoreRemoteSession({
+                accessToken,
+                refreshToken,
+                signal,
+                operationVersion,
+                onTokenRotated: (token) => {
+                  usableAccessToken = token;
+                },
+              }),
+            LOAD_TOKEN_TIMEOUT_MS,
+          )
+        : { client: null, token: null };
 
-    // Hors ligne ou backend temporairement indisponible : conserver la
-    // session locale connue. Les requêtes réseau restent gérées séparément.
-    const recoveredSession =
-      result ??
-      (usableAccessToken && cachedClient
-        ? { client: cachedClient, token: usableAccessToken }
-        : { client: null, token: usableAccessToken });
-    const client = recoveredSession.client;
-    set({
-      client,
-      token: recoveredSession.token,
+      if (operationVersion !== authOperationVersion) return;
+
+      // Hors ligne ou backend temporairement indisponible : conserver la
+      // session locale connue. Les requêtes réseau restent gérées séparément.
+      const recoveredSession =
+        result ??
+        (usableAccessToken && cachedClient
+          ? { client: cachedClient, token: usableAccessToken }
+          : { client: null, token: usableAccessToken });
+      const client = recoveredSession.client;
+      set({
+        client,
+        token: recoveredSession.token,
+      });
+
+      await get().activateLocalDataOwner(
+        client?.id ?? GUEST_LOCAL_DATA_OWNER,
+      );
+
+      if (operationVersion !== authOperationVersion) return;
+
+      // Timeout dépassé ou erreur → restaurer au mieux sans bloquer
+      // indéfiniment l'utilisateur sur le splash.
+      set({ isLoading: false });
+    })();
+
+    const trackedOperation = operation.finally(() => {
+      if (loadTokenInFlight === trackedOperation) {
+        loadTokenInFlight = null;
+      }
     });
-
-    await get().activateLocalDataOwner(
-      client?.id ?? GUEST_LOCAL_DATA_OWNER,
-    );
-
-    if (operationVersion !== authOperationVersion) return;
-
-    // Timeout dépassé ou erreur → session anonyme, sans bloquer
-    // indéfiniment l'utilisateur sur le splash.
-    set({ isLoading: false });
+    loadTokenInFlight = trackedOperation;
+    return trackedOperation;
   },
 });

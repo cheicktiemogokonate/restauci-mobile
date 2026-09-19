@@ -1,4 +1,5 @@
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
+import { AppBackdrop } from "@/components/ui/app-backdrop";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { ApiClientError } from "@/lib/api";
 import { useReactQueryLifecycle } from "@/hooks/useReactQueryLifecycle";
@@ -6,6 +7,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { PortalHost } from "@rn-primitives/portal";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ErrorBoundaryProps } from "expo-router";
+import { useSegments } from "expo-router";
 import { Stack } from "expo-router/stack";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useRef } from "react";
@@ -51,8 +53,9 @@ const queryClient = new QueryClient({
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (
     <View
-      style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32, backgroundColor: "#fff" }}
+      style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}
     >
+      <AppBackdrop />
       <Text style={{ fontSize: 48, marginBottom: 8 }}>⚠️</Text>
       <Text style={{ fontSize: 20, fontWeight: "bold", color: "#111827", marginBottom: 8 }}>
         Quelque chose s&apos;est mal passé
@@ -75,10 +78,12 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
+  const segments = useSegments();
   const loadToken = useStore((s) => s.loadToken);
   const isLoading = useStore((s) => s.isLoading);
   const clientId = useStore((s) => s.client?.id ?? null);
   const previousClientId = useRef<string | null | undefined>(undefined);
+  const isMapScreen = segments[0] === "(tabs)" && segments[1] === undefined;
   useReactQueryLifecycle();
   usePushNotifications();
 
@@ -114,22 +119,29 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <BottomSheetModalProvider>
-            <>
+            <View style={{ flex: 1 }}>
+              {!isMapScreen && <AppBackdrop />}
               <Stack
                 screenOptions={{
+                  contentStyle: { backgroundColor: "transparent" },
                   headerShown: false,
                 }}
               >
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="auth" options={{ presentation: "modal" }} />
                 <Stack.Screen name="restaurant/[slug]" />
+                <Stack.Screen
+                  name="activite"
+                  options={{ animation: "slide_from_right" }}
+                />
+                <Stack.Screen name="checkout" />
                 <Stack.Screen name="residences/[slug]" />
                 <Stack.Screen name="reservations/[id]" />
                 <Stack.Screen name="payments/callback" />
               </Stack>
               <OfflineBanner />
               <PortalHost />
-            </>
+            </View>
           </BottomSheetModalProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

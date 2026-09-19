@@ -3,7 +3,7 @@ import { ScrollView, Text, View } from "react-native";
 export default function AProposScreen() {
   return (
     <ScrollView
-      className="flex-1 bg-ink-50"
+      className="flex-1"
       contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 16 }}
     >

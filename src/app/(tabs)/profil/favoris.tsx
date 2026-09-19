@@ -19,7 +19,6 @@ export default function FavorisScreen() {
         padding: 16,
         paddingBottom: 96,
         gap: 12,
-        backgroundColor: "#F9FAFB",
       }}
       renderItem={({ item }) => (
         <Pressable

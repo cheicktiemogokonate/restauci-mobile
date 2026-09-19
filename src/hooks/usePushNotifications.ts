@@ -52,7 +52,7 @@ export function usePushNotifications() {
         router.push(`/(tabs)/commandes/${commandeId}`);
       } else {
         // Pas d'id : on atterrit sur la liste des commandes
-        router.push("/(tabs)/commandes");
+        router.push("/(tabs)/activite");
       }
     },
     [clientId, isAuthLoading],

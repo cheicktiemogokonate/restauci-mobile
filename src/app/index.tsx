@@ -51,14 +51,14 @@ export default function OnboardingScreen() {
 
   if (isCheckingOnboarding) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-ink-50">
+      <SafeAreaView className="flex-1 items-center justify-center">
         <ActivityIndicator size="large" color="#14532d" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-ink-50">
+    <SafeAreaView className="flex-1">
       <ImageBackground
         source={require("../../assets/images/food2.jpeg")}
         style={{ width: "100%", height: "100%" }}

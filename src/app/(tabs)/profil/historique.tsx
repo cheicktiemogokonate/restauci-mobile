@@ -57,7 +57,7 @@ export default function HistoriqueCommandesScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
+      <View className="flex-1 items-center justify-center">
         <ActivityIndicator size="large" color="#166534" />
       </View>
     );
@@ -65,7 +65,7 @@ export default function HistoriqueCommandesScreen() {
 
   if (error && commandes.length === 0) {
     return (
-      <View className="flex-1 bg-white">
+      <View className="flex-1">
         <ErrorView
           title="Historique indisponible"
           message={
@@ -80,7 +80,7 @@ export default function HistoriqueCommandesScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1">
       <View className="px-5 pb-2 pt-4">
         <Text className="text-2xl font-extrabold text-ink-900">
           Commandes terminées

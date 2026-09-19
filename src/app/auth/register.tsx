@@ -1,5 +1,11 @@
 import { ENDPOINTS } from "@/constants/api";
 import { resolveAuthRedirect } from "@/domain/authRedirect";
+import {
+  CLIENT_PASSWORD_MAX_LENGTH,
+  CLIENT_PASSWORD_MIN_LENGTH,
+  clientRegisterSchema,
+  type ClientRegisterInput,
+} from "@/domain/clientRegistration";
 import { apiFetch } from "@/lib/api";
 import { authDataSchema, parseApiSuccess } from "@/lib/apiValidation";
 import { useStore } from "@/store";
@@ -29,32 +35,14 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { z } from "zod";
-
-const registerSchema = z
-  .object({
-    nom: z.string().min(2, "Nom trop court").max(255),
-    telephone: z
-      .string()
-      .regex(/^[0-9\s]{8,20}$/, "Numéro de téléphone invalide"),
-    email: z.string().email("Email invalide").optional().or(z.literal("")),
-    password: z.string().min(8, "8 caractères minimum").max(100),
-    confirmPassword: z.string(),
-  })
-  .refine((d) => d.password === d.confirmPassword, {
-    message: "Les mots de passe ne correspondent pas",
-    path: ["confirmPassword"],
-  });
-
-type RegisterInput = z.infer<typeof registerSchema>;
 
 export default function RegisterScreen() {
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<RegisterInput>({
-    resolver: zodResolver(registerSchema),
+  } = useForm<ClientRegisterInput>({
+    resolver: zodResolver(clientRegisterSchema),
     defaultValues: {
       nom: "",
       telephone: "",
@@ -76,7 +64,7 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const onSubmit = async (data: RegisterInput) => {
+  const onSubmit = async (data: ClientRegisterInput) => {
     setIsLoading(true);
     setServerError(null);
 
@@ -132,12 +120,12 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-[#ffffff]"
+      className="flex-1"
     >
       <ScrollView
         style={{ paddingTop: insets.top }}
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
-        className="flex-1 bg-[#ffffff]"
+        className="flex-1"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -292,6 +280,7 @@ export default function RegisterScreen() {
                   placeholder="Créez un mot de passe"
                   //   placeholderTextColor="#14532d"
                   secureTextEntry={!showPassword}
+                  maxLength={CLIENT_PASSWORD_MAX_LENGTH}
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
@@ -314,6 +303,11 @@ export default function RegisterScreen() {
               {errors.password.message}
             </Text>
           )}
+          {!errors.password && (
+            <Text className="mt-1 text-sm text-gray-400">
+              {CLIENT_PASSWORD_MIN_LENGTH} à {CLIENT_PASSWORD_MAX_LENGTH} caractères
+            </Text>
+          )}
 
           {/* Confirmer le mot de passe */}
           <Text className="text-black font-semibold mb-2 mt-4">
@@ -334,6 +328,7 @@ export default function RegisterScreen() {
                   placeholder="Confirmez votre mot de passe"
                   //     //   placeholderTextColor="#14532d"
                   secureTextEntry={!showConfirmPassword}
+                  maxLength={CLIENT_PASSWORD_MAX_LENGTH}
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
