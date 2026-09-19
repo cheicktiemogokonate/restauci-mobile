@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import type { ResidenceStaySelection } from "@/domain/residenceSearch";
 import { formatPrix } from "@/lib/format";
 import type { PublicResidence } from "@/types/residences";
 import { Image } from "expo-image";
@@ -6,13 +7,30 @@ import { useRouter } from "expo-router";
 import { MapPin, Sparkles, Users } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 
-export function ResidenceCard({ residence }: { residence: PublicResidence }) {
+export function ResidenceCard({
+  residence,
+  stay,
+}: {
+  residence: PublicResidence;
+  stay: ResidenceStaySelection;
+}) {
   const router = useRouter();
   const cover = residence.photos[0]?.url;
 
   return (
     <Pressable
-      onPress={() => router.push(`/residences/${residence.slug}`)}
+      onPress={() =>
+        router.push({
+          pathname: "/residences/[slug]",
+          params: {
+            slug: residence.slug,
+            checkIn: stay.checkIn,
+            checkOut: stay.checkOut,
+            guests: String(stay.guests),
+            discoveryToken: residence.discoveryToken,
+          },
+        })
+      }
       accessibilityRole="button"
       accessibilityLabel={`Voir ${residence.title}`}
       className="active:opacity-90"
