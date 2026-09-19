@@ -1,0 +1,25 @@
+Génère un seul nouvel écran mobile : la finalisation d'une commande restaurant ToutCi.
+
+Les trois captures jointes — Explorer sur la carte, Mood et la fiche Café Typica — sont les références visuelles canoniques. Cet écran doit paraître avoir été conçu par exactement le même designer, dans le même fichier et au même moment. Ne propose aucune variante de style et ne réinterprète pas les références.
+
+Reprends fidèlement leur fond blanc cassé lumineux avec des halos flous pastel vert menthe, bleu pâle et crème, leurs surfaces blanches légèrement translucides, leurs très grands rayons continus, leurs ombres diffuses presque imperceptibles, leurs bordures fines gris clair, leur typographie noire géométrique, leurs textes secondaires gris doux, leurs icônes simples au trait et leur grande respiration.
+
+L'écran doit être calme et très hiérarchisé, avec une grande surface blanche principale. Ne crée pas une succession de grosses cartes. Présente les choix comme des lignes ou des champs simples, spacieux, séparés par des filets fins. Si le contenu dépasse l'écran, montre seulement les éléments essentiels et suggère naturellement le défilement.
+
+L'écran doit contenir :
+
+- un retour discret et le titre « Finaliser la commande » ;
+- le choix entre « Livraison » et « À emporter » si les deux sont disponibles ;
+- une adresse de livraison ivoirienne crédible, modifiable ;
+- une note facultative pour le restaurant ;
+- le choix du paiement, avec espèces, mobile money ou carte selon ce qui est pertinent ;
+- un récapitulatif compact du montant total en FCFA ;
+- une seule action principale « Commander ».
+
+Le montant final et l'action principale doivent être parfaitement visibles. Le bouton principal peut reprendre exactement l'accent corail-rouge de la fiche Café Typica. Le vert sert uniquement aux états positifs ou à la sélection. Les icônes restent monochromes et au trait.
+
+Tous les textes visibles doivent être en français naturel et correctement orthographié. Utilise des usages, une adresse et des moyens de paiement crédibles pour la Côte d'Ivoire.
+
+Interdictions : pas de grosse carte pour chaque option, pas de dashboard, pas de barre de progression décorative, pas de mosaïque, pas de fond sombre, pas de nouvelle palette, pas de dégradé saturé, pas de glassmorphism marqué, pas d'illustration 3D, pas d'emoji comme icône, pas de surcharge et pas de variante créative.
+
+Génère uniquement l'image finale : une seule maquette mobile portrait plein écran, sans téléphone autour, sans mains, sans annotations, sans texte explicatif, sans collage et sans autre écran.

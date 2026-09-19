@@ -1,0 +1,24 @@
+Génère un seul nouvel écran mobile : le panier d'une commande restaurant ToutCi.
+
+Les trois captures jointes — Explorer sur la carte, Mood et la fiche Café Typica — sont les références visuelles canoniques. Cet écran doit paraître avoir été conçu par exactement le même designer, dans le même fichier et au même moment. Ne propose aucune variante de style et ne réinterprète pas les références.
+
+Reprends fidèlement leur fond blanc cassé lumineux avec des halos flous pastel vert menthe, bleu pâle et crème, leurs surfaces blanches légèrement translucides, leurs très grands rayons continus, leurs ombres diffuses presque imperceptibles, leurs bordures fines gris clair, leur typographie noire géométrique, leurs textes secondaires gris doux, leurs icônes simples au trait et leur grande respiration.
+
+Le panier doit utiliser une grande surface blanche dominante et une liste très simple. Ne place pas chaque article dans une grosse carte. Utilise des lignes aérées, de petits visuels arrondis si nécessaire, des séparateurs fins et des contrôles de quantité discrets.
+
+L'écran doit contenir :
+
+- un retour discret et le titre « Votre panier » ;
+- le nom du restaurant ;
+- deux ou trois plats ivoiriens crédibles ;
+- les quantités modifiables et une suppression discrète ;
+- le sous-total, les frais de livraison et le total en FCFA ;
+- une seule action principale pour continuer la commande.
+
+Les prix doivent être transparents et immédiatement vérifiables. Le total et l'action suivante doivent dominer sans ajouter de bloc promotionnel. Le bouton principal peut reprendre exactement l'accent corail-rouge de la fiche Café Typica. Les états positifs peuvent reprendre son vert.
+
+Tous les textes visibles doivent être en français naturel et correctement orthographié. Utilise un restaurant et des prix crédibles pour Bouaké.
+
+Interdictions : pas de coupon mis en avant, pas de promotion artificielle, pas de compte à rebours, pas de grosse carte par article, pas de mosaïque, pas de fond sombre, pas de nouvelle palette, pas de dégradé saturé, pas de glassmorphism marqué, pas d'illustration 3D, pas d'emoji comme icône et pas de variante créative.
+
+Génère uniquement l'image finale : une seule maquette mobile portrait plein écran, sans téléphone autour, sans mains, sans annotations, sans texte explicatif, sans collage et sans autre écran.

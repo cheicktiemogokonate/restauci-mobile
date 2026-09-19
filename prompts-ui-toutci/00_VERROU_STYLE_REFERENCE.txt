@@ -1,0 +1,45 @@
+Tu dois utiliser les trois captures jointes comme références visuelles canoniques et comme source de vérité absolue pour tous les futurs écrans de ToutCi.
+
+Ne redessine pas ces trois écrans. Ne génère pas de variante d'Explorer, de Mood ou de la fiche restaurant. Ils sont déjà validés tels quels. Ton travail futur consiste uniquement à créer les écrans manquants comme s'ils avaient été conçus en même temps par le même designer et dans le même fichier de design.
+
+La fidélité aux références est prioritaire sur toute envie d'originalité. Ne propose pas une nouvelle direction artistique. Ne modernise pas, ne réinterprète pas, ne remixe pas et ne remplace pas les composants visibles. N'utilise pas les références comme une simple inspiration : prolonge exactement leur langage visuel.
+
+Reproduis fidèlement les caractéristiques suivantes :
+
+- format mobile portrait plein écran avec zones sûres iOS ;
+- fond blanc cassé lumineux ;
+- halos flous pastel très doux, principalement vert menthe, bleu pâle et crème chaud ;
+- surfaces blanches ou légèrement translucides qui laissent subtilement passer les couleurs du fond ;
+- grands rayons continus, ombres très diffuses et très légères, bordures fines gris clair ;
+- beaucoup d'espace vide et une faible densité d'interface ;
+- typographie sans serif géométrique, noire ou gris anthracite, avec titres nets et textes secondaires gris doux ;
+- icônes simples au trait noir, cohérentes, sans mélange de styles ;
+- accents verts pour les états positifs et bouton principal corail-rouge lorsque l'action doit ressortir ;
+- photographie éditoriale forte avec coins très arrondis lorsqu'une image est utile ;
+- navigation flottante blanche en forme de capsule lorsqu'elle appartient à l'écran ;
+- une grande surface dominante plutôt qu'une grille de nombreuses cartes ;
+- listes simples composées de lignes aérées, d'icônes et de séparateurs fins plutôt que de grosses cases répétées.
+
+Interdictions :
+
+- aucune variante créative du style ;
+- aucune nouvelle palette ;
+- aucune grosse carte colorée répétée ;
+- aucune mosaïque de blocs ;
+- aucun dashboard ;
+- aucun glassmorphism appuyé ;
+- aucun dégradé saturé ;
+- aucune ombre lourde ;
+- aucune illustration 3D ;
+- aucun emoji utilisé comme icône d'interface ;
+- aucune décoration ajoutée sans équivalent dans les références ;
+- aucune surcharge de pastilles, boutons ou informations ;
+- aucune imitation d'Uber Eats, Airbnb, Booking ou d'un kit UI générique.
+
+ToutCi est une application ivoirienne de découverte locale réunissant d'abord restaurants et résidences, puis éventuellement événements et boutiques. Tous les textes visibles doivent être en français naturel et correctement orthographié. Le mot « Mood » est le seul terme anglais autorisé. Utilise des contenus crédibles de Côte d'Ivoire, notamment Bouaké et Abidjan, avec des prix en FCFA.
+
+Pour chaque écran manquant, conserve exactement le même système de proportions, d'espacement, de typographie, de couleurs, de transparence, d'icônes, de rayons et d'ombres que dans les trois références. Si un écran contient beaucoup d'informations, simplifie et hiérarchise son contenu au lieu d'ajouter des blocs.
+
+À chaque demande, génère une seule maquette mobile portrait, sans téléphone autour, sans annotations, sans explications, sans collage et sans variantes.
+
+Ne génère encore aucune image. Confirme silencieusement cette contrainte et attends le prompt du premier écran manquant.

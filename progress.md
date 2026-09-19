@@ -1,5 +1,29 @@
 # Journal d’exécution — Stabilisation de ToutCi
 
+## Certification des parcours authentifiés — 19 septembre 2026
+
+Un compte client de test a été fourni (`+2250777945714`). La matrice authentifiée déclarée incertaine depuis le 1er août a été exécutée contre le backend réel via HTTP, sans modifier le code.
+
+| Parcours | Résultat |
+|---|---|
+| `POST /client/auth/login` | HTTP 200 ; access token JSON + refresh en cookie HTTP-only `__Secure-toutci_client_refresh` |
+| `GET /client/auth/me` | HTTP 200 ; profil complet, compteurs commande/dépense présents |
+| `POST /client/auth/refresh` | HTTP 200 ; rotation du cookie observée, nouveau token |
+| `GET /client/commandes` | HTTP 200 ; historique réel paginé (14 commandes, statuts variés) |
+| `POST /client/commandes/prevalidate` | HTTP 200 ; `valid:true` avec politique géo (`serviceMarketId`, `geoPolicyVersion`) ; position exigée sinon 422 `CURRENT_LOCATION_REQUIRED` |
+| `POST /client/commandes` | HTTP 201 ; montants calculés serveur (`sousTotal`, `fraisLivraison`, `total`) ; cash → `authorizationUrl:null` |
+| Idempotence du POST | Confirmée : même clé → même commande, `replayed:true`, HTTP 200 au lieu de 201 |
+| `GET /client/commandes/{id}` | HTTP 200 ; détail complet |
+| `POST /client/auth/logout` | HTTP 200 ; refresh post-logout rejeté 401 `Session expirée` |
+
+Observations complémentaires :
+
+- Le login applique un rate limit réel (429 avec `retryAfter` ~240 s) — comportement de sécurité validé de fait.
+- L'annulation de commande reste non implémentée côté mobile et le `PATCH /client/commandes/{id}` n'a pas de corps documenté dans l'OpenAPI client.
+- Deux commandes de test (plat « validation E2E », 12 000 FCFA, cash, emporter) subsistent dans l'historique du compte, créées sur le restaurant de test E2E.
+
+**Conclusion : les risques « testables uniquement avec un compte client » listés dans `findings.md` sont désormais certifiés côté backend.** Les limites restantes relèvent du backend/produit : push client, observabilité, publication stores.
+
 ## Bilan du 1er août 2026
 
 ### Statut
@@ -147,3 +171,95 @@ Douze tests Node couvrent :
 1. obtenir un compte backend de test ;
 2. exécuter la matrice authentifiée du `task_plan.md` ;
 3. choisir l’observabilité avant diffusion publique.
+
+---
+
+## Audit de préparation production — 13 septembre 2026
+
+### Contrôles actuels
+
+- `npm run check` : TypeScript, ESLint et 27 tests réussis.
+- `npm run api:check` : réussi, mais ne détecte pas encore l'écart entre OpenAPI et le validateur runtime.
+- `npx expo install --check` : versions compatibles selon la carte locale.
+- `npm audit --offline` : aucune vulnérabilité connue.
+- `git diff --check` : réussi.
+- Export Android courant : réussi, 4 081 modules, 38 assets, bundle HBC 7,8 Mo.
+- Arbre local : 53 fichiers modifiés, 6 supprimés et 33 non suivis.
+
+### Constats fonctionnels
+
+- La recherche restaurants appelle bien le backend.
+- Le champ texte est toutefois masqué par le bouton Mood dans le parcours principal.
+- Le mobile envoie `query`, tandis que le schéma backend strict attend `search` ; OpenAPI annonce encore `query`.
+- Mood est entièrement local : quatre suggestions codées en dur, sans soumission ni endpoint de recommandation.
+- Le backend possède recherche, ranking organique/sponsorisé et attribution, mais aucun contrat Mood/sémantique.
+- Paiement et Support restent des placeholders ; suppression de compte absente.
+- Prévalidation, annulation de commande, édition de profil et changement de mot de passe ne sont pas exploités côté mobile.
+
+### Constats d'interface
+
+- 19 fichiers utilisent `StyleSheet` et 37 utilisent des classes NativeWind.
+- Plus de 100 couleurs hexadécimales sont définies localement.
+- 107 contrôles Pressable/Touchable ont été relevés pour 79 libellés d'accessibilité.
+- 15 fichiers contiennent des animations sans prise en charge explicite de la réduction des mouvements.
+- Les en-têtes, retours, états de chargement/vide/erreur et CTA ne reposent pas encore sur une seule famille de composants.
+
+### Limites de cette passe
+
+- CoreSimulatorService et ADB ne sont pas accessibles depuis la session actuelle ; aucune nouvelle preuve runtime native n'a été produite.
+- Les documents historiques du backend ne suffisent pas à certifier ses intégrations de production ; elles doivent être retestées sur staging.
+
+### Livrables
+
+- `findings.md` enrichi avec l'état dynamique/statique précis.
+- `task_plan.md` remplacé par une feuille de route production en quatorze passes avec critères de sortie.
+
+### Prochaine reprise
+
+1. Passe 0 : protéger l'état Git actuel et figer la baseline.
+2. Passe 1 : décider le périmètre public de la V1.
+3. Premier correctif fonctionnel : réparer et tester le contrat `query` / `search`.
+
+---
+
+## Recentrage produit Mood — 13 septembre 2026
+
+- Vision clarifiée avec le porteur du produit : Mood est le cœur de la découverte et doit remplacer la logique de simple annuaire.
+- `task_plan.md` a été réorganisé pour traiter Mood comme une recherche universelle et une recommandation multi-verticale.
+- Restaurants et résidences sont désormais considérés comme le socle Mood du lancement.
+- La recherche exacte devient un cas d'usage de Mood et son fallback, pas un écran concurrent.
+- Le prochain travail produit est la spécification du contrat unifié Mood ; le prochain travail technique reste la protection de la base puis la correction `query` / `search`.
+
+---
+
+## Recentrage du plan sur le développement local — 13 septembre 2026
+
+- Authentifications sociales Apple et Google retirées du périmètre.
+- Absence de comptes Apple Developer Program et Google Play Console enregistrée comme contrainte, pas comme blocage du développement local.
+- Le plan distingue désormais le gate actif « production-grade local » du gate différé « publiable sur les stores ».
+- EAS Submit, TestFlight, Play Internal et signatures de distribution ne font plus partie du chemin critique.
+- Les passes de tests et de build ciblent d'abord le simulateur iOS et l'émulateur Android locaux.
+- L'inscription/connexion classique est conservée selon un modèle progressif ; aucune connexion sociale n'est prévue.
+
+---
+
+## Clarification sur l'identité — 13 septembre 2026
+
+- Toute notion de pseudonyme utilisateur a été retirée.
+- Aucun profil anonyme persistant ne sera construit avant connexion.
+- Mood pré-connexion fonctionnera avec le seul contexte de la requête courante.
+- Les opérations transactionnelles et synchronisées utiliseront un compte classique avec informations réelles.
+- `task_plan.md` et `findings.md` ont été alignés sur cette règle.
+
+---
+
+## Audit visuel et fonctionnel de la refonte — 13 septembre 2026
+
+- Audit demandé avant le démarrage des passes production-grade.
+- Périmètre : inventorier les écrans, lancer les parcours sur simulateur/émulateur, qualifier les écrans terminés, partiels ou manquants, puis évaluer la cohérence visuelle et fonctionnelle.
+- Aucun code applicatif ne doit être modifié pendant cette phase de diagnostic.
+
+### Incidents de préparation
+
+- Une commande de lecture contenait par erreur le motif shell `tail?` ; zsh l'a rejeté avant cette portion. Les fichiers demandés avaient déjà été lus dans la même commande.
+- Le chemin supposé `references/design-audit-framework.md` n'existe pas à la racine du plugin Product Design ; le fichier doit être localisé avant de poursuivre au lieu de répéter la même lecture.

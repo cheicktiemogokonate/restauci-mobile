@@ -1,0 +1,15 @@
+Régénère uniquement le même écran ToutCi que dans ta génération précédente.
+
+Le résultat précédent s'est trop éloigné des trois captures de référence. Corrige-le en revenant strictement à leur système visuel. Les références sont la source de vérité absolue : il ne faut ni les réinterpréter, ni les moderniser, ni proposer une variante.
+
+Rétablis fidèlement : le fond blanc cassé lumineux, les halos flous pastel vert menthe, bleu pâle et crème, les surfaces blanches légèrement translucides, les très grands rayons continus, les ombres diffuses très légères, les bordures fines gris clair, la typographie noire géométrique, les textes secondaires gris doux, les icônes monochromes au trait, la grande respiration et la faible densité.
+
+Supprime les grosses cases répétées, les grilles, les mosaïques, les couleurs saturées, les cartes imbriquées, les ombres lourdes, les effets décoratifs gratuits et tout composant qui n'a pas d'équivalent visuel dans les références.
+
+Applique également les corrections précises suivantes :
+
+[REMPLACER CETTE LIGNE PAR LES CORRECTIONS À APPLIQUER]
+
+Conserve le contenu fonctionnel nécessaire, mais simplifie sa présentation au lieu d'ajouter des blocs. Tous les textes restent en français correctement orthographié ; « Mood » est le seul terme anglais autorisé ; les contenus et prix restent crédibles pour la Côte d'Ivoire et en FCFA.
+
+Génère uniquement l'image corrigée : une seule maquette mobile portrait plein écran, sans téléphone autour, sans annotations, sans explications, sans collage et sans variantes.

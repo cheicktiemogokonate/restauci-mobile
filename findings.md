@@ -100,3 +100,79 @@ Les routes authentifiées n’ont pas été appelées faute de compte de test et
 - Statuts commande : `src/domain/orderStatus.ts`
 - Persistance versionnée : `src/domain/localData.ts`
 - Redirections auth : `src/domain/authRedirect.ts`
+
+## Audit complémentaire — recherche, Mood et préparation production (13 septembre 2026)
+
+### État réel de la recherche mobile
+
+- La liste de restaurants visible sur la carte est dynamique : elle appelle `POST /api/v1/public/restaurants/search` avec position, précision, horodatage et filtre cuisine.
+- Les filtres de cuisine ne sont pas codés en dur : ils sont dérivés des restaurants renvoyés par l'API pour la zone courante.
+- Le code de recherche textuelle restaurant est branché sur le même endpoint et le géocodage est branché sur `GET /api/v1/client/geo/geocode`.
+- Dans le parcours principal, `SearchBar` reçoit toujours `onMoodPress`. Cette prop remplace le champ de recherche réel par un bouton ouvrant Mood : la recherche textuelle backend existe donc dans le code mais n'est pas accessible depuis l'interface affichée.
+
+### État réel de Mood
+
+- Les quatre suggestions sont une constante locale `MOOD_SUGGESTIONS`.
+- La saisie Mood n'est reliée à aucun hook, endpoint, bouton de soumission ou écran de résultats.
+- Choisir une suggestion ne fait que recopier son titre dans le champ.
+- La ligne « Quoi / Peu importe » est purement visuelle.
+- Les emplacements Abidjan/Bouaké sont un sélecteur de développement exposé uniquement en mode `__DEV__`; en production, Mood s'appuie sur la position réelle ou son actualisation.
+
+### Capacités backend disponibles
+
+- Le backend canonique sait déjà filtrer les restaurants visibles par marché, texte, cuisine et mode de commande.
+- Il classe les candidats via le module Discovery, avec placements organiques/promotionnels, rotation, badges partenaire et jetons d'attribution.
+- Le backend expose des endpoints de recherche séparés pour restaurants et résidences ainsi qu'un endpoint d'événement `detail_open`.
+- Il n'existe actuellement aucun contrat Mood, recherche sémantique, suggestion de requête, facette unifiée multi-verticale ou explication de recommandation dans l'OpenAPI mobile.
+
+## Décision produit — rôle central de Mood (13 septembre 2026)
+
+- Mood est la fonctionnalité phare de découverte, pas un filtre secondaire.
+- Il doit réunir dans une seule entrée :
+  - la recherche précise par établissement, cuisine, lieu ou type ;
+  - la recherche par intention exprimée en langage naturel ;
+  - les inspirations proposées par l'application ;
+  - des résultats multi-verticaux, au minimum restaurants et résidences.
+- Le bouton/barre principal qui ouvre Mood est cohérent avec cette vision. Le défaut actuel est fonctionnel : le champ interne ne soumet rien et les suggestions sont statiques.
+- Le résultat doit être une sélection classée et contextualisée, pas seulement un annuaire filtré.
+- L'intelligence doit exploiter les données réelles de disponibilité, distance, horaires, budget et qualité. Elle peut interpréter l'intention, mais ne doit jamais inventer une disponibilité.
+- Chaque résultat devra exposer une raison de recommandation et une action réalisable.
+- La recherche classique doit rester un mode compris par Mood et un fallback technique, pas un parcours produit concurrent.
+- Les événements restent une extension future possible ; restaurants et résidences appartiennent au socle du lancement.
+
+## Contraintes de développement et d'identité (13 septembre 2026)
+
+- « Sign in with Apple » et « Google Sign-In » relèvent de l'authentification sociale/fédérée.
+- Ces deux fournisseurs sont explicitement hors périmètre du chantier actuel.
+- Le bloc Google commenté dans `src/app/auth/login.tsx` est donc du code mort à retirer, pas une fonctionnalité à terminer.
+- Aucun compte Apple Developer Program ni Google Play Console n'est disponible.
+- La cible immédiate est une application production-grade développée et vérifiée localement sur simulateur iOS et émulateur Android.
+- Les comptes stores ne sont pas nécessaires pour les tests Android sur émulateur.
+- Sur Apple, le simulateur reste utilisable localement ; un Apple Account gratuit avec Personal Team permet aussi des essais limités sur appareil physique, mais ne permet pas une soumission App Store.
+- Signature de distribution, TestFlight, Play Internal et publication doivent être séparés dans un gate différé.
+- L'authentification progressive est retenue : exploration possible avant connexion, compte classique requis avant une opération transactionnelle ou synchronisée.
+
+## Décision produit — aucune identité pseudonyme (13 septembre 2026)
+
+- Aucun pseudonyme public, alias inventé ou profil anonyme persistant ne doit exister dans l'application.
+- Avant connexion, l'utilisateur n'a simplement pas d'identité applicative.
+- Mood peut répondre avec les données de la requête courante sans attacher ces données à un profil durable.
+- Le panier et les préférences temporaires peuvent rester sur l'appareil ; ils ne constituent pas un compte.
+- Lors de l'inscription classique, les informations nécessaires au service doivent être réelles et validées.
+- Les identifiants purement techniques de requête, d'idempotence ou de sécurité doivent rester courts, internes et non réutilisés comme profil marketing.
+
+### Autres façades ou fonctions incomplètes
+
+- Paiement dans le profil : écran « Bientôt », sans API de moyens de paiement.
+- Assistance : écran « Bientôt », sans centre d'aide ni contact opérationnel.
+- OAuth Google : code commenté et contrat non confirmé.
+- Favoris et adresses : fonctionnels mais locaux à l'appareil, sans synchronisation de compte.
+- Événements : annoncés par la vision produit mais absents du mobile et du type d'établissement courant.
+- Le suivi de commande utilise le polling ; l'URL SSE existe mais n'est pas consommée par le mobile.
+
+### Risques de qualification
+
+- Le lot actuel compte 92 chemins locaux non enregistrés dans Git (53 modifiés, 6 supprimés, 33 non suivis).
+- Les tests couvrent 27 invariants métier/contrat mais aucun composant ou parcours mobile E2E.
+- L'export Android courant réussit, mais une recette native fraîche et complète des changements actuels reste nécessaire sur iOS et Android.
+- `task_plan.md`, `progress.md` et certaines décisions de `findings.md` sont antérieurs aux résidences, à Activité, au push client réactivé et aux 27 tests ; ils doivent être remplacés comme source de statut par le nouveau plan production.
