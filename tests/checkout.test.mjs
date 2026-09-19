@@ -252,6 +252,15 @@ test("les redirections post-auth restent dans les routes autorisées", () => {
     resolveAuthRedirect("/(tabs)/commandes/123e4567-e89b-12d3-a456"),
     "/(tabs)/commandes/123e4567-e89b-12d3-a456",
   );
+  const residenceRedirect =
+    "/residences/villa-lagune?checkIn=2026-09-10&checkOut=2026-09-13&guests=4&discoveryToken=abcdefghijklmnopqrst.1234567890";
+  assert.equal(resolveAuthRedirect(residenceRedirect), residenceRedirect);
+  assert.equal(
+    resolveAuthRedirect(
+      "/residences/villa-lagune?checkIn=2026-09-10&checkOut=2026-09-13&guests=4&next=https%3A%2F%2Fsite-externe.test",
+    ),
+    "/(tabs)",
+  );
   assert.equal(resolveAuthRedirect("//site-externe.test"), "/(tabs)");
   assert.equal(resolveAuthRedirect("/(tabs)/profil"), "/(tabs)");
 });

@@ -1,5 +1,6 @@
 import { ENDPOINTS } from "@/constants/api";
 import { apiFetch } from "@/lib/api";
+import { invalidateCommandeQueries } from "@/lib/commandeQueryCache";
 import {
   commandeCreationDataSchema,
   parseApiSuccess,
@@ -46,8 +47,8 @@ export function useEnvoyerCommande() {
         replayed: response.data.replayed,
       };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["commandes"] });
+    onSuccess: async () => {
+      await invalidateCommandeQueries(queryClient);
     },
   });
 }
