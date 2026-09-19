@@ -385,7 +385,7 @@ export function CheckoutForm({
                     ]}
                   >
                     <Icon
-                      color={selected ? "#14532D" : "#6B6B66"}
+                      color={selected ? "theme.green900" : "#6B6B66"}
                       size={17}
                       strokeWidth={2}
                     />
@@ -446,7 +446,7 @@ export function CheckoutForm({
                         style={[styles.addressChip, selected && styles.addressChipSelected]}
                       >
                         {selected && (
-                          <Check color="#14532D" size={14} strokeWidth={2.4} />
+                          <Check color="theme.green900" size={14} strokeWidth={2.4} />
                         )}
                         <Text
                           numberOfLines={1}
@@ -501,9 +501,9 @@ export function CheckoutForm({
                   style={[styles.locateButton, isLocating && styles.controlDisabled]}
                 >
                   {isLocating ? (
-                    <ActivityIndicator color="#14532D" size="small" />
+                    <ActivityIndicator color="theme.green900" size="small" />
                   ) : (
-                    <LocateFixed color="#14532D" size={20} strokeWidth={2} />
+                    <LocateFixed color="theme.green900" size={20} strokeWidth={2} />
                   )}
                 </Pressable>
               </View>
@@ -516,7 +516,7 @@ export function CheckoutForm({
                       onPress={() => handleSelectSuggestion(item)}
                       style={styles.suggestionRow}
                     >
-                      <MapPin color="#777772" size={15} strokeWidth={1.9} />
+                      <MapPin color="theme.inkMuted" size={15} strokeWidth={1.9} />
                       <Text numberOfLines={1} style={styles.suggestionLabel}>
                         {item.label}
                       </Text>
@@ -543,7 +543,7 @@ export function CheckoutForm({
             <Text style={styles.paymentSectionTitle}>Moyen de paiement</Text>
             <View style={styles.paymentRow}>
               <View style={styles.paymentIcon}>
-                <Banknote color="#14532D" size={20} strokeWidth={2} />
+                <Banknote color="theme.green900" size={20} strokeWidth={2} />
               </View>
               <View style={styles.paymentCopy}>
                 <Text style={styles.paymentTitle}>Paiement à la réception</Text>
@@ -597,9 +597,9 @@ export function CheckoutForm({
                 </Text>
               </View>
               {notesExpanded ? (
-                <ChevronUp color="#777772" size={18} />
+                <ChevronUp color="theme.inkMuted" size={18} />
               ) : (
-                <ChevronDown color="#777772" size={18} />
+                <ChevronDown color="theme.inkMuted" size={18} />
               )}
             </Pressable>
 
@@ -678,7 +678,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   addressChipLabelSelected: {
-    color: "#14532D",
+    color: "theme.green900",
   },
   addressChipSelected: {
     backgroundColor: "#EEF6F0",
@@ -706,7 +706,7 @@ const styles = StyleSheet.create({
     gap: 9,
   },
   contactHint: {
-    color: "#777772",
+    color: "theme.inkMuted",
     fontSize: 12,
     lineHeight: 17,
     paddingHorizontal: 4,
@@ -716,7 +716,7 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   emptySuggestion: {
-    color: "#777772",
+    color: "theme.inkMuted",
     fontSize: 13,
     paddingTop: 10,
     textAlign: "center",
@@ -772,7 +772,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   modeLabelSelected: {
-    color: "#14532D",
+    color: "theme.green900",
   },
   modeSelector: {
     backgroundColor: "#EDEDE9",
@@ -784,7 +784,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   noteHint: {
-    color: "#777772",
+    color: "theme.inkMuted",
     fontSize: 12,
     marginTop: 2,
   },
@@ -814,7 +814,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   paymentDescription: {
-    color: "#777772",
+    color: "theme.inkMuted",
     fontSize: 12,
     marginTop: 2,
   },
@@ -871,7 +871,7 @@ const styles = StyleSheet.create({
   },
   selectedIndicator: {
     alignItems: "center",
-    backgroundColor: "#14532D",
+    backgroundColor: "theme.green900",
     borderRadius: 999,
     height: 23,
     justifyContent: "center",
@@ -882,7 +882,7 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     alignItems: "center",
-    backgroundColor: "#14532D",
+    backgroundColor: "theme.green900",
     borderCurve: "continuous",
     borderRadius: 999,
     justifyContent: "center",
@@ -918,7 +918,7 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   summaryLabel: {
-    color: "#777772",
+    color: "theme.inkMuted",
     fontSize: 13,
   },
   summaryLines: {
@@ -935,7 +935,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   summaryTotalValue: {
-    color: "#14532D",
+    color: "theme.green900",
     fontSize: 17,
     fontVariant: ["tabular-nums"],
     fontWeight: "800",

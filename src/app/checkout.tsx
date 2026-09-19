@@ -97,7 +97,7 @@ export default function CheckoutScreen() {
 
       {restaurantQuery.isPending ? (
         <View style={styles.centerState}>
-          <ActivityIndicator color="#14532D" size="large" />
+          <ActivityIndicator color="theme.green900" size="large" />
           <Text style={styles.stateMessage}>Préparation du paiement…</Text>
         </View>
       ) : restaurantQuery.isError || !restaurant ? (
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   returnButton: {
     alignItems: "center",
-    backgroundColor: "#14532D",
+    backgroundColor: "theme.green900",
     borderCurve: "continuous",
     borderRadius: 999,
     justifyContent: "center",

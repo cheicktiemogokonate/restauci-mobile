@@ -62,7 +62,7 @@ function StepButton({
       {variant === "dark" ? (
         <Plus size={16} color="white" />
       ) : (
-        <Minus size={16} color="#14532d" />
+        <Minus size={16} color="theme.green900" />
       )}
     </Pressable>
   );
@@ -133,7 +133,7 @@ export default function ResidencesScreen() {
         {!showingTrips ? (
           <View className="mt-4 gap-3">
             <View className="flex-row items-center rounded-2xl border border-ink-200 bg-white px-4">
-              <Search size={19} color="#6b7280" />
+              <Search size={19} color="theme.ink500" />
               <Input
                 value={destination}
                 onChangeText={setDestination}
@@ -189,7 +189,7 @@ export default function ResidencesScreen() {
               <View className="my-3 border-t border-ink-100" />
               <View className="flex-row items-center justify-between">
                 <View className="flex-row items-center gap-2">
-                  <Users size={18} color="#14532d" />
+                  <Users size={18} color="theme.green900" />
                   <Text className="font-bold text-ink-900">
                     {stay.guests} voyageur{stay.guests > 1 ? "s" : ""}
                   </Text>
@@ -224,7 +224,7 @@ export default function ResidencesScreen() {
       {showingTrips ? (
         !client ? (
           <View className="flex-1 items-center justify-center px-8 pb-28">
-            <CalendarDays size={44} color="#14532d" />
+            <CalendarDays size={44} color="theme.green900" />
             <Text className="mt-4 text-xl font-bold text-ink-900">
               Retrouvez vos séjours
             </Text>
@@ -246,7 +246,7 @@ export default function ResidencesScreen() {
           </View>
         ) : reservations.isPending ? (
           <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#14532d" />
+            <ActivityIndicator size="large" color="theme.green900" />
           </View>
         ) : reservations.isError ? (
           <ErrorView
@@ -284,7 +284,7 @@ export default function ResidencesScreen() {
                     />
                   ) : (
                     <View className="flex-1 items-center justify-center">
-                      <BedDouble color="#14532d" />
+                      <BedDouble color="theme.green900" />
                     </View>
                   )}
                 </View>
@@ -296,7 +296,7 @@ export default function ResidencesScreen() {
                     {item.residenceTitle}
                   </Text>
                   <View className="mt-1 flex-row items-center gap-1">
-                    <MapPin size={13} color="#6b7280" />
+                    <MapPin size={13} color="theme.ink500" />
                     <Text className="text-xs text-ink-500">
                       {item.residenceCity}
                     </Text>
@@ -324,7 +324,7 @@ export default function ResidencesScreen() {
         )
       ) : residences.isPending ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#14532d" />
+          <ActivityIndicator size="large" color="theme.green900" />
         </View>
       ) : residences.isError ? (
         <ErrorView
@@ -349,7 +349,7 @@ export default function ResidencesScreen() {
           }}
           ListFooterComponent={
             residences.isFetchingNextPage ? (
-              <ActivityIndicator color="#14532d" />
+              <ActivityIndicator color="theme.green900" />
             ) : null
           }
           ListEmptyComponent={

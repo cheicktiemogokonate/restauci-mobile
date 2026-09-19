@@ -45,7 +45,7 @@ export default function PaymentCallbackScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView className="flex-1 items-center justify-center px-8">
-        {confirmed ? <CircleCheckBig size={64} color="#15803d" /> : failed ? <CircleX size={64} color="#dc2626" /> : <LoaderCircle size={64} color="#14532d" />}
+        {confirmed ? <CircleCheckBig size={64} color="#15803d" /> : failed ? <CircleX size={64} color="theme.danger700" /> : <LoaderCircle size={64} color="theme.green900" />}
         <Text className="mt-6 text-center text-2xl font-extrabold text-ink-900">{confirmed ? "Paiement confirmé" : failed ? "Paiement non confirmé" : "Vérification du paiement"}</Text>
         <Text className="mt-3 text-center leading-6 text-ink-500">{confirmed ? `Votre paiement a été vérifié. Nous ouvrons maintenant ${isResidencePayment ? "votre séjour" : "votre suivi"}.` : failed ? `Aucun paiement n’est considéré comme validé. Vous pourrez le reprendre depuis le détail ${isResidencePayment ? "du séjour" : "de la commande"}.` : "ToutCi vérifie le statut auprès du serveur avant de mettre à jour votre réservation ou commande."}</Text>
         <Button onPress={() => router.replace(destination)} className="mt-8 w-full"><ButtonText>Continuer</ButtonText></Button>

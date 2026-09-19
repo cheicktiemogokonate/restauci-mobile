@@ -71,7 +71,7 @@ export function FloatingTabBar({
           const isFocused =
             isCurrentRoute ||
             (route.name === "activite" && activeRouteName === "commandes");
-          const color = isFocused ? "#111827" : "#5F6368";
+          const color = isFocused ? "theme.ink900" : "#5F6368";
 
           return (
             <TouchableOpacity

@@ -143,7 +143,7 @@ export function RestaurantMapCard({
                 accessibilityLabel="Fermer la fiche"
                 className="h-7 w-7 items-center justify-center rounded-full bg-ink-100"
               >
-                <X size={16} color="#6B7280" />
+                <X size={16} color="theme.ink500" />
               </Pressable>
             )}
           </View>
@@ -173,7 +173,7 @@ export function RestaurantMapCard({
           <View className="mt-1 flex-row flex-wrap items-center gap-x-3 gap-y-1">
             {typeof item.distanceKm === "number" && (
               <View className="flex-row items-center gap-1">
-                <MapPin size={13} color="#6B7280" />
+                <MapPin size={13} color="theme.ink500" />
                 <Text className="text-xs text-ink-600">
                   {item.distanceKm.toFixed(1)} km
                 </Text>
@@ -182,9 +182,9 @@ export function RestaurantMapCard({
             {detailTag && (
               <View className="flex-row items-center gap-1">
                 {isResidence ? (
-                  <Home size={13} color="#6B7280" />
+                  <Home size={13} color="theme.ink500" />
                 ) : (
-                  <Clock size={13} color="#6B7280" />
+                  <Clock size={13} color="theme.ink500" />
                 )}
                 <Text className="text-xs text-ink-600">{detailTag}</Text>
               </View>
@@ -192,7 +192,7 @@ export function RestaurantMapCard({
             {(item.nombreAvis ?? 0) > 0 &&
               typeof item.noteMoyenne === "number" && (
                 <View className="flex-row items-center gap-1">
-                  <Star size={13} color="#CA8A04" />
+                  <Star size={13} color="theme.warning600" />
                   <Text className="text-xs text-ink-600">
                     {item.noteMoyenne.toFixed(1)}
                   </Text>
@@ -215,7 +215,7 @@ export function RestaurantMapCard({
                   accessibilityRole="button"
                   accessibilityLabel={`Itinéraire vers ${item.nom}`}
                 >
-                  <MapPin size={14} color="#14532d" />
+                  <MapPin size={14} color="theme.green900" />
                   <Text className="ml-1 text-xs font-bold text-brand-800">
                     Y aller
                   </Text>

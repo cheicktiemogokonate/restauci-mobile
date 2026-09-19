@@ -21,7 +21,7 @@ interface ItineraryVisualConfig {
  */
 export const ITINERARY_VISUAL_CONFIG: ItineraryVisualConfig = {
   strokeStyle: "solid",
-  color: "#14532d",
+  color: "theme.green900",
   width: 4,
   opacity: 0.92,
   casingColor: "rgba(255, 255, 255, 0.92)",

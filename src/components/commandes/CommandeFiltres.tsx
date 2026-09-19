@@ -63,17 +63,17 @@ export function CommandeFiltres({
               borderRadius: 999,
               paddingHorizontal: 16,
               paddingVertical: 10,
-              backgroundColor: estActif ? "#14532d" : "#f3f4f6",
+              backgroundColor: estActif ? "theme.green900" : "theme.ink100",
             }}
           >
-            <f.Icon size={15} color={estActif ? "#FFFFFF" : "#4B5563"} />
+            <f.Icon size={15} color={estActif ? "#FFFFFF" : "theme.ink600"} />
             <Text
               style={{
                 marginLeft: 6,
                 fontWeight: "600",
                 fontSize: 13,
                 lineHeight: 16,
-                color: estActif ? "#FFFFFF" : "#4B5563",
+                color: estActif ? "#FFFFFF" : "theme.ink600",
               }}
             >
               {f.label}

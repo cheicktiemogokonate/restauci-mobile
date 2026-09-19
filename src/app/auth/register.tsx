@@ -172,11 +172,11 @@ export default function RegisterScreen() {
                   errors.nom ? "border-red-500" : "border-gray-200"
                 }`}
               >
-                <User size={18} color="#14532d" />
+                <User size={18} color="theme.green900" />
                 <TextInput
                   className="flex-1 text-black text-base ml-3"
                   placeholder="Entrez votre nom complet"
-                  //   placeholderTextColor="#14532d"
+                  //   placeholderTextColor="theme.green900"
                   autoCapitalize="words"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -206,14 +206,14 @@ export default function RegisterScreen() {
                 <Text className="text-black font-medium ml-1">+225</Text>
                 <ChevronDown
                   size={16}
-                  color="#14532d"
+                  color="theme.green900"
                   style={{ marginLeft: 4 }}
                 />
                 <View className="w-px h-6 bg-gray-200 mx-3" />
                 <TextInput
                   className="flex-1 text-black text-base"
                   placeholder="07 51 23 45 67"
-                  //   placeholderTextColor="#14532d"
+                  //   placeholderTextColor="theme.green900"
                   keyboardType="phone-pad"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -241,11 +241,11 @@ export default function RegisterScreen() {
                   errors.email ? "border-red-500" : "border-gray-200"
                 }`}
               >
-                <Mail size={18} color="#14532d" />
+                <Mail size={18} color="theme.green900" />
                 <TextInput
                   className="flex-1 text-black text-base ml-3"
                   placeholder="Entrez votre email"
-                  //   placeholderTextColor="#14532d"
+                  //   placeholderTextColor="theme.green900"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   onBlur={onBlur}
@@ -274,11 +274,11 @@ export default function RegisterScreen() {
                   errors.password ? "border-red-500" : "border-gray-200"
                 }`}
               >
-                <Lock size={18} color="#14532d" />
+                <Lock size={18} color="theme.green900" />
                 <TextInput
                   className="flex-1 text-black text-base ml-3"
                   placeholder="Créez un mot de passe"
-                  //   placeholderTextColor="#14532d"
+                  //   placeholderTextColor="theme.green900"
                   secureTextEntry={!showPassword}
                   maxLength={CLIENT_PASSWORD_MAX_LENGTH}
                   onBlur={onBlur}
@@ -290,9 +290,9 @@ export default function RegisterScreen() {
                   hitSlop={10}
                 >
                   {showPassword ? (
-                    <EyeOff size={18} color="#14532d" />
+                    <EyeOff size={18} color="theme.green900" />
                   ) : (
-                    <Eye size={18} color="#14532d" />
+                    <Eye size={18} color="theme.green900" />
                   )}
                 </Pressable>
               </View>
@@ -322,11 +322,11 @@ export default function RegisterScreen() {
                   errors.confirmPassword ? "border-red-500" : "border-gray-200"
                 }`}
               >
-                <Lock size={18} color="#14532d" />
+                <Lock size={18} color="theme.green900" />
                 <TextInput
                   className="flex-1 text-black text-base ml-3"
                   placeholder="Confirmez votre mot de passe"
-                  //     //   placeholderTextColor="#14532d"
+                  //     //   placeholderTextColor="theme.green900"
                   secureTextEntry={!showConfirmPassword}
                   maxLength={CLIENT_PASSWORD_MAX_LENGTH}
                   onBlur={onBlur}
@@ -338,9 +338,9 @@ export default function RegisterScreen() {
                   hitSlop={10}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff size={18} color="#14532d" />
+                    <EyeOff size={18} color="theme.green900" />
                   ) : (
-                    <Eye size={18} color="#14532d" />
+                    <Eye size={18} color="theme.green900" />
                   )}
                 </Pressable>
               </View>

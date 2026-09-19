@@ -81,7 +81,7 @@ export function LivraisonCard({
           </Text>
         </View>
         <View className="h-11 w-11 items-center justify-center rounded-full bg-white">
-          <Truck size={21} color="#166534" />
+          <Truck size={21} color="theme.green800" />
         </View>
       </View>
 
@@ -109,12 +109,12 @@ export function LivraisonCard({
               accessibilityLabel={`Appeler ${driver.name}`}
               onPress={() => void Linking.openURL(`tel:${driver.phone}`)}
             >
-              <Phone size={19} color="#166534" />
+              <Phone size={19} color="theme.green800" />
             </Pressable>
           </View>
 
           <View className="mt-4 flex-row items-center">
-            <Bike size={18} color="#6B7280" />
+            <Bike size={18} color="theme.ink500" />
             <Text className="ml-2 text-sm text-ink-600">
               {vehicleLabel(driver.vehicle)}
               {driver.vehicleNumber ? ` · ${driver.vehicleNumber}` : ""}
@@ -136,7 +136,7 @@ export function LivraisonCard({
               key={event.label}
             >
               <View className="flex-row items-center">
-                <Clock3 size={16} color="#6B7280" />
+                <Clock3 size={16} color="theme.ink500" />
                 <Text className="ml-2 text-sm text-ink-500">
                   {event.label}
                 </Text>

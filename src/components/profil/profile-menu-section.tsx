@@ -38,7 +38,7 @@ export function ProfileMenuSection({
                 ])}
               >
                 <View style={styles.iconTile}>
-                  <Icon color="#183C2A" size={21} strokeWidth={1.9} />
+                  <Icon color="theme.brandDark" size={21} strokeWidth={1.9} />
                 </View>
 
                 <View style={styles.copy}>
@@ -77,7 +77,7 @@ export function ProfileMenuSection({
 const styles = StyleSheet.create({
   badge: {
     alignItems: "center",
-    backgroundColor: "#183C2A",
+    backgroundColor: "theme.brandDark",
     borderRadius: 999,
     justifyContent: "center",
     minHeight: 20,
@@ -96,20 +96,20 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   description: {
-    color: "#6B7280",
+    color: "theme.ink500",
     fontSize: 12,
     lineHeight: 16,
   },
   iconTile: {
     alignItems: "center",
-    backgroundColor: "#F0FDF4",
+    backgroundColor: "theme.green50",
     borderRadius: 12,
     height: 38,
     justifyContent: "center",
     width: 38,
   },
   label: {
-    color: "#111827",
+    color: "theme.ink900",
     flexShrink: 1,
     fontSize: 15,
     fontWeight: "600",
@@ -128,26 +128,26 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   rowWithSeparator: {
-    borderBottomColor: "#F3F4F6",
+    borderBottomColor: "theme.ink100",
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   section: {
     gap: 8,
   },
   sectionTitle: {
-    color: "#111827",
+    color: "theme.ink900",
     fontSize: 16,
     fontWeight: "700",
     letterSpacing: -0.2,
     paddingHorizontal: 2,
   },
   statusLabel: {
-    color: "#6B7280",
+    color: "theme.ink500",
     fontSize: 10.5,
     fontWeight: "600",
   },
   statusPill: {
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "theme.ink100",
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 3,

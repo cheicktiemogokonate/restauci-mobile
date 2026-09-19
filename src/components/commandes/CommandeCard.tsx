@@ -53,23 +53,23 @@ export function CommandeCard({
     switch (categorie) {
       case "livrees":
         return {
-          bg: "#f0fdf4",
-          text: "#166534",
-          iconColor: "#166534",
+          bg: "theme.green50",
+          text: "theme.green800",
+          iconColor: "theme.green800",
           Icon: CheckCircle2,
         };
       case "annulees":
         return {
           bg: "#fef2f2",
           text: "text-danger",
-          iconColor: "#DC2626",
+          iconColor: "theme.danger700",
           Icon: XCircle,
         };
       default:
         return {
           bg: "bg-warning/10",
           text: "text-warning",
-          iconColor: "#CA8A04",
+          iconColor: "theme.warning600",
           Icon: Clock,
         };
     }
@@ -82,7 +82,7 @@ export function CommandeCard({
           bg: "bg-brand-50",
           text: "text-brand-800",
           border: "border-brand-800",
-          iconColor: "#166534",
+          iconColor: "theme.green800",
           Icon: CheckCircle2,
           message: "Commandée et livrée",
           actionLabel: "Voir le détail",
@@ -93,7 +93,7 @@ export function CommandeCard({
           bg: "bg-danger/10",
           text: "text-danger",
           border: "border-danger",
-          iconColor: "#DC2626",
+          iconColor: "theme.danger700",
           Icon: XCircle,
           message: "Commande annulée",
           actionLabel: "Voir le détail",
@@ -104,7 +104,7 @@ export function CommandeCard({
           bg: "bg-warning/10",
           text: "text-warning",
           border: "border-warning",
-          iconColor: "#CA8A04",
+          iconColor: "theme.warning600",
           Icon: Bike,
           message: ongoingMessage,
           actionLabel: "Suivre ma commande",
@@ -153,7 +153,7 @@ export function CommandeCard({
             </Text>
 
             <View className="flex-row items-center mt-1">
-              <Calendar size={13} color="#9CA3AF" />
+              <Calendar size={13} color="theme.ink400" />
               <Text className="text-gray-400 text-xs ml-1">
                 {dateFormatee} • {heureFormatee}
               </Text>
@@ -167,7 +167,7 @@ export function CommandeCard({
                 <Text className="text-brand-800 font-semibold text-sm">
                   Voir les détails
                 </Text>
-                <ChevronRight size={14} color="#166534" />
+                <ChevronRight size={14} color="theme.green800" />
               </View>
             </View>
           </View>

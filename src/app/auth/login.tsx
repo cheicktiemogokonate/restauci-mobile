@@ -104,11 +104,6 @@ export default function LoginScreen() {
     }
   };
 
-  // const handleGoogle = async () => {
-  //   // 🔗 Flux OAuth Google -> échange du token avec ENDPOINTS.authClientGoogle (à confirmer sur l'OpenAPI)
-  //   setServerError("La connexion Google sera disponible prochainement.");
-  // };
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -169,14 +164,14 @@ export default function LoginScreen() {
                 <Text className="text-black font-medium ml-1">+225</Text>
                 <ChevronDown
                   size={16}
-                  color="#9ca3af"
+                  color="theme.ink400"
                   style={{ marginLeft: 4 }}
                 />
                 <View className="w-px h-6 bg-gray-200 mx-3" />
                 <TextInput
                   className="flex-1 text-black text-base"
                   placeholder="07 51 23 45 67"
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor="theme.ink400"
                   keyboardType="phone-pad"
                   autoCapitalize="none"
                   onBlur={onBlur}
@@ -205,7 +200,7 @@ export default function LoginScreen() {
                   errors.password ? "border-red-500" : "border-gray-200"
                 }`}
               >
-                <Lock size={18} color="#14532d" />
+                <Lock size={18} color="theme.green900" />
                 <TextInput
                   className="flex-1 text-black text-base ml-3"
                   placeholder="Entrez votre mot de passe"
@@ -219,9 +214,9 @@ export default function LoginScreen() {
                   hitSlop={10}
                 >
                   {showPassword ? (
-                    <EyeOff size={18} color="#14532d" />
+                    <EyeOff size={18} color="theme.green900" />
                   ) : (
-                    <Eye size={18} color="#14532d" />
+                    <Eye size={18} color="theme.green900" />
                   )}
                 </Pressable>
               </View>

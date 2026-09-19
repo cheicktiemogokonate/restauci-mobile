@@ -110,7 +110,7 @@ export function ActivityNowCard({
               {isOrder ? (
                 <ChefHat color="#F04B2F" size={17} strokeWidth={2} />
               ) : (
-                <Clock3 color="#183C2A" size={17} strokeWidth={2} />
+                <Clock3 color="theme.brandDark" size={17} strokeWidth={2} />
               )}
               <Text
                 numberOfLines={1}
@@ -134,7 +134,7 @@ export function ActivityNowCard({
           </Text>
           <View style={styles.actionRow}>
             <Text style={styles.actionLabel}>{isOrder ? "Suivre" : "Voir"}</Text>
-            <ChevronRight color="#183C2A" size={18} strokeWidth={2.4} />
+            <ChevronRight color="theme.brandDark" size={18} strokeWidth={2.4} />
           </View>
         </View>
       </Pressable>
@@ -144,7 +144,7 @@ export function ActivityNowCard({
 
 const styles = StyleSheet.create({
   actionLabel: {
-    color: "#183C2A",
+    color: "theme.brandDark",
     fontSize: 15,
     fontWeight: "700",
   },
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   stayStatus: {
-    color: "#14532D",
+    color: "theme.green900",
   },
   title: {
     color: "#111111",

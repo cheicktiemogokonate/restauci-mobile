@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     width: 6,
   },
   indicatorDotActive: {
-    backgroundColor: "#183C2A",
+    backgroundColor: "theme.brandDark",
     borderRadius: 3,
     width: 18,
   },

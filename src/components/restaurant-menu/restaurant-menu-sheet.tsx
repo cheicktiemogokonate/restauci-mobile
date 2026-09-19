@@ -258,7 +258,7 @@ export const RestaurantMenuSheet = forwardRef<
 
       {isLoading ? (
         <View style={styles.loadingState}>
-          <ActivityIndicator color="#14532D" size="large" />
+          <ActivityIndicator color="theme.green900" size="large" />
           <Text style={styles.loadingLabel}>Le menu se prépare…</Text>
         </View>
       ) : error ? (
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   stateAction: {
-    backgroundColor: "#14532D",
+    backgroundColor: "theme.green900",
     borderCurve: "continuous",
     borderRadius: 999,
     marginTop: 20,

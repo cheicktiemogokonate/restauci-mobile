@@ -49,9 +49,7 @@ export default function ProfilLayout() {
       <Stack.Screen name="historique" options={{ title: "Historique" }} />
       <Stack.Screen name="favoris" options={{ title: "Mes favoris" }} />
       <Stack.Screen name="adresses" options={{ title: "Mes adresses" }} />
-      <Stack.Screen name="paiement" options={{ title: "Paiement" }} />
       <Stack.Screen name="notifications" options={{ title: "Notifications" }} />
-      <Stack.Screen name="support" options={{ title: "Support" }} />
       <Stack.Screen name="a-propos" options={{ title: "À propos" }} />
     </Stack>
   );

@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     minHeight: 38,
   },
   price: {
-    color: "#14532D",
+    color: "theme.green900",
     flexShrink: 1,
     fontSize: 14,
     fontVariant: ["tabular-nums"],
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   },
   addButton: {
     alignItems: "center",
-    backgroundColor: "#14532D",
+    backgroundColor: "theme.green900",
     borderCurve: "continuous",
     borderRadius: 999,
     height: 38,
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   },
   quantityButton: {
     alignItems: "center",
-    backgroundColor: "#14532D",
+    backgroundColor: "theme.green900",
     borderCurve: "continuous",
     borderRadius: 999,
     height: 32,

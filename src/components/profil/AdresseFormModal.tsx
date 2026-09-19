@@ -142,7 +142,7 @@ export function AdresseFormModal({
               accessibilityRole="button"
               accessibilityLabel="Fermer"
             >
-              <X size={21} color="#374151" />
+              <X size={21} color="theme.ink700" />
             </Pressable>
           </View>
 

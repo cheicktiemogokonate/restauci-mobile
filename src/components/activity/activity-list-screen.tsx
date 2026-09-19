@@ -133,7 +133,7 @@ function EmptyList({ view }: { view: ActivityListView }) {
   return (
     <View style={styles.emptyState}>
       <View style={styles.emptyIcon}>
-        <CalendarDays color="#14532D" size={27} strokeWidth={1.9} />
+        <CalendarDays color="theme.green900" size={27} strokeWidth={1.9} />
       </View>
       <Text style={styles.emptyTitle}>
         {view === "upcoming"
@@ -223,7 +223,7 @@ export function ActivityListScreen() {
 
         {loading ? (
           <View style={styles.loadingState}>
-            <ActivityIndicator color="#14532D" />
+            <ActivityIndicator color="theme.green900" />
           </View>
         ) : view === "upcoming" ? (
           feed.upcoming.length > 0 ? (
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
   },
   selectorLabel: {
-    color: "#64748B",
+    color: "theme.slate500",
     fontSize: 14,
     fontWeight: "600",
   },

@@ -52,7 +52,7 @@ export default function OnboardingScreen() {
   if (isCheckingOnboarding) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="#14532d" />
+        <ActivityIndicator size="large" color="theme.green900" />
       </SafeAreaView>
     );
   }
@@ -93,7 +93,7 @@ export default function OnboardingScreen() {
             <View className="w-[300px] h-[300px] rounded-full justify-center items-center">
               {/* Top Left Badge — brand voice, not fake metric */}
               <View className="absolute -left-4 top-10 flex-row items-center bg-ink-50 px-3 py-2 rounded-2xl shadow-sm border border-ink-200">
-                <Footprints size={18} color="#457b3b" />
+                <Footprints size={18} color="theme.green500" />
                 <View className="ml-2">
                   <Text className="text-sm font-bold text-ink-900">
                     Livraison
@@ -104,7 +104,7 @@ export default function OnboardingScreen() {
 
               {/* Right Badge */}
               <View className="absolute -right-12 top-14 flex-row items-center bg-ink-50 px-3 py-2 rounded-2xl shadow-sm border border-ink-200">
-                <Store size={20} color="#457b3b" />
+                <Store size={20} color="theme.green500" />
                 <View className="ml-2">
                   <Text className="text-sm font-bold text-ink-900">Tout près</Text>
                   <Text className="text-xs text-ink-500">de chez vous</Text>
@@ -113,7 +113,7 @@ export default function OnboardingScreen() {
 
               {/* Bottom Left Badge — cuisine identity, not a vanity rating */}
               <View className="absolute -left-2 bottom-12 flex-row items-center bg-ink-50 px-3 py-2 rounded-2xl shadow-sm border border-ink-200">
-                <Utensils size={20} color="#457b3b" />
+                <Utensils size={20} color="theme.green500" />
                 <View className="ml-2">
                   <Text className="text-sm font-bold text-ink-900">
                     Cuisine

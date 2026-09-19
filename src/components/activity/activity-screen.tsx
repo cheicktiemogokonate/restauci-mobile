@@ -23,7 +23,11 @@ import {
   Text,
   View,
 } from "react-native";
-import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  useReducedMotion,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const UPCOMING_PREVIEW_LIMIT = 2;
@@ -34,8 +38,10 @@ function pluralizedSummary(now: number, upcoming: number): string {
 }
 
 function ActivityHeader({ now, upcoming }: { now: number; upcoming: number }) {
+  const reduceMotion = useReducedMotion();
+
   return (
-    <Animated.View entering={FadeIn.duration(220)} style={styles.header}>
+    <Animated.View entering={reduceMotion ? undefined : FadeIn.duration(220)} style={styles.header}>
       <Text style={styles.screenTitle}>Activité</Text>
       <Text style={styles.screenSummary}>
         {pluralizedSummary(now, upcoming)}
@@ -80,9 +86,11 @@ function ActivityRows({
   onPress: (item: ActivityItem) => void;
   variant: "recent" | "upcoming";
 }) {
+  const reduceMotion = useReducedMotion();
+
   return (
     <Animated.View
-      entering={FadeInDown.duration(220)}
+      entering={reduceMotion ? undefined : FadeInDown.duration(220)}
       style={styles.rowsSurface}
     >
       {items.map((item, index) => (
@@ -106,8 +114,10 @@ function HistoryAccess({
   count: number;
   onPress: () => void;
 }) {
+  const reduceMotion = useReducedMotion();
+
   return (
-    <Animated.View entering={FadeInDown.duration(220)}>
+    <Animated.View entering={reduceMotion ? undefined : FadeInDown.duration(220)}>
       <Pressable
         accessibilityLabel={`Ouvrir l'historique, ${count} activité${count > 1 ? "s" : ""}`}
         accessibilityRole="button"
@@ -115,7 +125,7 @@ function HistoryAccess({
         style={styles.historyCard}
       >
         <View style={styles.historyIcon}>
-          <History color="#183C2A" size={20} strokeWidth={2} />
+          <History color="theme.brandDark" size={20} strokeWidth={2} />
         </View>
         <View style={styles.historyCopy}>
           <Text style={styles.historyTitle}>Toutes les activités</Text>
@@ -134,7 +144,7 @@ function ActivityEmpty({ onExplore }: { onExplore: () => void }) {
   return (
     <View style={styles.emptyState}>
       <View style={styles.emptyIcon}>
-        <Clock3 color="#14532D" size={30} strokeWidth={1.8} />
+        <Clock3 color="theme.green900" size={30} strokeWidth={1.8} />
       </View>
       <Text style={styles.emptyTitle}>Aucune activité pour le moment</Text>
       <Text style={styles.emptyMessage}>
@@ -156,7 +166,7 @@ function ActivityLogin({ onLogin }: { onLogin: () => void }) {
   return (
     <View style={styles.emptyState}>
       <View style={styles.emptyIcon}>
-        <Clock3 color="#14532D" size={30} strokeWidth={1.8} />
+        <Clock3 color="theme.green900" size={30} strokeWidth={1.8} />
       </View>
       <Text style={styles.emptyTitle}>Retrouvez toute votre activité</Text>
       <Text style={styles.emptyMessage}>
@@ -240,7 +250,7 @@ export function ActivityScreen() {
       <View style={styles.page}>
         <StatusBar barStyle="dark-content" />
         <View style={styles.centerState}>
-          <ActivityIndicator color="#14532D" size="large" />
+          <ActivityIndicator color="theme.green900" size="large" />
           <Text style={styles.stateMessage}>Chargement de votre activité…</Text>
         </View>
       </View>
@@ -291,7 +301,7 @@ export function ActivityScreen() {
           <RefreshControl
             onRefresh={() => void handleRefresh()}
             refreshing={refreshing}
-            tintColor="#183C2A"
+            tintColor="theme.brandDark"
           />
         }
         showsVerticalScrollIndicator={false}
@@ -374,7 +384,7 @@ const styles = StyleSheet.create({
   },
   emptyIcon: {
     alignItems: "center",
-    backgroundColor: "#F0FDF4",
+    backgroundColor: "theme.green50",
     borderCurve: "continuous",
     borderRadius: 22,
     height: 68,
@@ -382,7 +392,7 @@ const styles = StyleSheet.create({
     width: 68,
   },
   emptyMessage: {
-    color: "#64748B",
+    color: "theme.slate500",
     fontSize: 14.5,
     lineHeight: 21,
     maxWidth: 310,
@@ -428,7 +438,7 @@ const styles = StyleSheet.create({
   },
   historyIcon: {
     alignItems: "center",
-    backgroundColor: "#F0FDF4",
+    backgroundColor: "theme.green50",
     borderCurve: "continuous",
     borderRadius: 14,
     height: 44,
@@ -436,7 +446,7 @@ const styles = StyleSheet.create({
     width: 44,
   },
   historySubtitle: {
-    color: "#64748B",
+    color: "theme.slate500",
     fontSize: 13,
     fontWeight: "500",
   },
@@ -451,7 +461,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     alignItems: "center",
-    backgroundColor: "#183C2A",
+    backgroundColor: "theme.brandDark",
     borderCurve: "continuous",
     borderRadius: 999,
     flexDirection: "row",
@@ -477,7 +487,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   screenSummary: {
-    color: "#64748B",
+    color: "theme.slate500",
     fontSize: 14,
     fontVariant: ["tabular-nums"],
     fontWeight: "500",
@@ -515,7 +525,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   stateMessage: {
-    color: "#64748B",
+    color: "theme.slate500",
     fontSize: 14,
     fontWeight: "500",
   },

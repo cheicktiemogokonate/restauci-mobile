@@ -39,6 +39,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useReducedMotion } from "react-native-reanimated";
 
 import type { MoodType } from "@/hooks/useEtablissements";
 
@@ -117,6 +118,7 @@ export function MoodOverlay({
 }: MoodOverlayProps) {
   const insets = useSafeAreaInsets();
   const inputRef = useRef<TextInput>(null);
+  const reduceMotion = useReducedMotion();
   const [entrance] = useState(() => new Animated.Value(0));
   const [query, setQuery] = useState("");
   const [rendered, setRendered] = useState(visible);
@@ -179,7 +181,7 @@ export function MoodOverlay({
 
       const exitAnimation = Animated.timing(entrance, {
         toValue: 0,
-        duration: 210,
+        duration: reduceMotion ? 0 : 210,
         easing: Easing.inOut(Easing.cubic),
         useNativeDriver: true,
       });
@@ -192,6 +194,10 @@ export function MoodOverlay({
 
     entrance.setValue(0);
     const entranceTimer = setTimeout(() => {
+      if (reduceMotion) {
+        entrance.setValue(1);
+        return;
+      }
       Animated.spring(entrance, {
         toValue: 1,
         damping: 20,
@@ -208,7 +214,7 @@ export function MoodOverlay({
       clearTimeout(focusTimer);
       entrance.stopAnimation();
     };
-  }, [entrance, rendered, visible]);
+  }, [entrance, reduceMotion, rendered, visible]);
 
   useEffect(() => {
     if (!visible) return;
@@ -393,8 +399,8 @@ export function MoodOverlay({
                       style={[
                         styles.suggestion,
                         isSelected && {
-                          backgroundColor: "#F0FDF4",
-                          borderColor: "#14532D",
+                          backgroundColor: "theme.green50",
+                          borderColor: "theme.green900",
                           borderWidth: 1.5,
                         },
                       ]}

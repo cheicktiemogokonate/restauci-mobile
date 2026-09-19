@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     width: 68,
   },
   meta: {
-    color: "#64748B",
+    color: "theme.slate500",
     fontSize: 13,
     fontVariant: ["tabular-nums"],
     fontWeight: "500",
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   secondary: {
-    color: "#64748B",
+    color: "theme.slate500",
     flex: 1,
     fontSize: 13,
     fontWeight: "500",

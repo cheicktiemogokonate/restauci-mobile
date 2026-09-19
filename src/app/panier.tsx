@@ -188,7 +188,7 @@ export default function PanierScreen() {
 
         <Animated.View entering={FadeIn.duration(220)} style={styles.emptyState}>
           <View style={styles.emptyIconFrame}>
-            <ShoppingBag color="#14532D" size={34} strokeWidth={1.8} />
+            <ShoppingBag color="theme.green900" size={34} strokeWidth={1.8} />
           </View>
           <Text style={styles.emptyTitle}>Votre panier est vide</Text>
           <Text style={styles.emptyMessage}>
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   },
   checkoutButton: {
     alignItems: "center",
-    backgroundColor: "#14532D",
+    backgroundColor: "theme.green900",
     borderCurve: "continuous",
     borderRadius: 999,
     flexDirection: "row",
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
   },
   emptyAction: {
     alignItems: "center",
-    backgroundColor: "#14532D",
+    backgroundColor: "theme.green900",
     borderCurve: "continuous",
     borderRadius: 999,
     justifyContent: "center",
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   totalValue: {
-    color: "#14532D",
+    color: "theme.green900",
     fontSize: 18,
     fontVariant: ["tabular-nums"],
     fontWeight: "800",

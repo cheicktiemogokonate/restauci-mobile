@@ -66,7 +66,7 @@ export default function ReservationDetailScreen() {
   if (reservation.isPending) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="#14532d" />
+        <ActivityIndicator size="large" color="theme.green900" />
       </SafeAreaView>
     );
   }
@@ -142,7 +142,7 @@ export default function ReservationDetailScreen() {
             onPress={() => router.replace("/(tabs)/residences")}
             className="h-10 w-10 items-center justify-center rounded-full bg-white"
           >
-            <ChevronLeft color="#111827" />
+            <ChevronLeft color="theme.ink900" />
           </Pressable>
           <Text className="ml-3 text-xl font-extrabold text-ink-900">
             Détails du séjour
@@ -165,7 +165,7 @@ export default function ReservationDetailScreen() {
                 {item.residenceTitle}
               </Text>
               <View className="mt-2 flex-row items-center gap-2">
-                <MapPin size={16} color="#6b7280" />
+                <MapPin size={16} color="theme.ink500" />
                 <Text className="text-ink-500">{item.residenceCity}</Text>
               </View>
               <View
@@ -180,7 +180,7 @@ export default function ReservationDetailScreen() {
 
           <View className="mt-4 rounded-3xl border border-ink-100 bg-white p-5">
             <View className="flex-row items-center gap-3">
-              <CalendarDays color="#14532d" />
+              <CalendarDays color="theme.green900" />
               <View className="flex-1">
                 <Text className="text-xs uppercase text-ink-400">Dates</Text>
                 <Text className="font-bold text-ink-900">
@@ -190,7 +190,7 @@ export default function ReservationDetailScreen() {
               </View>
             </View>
             <View className="mt-5 flex-row items-center gap-3">
-              <Users color="#14532d" />
+              <Users color="theme.green900" />
               <View>
                 <Text className="text-xs uppercase text-ink-400">
                   Voyageurs
@@ -202,7 +202,7 @@ export default function ReservationDetailScreen() {
               </View>
             </View>
             <View className="mt-5 flex-row items-center gap-3">
-              <CreditCard color="#14532d" />
+              <CreditCard color="theme.green900" />
               <View>
                 <Text className="text-xs uppercase text-ink-400">
                   Paiement
@@ -219,7 +219,7 @@ export default function ReservationDetailScreen() {
 
           <View className="mt-4 rounded-3xl border border-ink-100 bg-white p-5">
             <View className="mb-4 flex-row items-center gap-2">
-              <ReceiptText size={20} color="#14532d" />
+              <ReceiptText size={20} color="theme.green900" />
               <Text className="text-lg font-bold text-ink-900">
                 Récapitulatif serveur
               </Text>
@@ -287,7 +287,7 @@ export default function ReservationDetailScreen() {
               className="mt-3"
             >
               {cancel.isPending ? (
-                <ActivityIndicator color="#14532d" />
+                <ActivityIndicator color="theme.green900" />
               ) : (
                 <ButtonText className="text-brand-800">
                   Annuler la réservation

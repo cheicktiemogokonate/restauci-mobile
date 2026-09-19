@@ -46,7 +46,7 @@ function AdresseCard({
     >
       <View className="flex-row items-start">
         <View className="h-12 w-12 items-center justify-center rounded-2xl bg-brand-50">
-          <MapPin size={22} color="#166534" />
+          <MapPin size={22} color="theme.green800" />
         </View>
 
         <View className="ml-3 flex-1">
@@ -79,7 +79,7 @@ function AdresseCard({
             accessibilityRole="button"
             accessibilityLabel={`Définir ${adresse.libelle} par défaut`}
           >
-            <Star size={15} color="#166534" />
+            <Star size={15} color="theme.green800" />
             <Text className="ml-2 text-xs font-semibold text-brand-800">
               Définir par défaut
             </Text>
@@ -93,7 +93,7 @@ function AdresseCard({
             accessibilityRole="button"
             accessibilityLabel={`Modifier ${adresse.libelle}`}
           >
-            <Pencil size={17} color="#374151" />
+            <Pencil size={17} color="theme.ink700" />
           </Pressable>
           <Pressable
             onPress={() => onDelete(adresse)}
@@ -101,7 +101,7 @@ function AdresseCard({
             accessibilityRole="button"
             accessibilityLabel={`Supprimer ${adresse.libelle}`}
           >
-            <Trash2 size={17} color="#DC2626" />
+            <Trash2 size={17} color="theme.danger700" />
           </Pressable>
         </View>
       </View>
@@ -189,7 +189,7 @@ export default function AdressesScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="#166534" />
+        <ActivityIndicator size="large" color="theme.green800" />
       </View>
     );
   }

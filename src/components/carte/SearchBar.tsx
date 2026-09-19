@@ -180,11 +180,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         accessibilityLabel={`Choisir ${item.label}`}
       >
         {item.type === "geo" ? (
-          <MapPin size={18} color="#374151" />
+          <MapPin size={18} color="theme.ink700" />
         ) : item.verticalType === "residence" ? (
-          <Home size={18} color="#14532d" />
+          <Home size={18} color="theme.green900" />
         ) : (
-          <UtensilsCrossed size={18} color="#374151" />
+          <UtensilsCrossed size={18} color="theme.ink700" />
         )}
         <Text className="ml-3 mr-2 flex-1 text-sm text-ink-700" numberOfLines={1}>
           {item.label}
@@ -219,7 +219,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             boxShadow: "0 10px 28px rgba(17, 24, 39, 0.13)",
           }}
         >
-          <Search size={23} color="#111827" strokeWidth={1.9} />
+          <Search size={23} color="theme.ink900" strokeWidth={1.9} />
           <Text className="ml-3 text-[16px] font-medium text-ink-700">
             Rechercher...
           </Text>
@@ -233,11 +233,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             boxShadow: "0 8px 24px rgba(17, 24, 39, 0.14)",
           }}
         >
-          <Search size={23} color="#111827" strokeWidth={2} />
+          <Search size={23} color="theme.ink900" strokeWidth={2} />
           <TextInput
             className="ml-3 flex-1 text-base text-ink-900"
             placeholder={`Rechercher ${libelles.pluriel}, une adresse...`}
-            placeholderTextColor="#6B7280"
+            placeholderTextColor="theme.ink500"
             value={query}
             onChangeText={handleChangeText}
             onBlur={handleBlur}
@@ -248,7 +248,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             accessibilityLabel="Rechercher un établissement ou une adresse"
             maxLength={200}
           />
-          {isLoading && <ActivityIndicator size="small" color="#111827" />}
+          {isLoading && <ActivityIndicator size="small" color="theme.ink900" />}
         </View>
       )}
 

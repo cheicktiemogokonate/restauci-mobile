@@ -58,7 +58,7 @@ export default function HistoriqueCommandesScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="#166534" />
+        <ActivityIndicator size="large" color="theme.green800" />
       </View>
     );
   }
@@ -118,7 +118,7 @@ export default function HistoriqueCommandesScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#166534"
+            tintColor="theme.green800"
           />
         }
         onEndReached={() => {
@@ -133,7 +133,7 @@ export default function HistoriqueCommandesScreen() {
               className="my-3 items-center py-3"
             >
               {isFetchingNextPage ? (
-                <ActivityIndicator color="#166534" />
+                <ActivityIndicator color="theme.green800" />
               ) : (
                 <Text className="font-semibold text-brand-800">
                   Charger plus

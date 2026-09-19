@@ -57,7 +57,7 @@ export default function CommandeDetailScreen() {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color="#166534" />
+        <ActivityIndicator size="large" color="theme.green800" />
       </SafeAreaView>
     );
   }
@@ -65,7 +65,7 @@ export default function CommandeDetailScreen() {
   if (!client) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center px-8">
-        <ShoppingBag size={40} color="#9CA3AF" />
+        <ShoppingBag size={40} color="theme.ink400" />
         <Text className="mt-4 text-lg font-bold text-black">
           Connexion requise
         </Text>
@@ -90,7 +90,7 @@ export default function CommandeDetailScreen() {
   if (error || !commande) {
     return (
       <SafeAreaView className="flex-1 justify-center items-center px-8">
-        <AlertCircle size={40} color="#DC2626" />
+        <AlertCircle size={40} color="theme.danger700" />
         <Text className="text-lg font-bold text-black mt-4 mb-2">
           Commande introuvable
         </Text>
@@ -171,7 +171,7 @@ export default function CommandeDetailScreen() {
           ) : (
             <View className="bg-red-50 rounded-3xl p-5 mt-2 border border-red-100">
               <View className="flex-row items-center gap-2">
-                <AlertCircle size={28} color="#DC2626" />
+                <AlertCircle size={28} color="theme.danger700" />
                 <Text className="font-bold text-red-600 text-lg mt-2">
                   Commande annulée
                 </Text>
@@ -221,7 +221,7 @@ export default function CommandeDetailScreen() {
                       >
                         <Icon
                           size={16}
-                          color={estAtteinte ? "#FFFFFF" : "#9CA3AF"}
+                          color={estAtteinte ? "#FFFFFF" : "theme.ink400"}
                         />
                       </View>
                       <Text
@@ -261,7 +261,7 @@ export default function CommandeDetailScreen() {
           commande.livraisonStatut !== null ? (
             delivery.isPending ? (
               <View className="mt-6 items-center rounded-3xl border border-green-100 bg-green-50 p-6">
-                <ActivityIndicator color="#166534" />
+                <ActivityIndicator color="theme.green800" />
                 <Text className="mt-3 text-sm text-ink-500">
                   Chargement du suivi de livraison…
                 </Text>

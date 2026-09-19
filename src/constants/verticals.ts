@@ -38,7 +38,7 @@ export const VERTICALS: Record<VerticalId, VerticalDefinition> = {
     actionLabel: "Voir le menu",
     markerIcon: "restaurant-marker",
     markerAsset: require("../../assets/images/restaurant-marker.png"),
-    accentColor: "#14532D",
+    accentColor: "theme.green900",
     emptyMessage: "Aucun restaurant n'est référencé autour de cette position.",
     formatSummary: (item) => {
       const cuisines = item.cuisines?.filter(Boolean) ?? item.tags?.filter(Boolean) ?? [];

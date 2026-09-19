@@ -23,7 +23,10 @@ import {
   Text,
   View,
 } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeInDown,
+  useReducedMotion,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface ProfileStatProps {
@@ -62,6 +65,7 @@ function getInitials(name: string): string {
 
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReducedMotion();
   const client = useStore((state) => state.client);
   const logout = useStore((state) => state.logout);
   const favorites = useStore((state) => state.favorites);
@@ -77,33 +81,12 @@ export function ProfileScreen() {
 
   const accountItems = useMemo<ProfileMenuItem[]>(
     () => [
-      // {
-      //   badge: unreadCount,
-      //   description: "Commandes, séjours et informations utiles",
-      //   icon: Bell,
-      //   label: "Notifications",
-      //   route: "/(tabs)/profil/notifications",
-      // },
       {
         description: `${addresses.length} lieu${addresses.length === 1 ? "" : "x"} enregistré${addresses.length === 1 ? "" : "s"}`,
         icon: MapPin,
         label: "Mes adresses",
         route: "/(tabs)/profil/adresses",
       },
-      // {
-      //   description: "Gérer vos moyens de paiement",
-      //   icon: CreditCard,
-      //   label: "Paiement",
-      //   route: "/(tabs)/profil/paiement",
-      //   status: "Bientôt",
-      // },
-      // {
-      //   description: "Obtenir de l’aide avec ToutCi",
-      //   icon: Headphones,
-      //   label: "Assistance",
-      //   route: "/(tabs)/profil/support",
-      //   status: "Bientôt",
-      // },
       {
         description: "Informations et engagements de l’application",
         icon: Info,
@@ -111,27 +94,8 @@ export function ProfileScreen() {
         route: "/(tabs)/profil/a-propos",
       },
     ],
-    [addresses.length, unreadCount],
+    [addresses.length],
   );
-
-  // const helpItems = useMemo<ProfileMenuItem[]>(
-  //   () => [
-  //     {
-  //       description: "Obtenir de l’aide avec ToutCi",
-  //       icon: Headphones,
-  //       label: "Assistance",
-  //       route: "/(tabs)/profil/support",
-  //       status: "Bientôt",
-  //     },
-  //     {
-  //       description: "Informations et engagements de l’application",
-  //       icon: Info,
-  //       label: "À propos",
-  //       route: "/(tabs)/profil/a-propos",
-  //     },
-  //   ],
-  //   [],
-  // );
 
   const handleLogout = () => {
     Alert.alert(
@@ -167,7 +131,7 @@ export function ProfileScreen() {
             accessibilityRole="button"
             style={styles.notificationButton}
           >
-            <Bell color="#183C2A" size={19} strokeWidth={2} />
+            <Bell color="theme.brandDark" size={19} strokeWidth={2} />
             {unreadCount > 0 && <View style={styles.notificationDot} />}
           </Pressable>
         </Link>
@@ -185,7 +149,7 @@ export function ProfileScreen() {
         style={styles.page}
       >
         {/* Hero Section — profil épuré, avatar proportionné */}
-        <Animated.View entering={FadeInDown.duration(260)} style={styles.hero}>
+        <Animated.View entering={reduceMotion ? undefined : FadeInDown.duration(260)} style={styles.hero}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initials}</Text>
             {client.actif === true && (
@@ -208,7 +172,7 @@ export function ProfileScreen() {
 
         {/* Statistiques clés */}
         <Animated.View
-          entering={FadeInDown.delay(50).duration(260)}
+          entering={reduceMotion ? undefined : FadeInDown.delay(50).duration(260)}
           style={styles.statsSurface}
         >
           <ProfileStat
@@ -230,46 +194,20 @@ export function ProfileScreen() {
           />
         </Animated.View>
 
-        {/* Callout Activité unifiée */}
-        {/* <Animated.View entering={FadeInDown.delay(90).duration(260)}>
-          <Link href="/(tabs)/activite" asChild>
-            <Pressable
-              accessibilityLabel="Voir toute mon activité"
-              accessibilityRole="button"
-              style={styles.activityCallout}
-            >
-              <View style={styles.activityIcon}>
-                <Clock3 color="#FFFFFF" size={20} strokeWidth={2} />
-              </View>
-              <View style={styles.activityCopy}>
-                <Text style={styles.activityTitle}>Toute votre activité</Text>
-                <Text numberOfLines={1} style={styles.activityDescription}>
-                  Commandes et séjours, en cours comme passés
-                </Text>
-              </View>
-              <ChevronRight color="rgba(255,255,255,0.7)" size={19} strokeWidth={2} />
-            </Pressable>
-          </Link>
-        </Animated.View> */}
-
         {/* Sections de navigation */}
-        <Animated.View entering={FadeInDown.delay(130).duration(260)}>
+        <Animated.View entering={reduceMotion ? undefined : FadeInDown.delay(130).duration(260)}>
           <ProfileMenuSection items={accountItems} title="" />
         </Animated.View>
 
-        {/* <Animated.View entering={FadeInDown.delay(170).duration(260)}>
-          <ProfileMenuSection items={helpItems} title="" />
-        </Animated.View> */}
-
         {/* Déconnexion */}
-        <Animated.View entering={FadeInDown.delay(210).duration(260)}>
+        <Animated.View entering={reduceMotion ? undefined : FadeInDown.delay(210).duration(260)}>
           <Pressable
             accessibilityLabel="Se déconnecter"
             accessibilityRole="button"
             onPress={handleLogout}
             style={styles.logoutButton}
           >
-            <LogOut color="#DC2626" size={17} strokeWidth={2} />
+            <LogOut color="theme.danger700" size={17} strokeWidth={2} />
             <Text style={styles.logoutLabel}>Se déconnecter</Text>
           </Pressable>
         </Animated.View>
@@ -290,7 +228,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   topBarTitle: {
-    color: "#111827",
+    color: "theme.ink900",
     fontSize: 26,
     fontWeight: "800",
     letterSpacing: -0.6,
@@ -343,14 +281,14 @@ const styles = StyleSheet.create({
     boxShadow: "0 2px 6px rgba(24,60,42,0.08)",
   },
   avatarText: {
-    color: "#183C2A",
+    color: "theme.brandDark",
     fontSize: 28,
     fontWeight: "800",
     letterSpacing: -0.5,
   },
   verifiedBadge: {
     alignItems: "center",
-    backgroundColor: "#183C2A",
+    backgroundColor: "theme.brandDark",
     borderColor: "#FFFFFF",
     borderRadius: 999,
     borderWidth: 2,
@@ -362,7 +300,7 @@ const styles = StyleSheet.create({
     width: 22,
   },
   name: {
-    color: "#111827",
+    color: "theme.ink900",
     fontSize: 22,
     fontWeight: "800",
     letterSpacing: -0.5,
@@ -377,7 +315,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   contactText: {
-    color: "#4B5563",
+    color: "theme.ink600",
     fontSize: 13,
     fontWeight: "600",
     letterSpacing: 0.1,
@@ -402,56 +340,21 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   statValue: {
-    color: "#183C2A",
+    color: "theme.brandDark",
     fontSize: 20,
     fontVariant: ["tabular-nums"],
     fontWeight: "800",
     letterSpacing: -0.3,
   },
   statLabel: {
-    color: "#6B7280",
+    color: "theme.ink500",
     fontSize: 12,
     fontWeight: "500",
   },
   statSeparator: {
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "theme.ink100",
     height: 26,
     width: 1,
-  },
-  activityCallout: {
-    alignItems: "center",
-    backgroundColor: "#183C2A",
-    borderRadius: 18,
-    boxShadow: "0 3px 10px rgba(24,60,42,0.10)",
-    flexDirection: "row",
-    gap: 12,
-    minHeight: 74,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  activityIcon: {
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.12)",
-    borderRadius: 13,
-    height: 40,
-    justifyContent: "center",
-    width: 40,
-  },
-  activityCopy: {
-    flex: 1,
-    gap: 2,
-    minWidth: 0,
-  },
-  activityTitle: {
-    color: "#FFFFFF",
-    fontSize: 15.5,
-    fontWeight: "700",
-    letterSpacing: -0.2,
-  },
-  activityDescription: {
-    color: "rgba(255,255,255,0.72)",
-    fontSize: 12,
-    lineHeight: 16,
   },
   logoutButton: {
     alignItems: "center",
@@ -468,7 +371,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   logoutLabel: {
-    color: "#DC2626",
+    color: "theme.danger700",
     fontSize: 14,
     fontWeight: "600",
   },

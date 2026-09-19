@@ -613,7 +613,7 @@ export default function CarteScreen() {
         {/* Badge filtre Mood actif */}
         {isMoodActive && modeAffichage === "carte" && (
           <View
-            className="absolute left-4 right-4 z-20 flex-row items-center justify-between rounded-full bg-[#14532D] px-4 py-2.5 shadow-md"
+            className="absolute left-4 right-4 z-20 flex-row items-center justify-between rounded-full bg-[theme.green900] px-4 py-2.5 shadow-md"
             style={{
               top: insets.top + (selectedCuisine ? 168 : 126),
             }}
@@ -650,7 +650,7 @@ export default function CarteScreen() {
             accessibilityRole="button"
             accessibilityLabel="Explorer Abidjan sans utiliser la localisation"
           >
-            <MapPinOff size={16} color="#CA8A04" />
+            <MapPinOff size={16} color="theme.warning600" />
             <Text className="text-xs font-bold text-ink-900">
               Position indisponible
             </Text>
@@ -779,7 +779,7 @@ export default function CarteScreen() {
 
         {isLoading && (
           <View className="absolute inset-0 items-center justify-center bg-white/50">
-            <ActivityIndicator size="large" color="#14532d" />
+            <ActivityIndicator size="large" color="theme.green900" />
           </View>
         )}
       </BlurTargetView>
@@ -865,7 +865,7 @@ export default function CarteScreen() {
                     accessibilityLabel="Explorer Abidjan sans utiliser la localisation"
                     className="mt-3 flex-row items-center gap-3 rounded-2xl border border-warning/30 bg-white px-3 py-3"
                   >
-                    <MapPinOff size={18} color="#CA8A04" />
+                    <MapPinOff size={18} color="theme.warning600" />
                     <View className="min-w-0 flex-1">
                       <Text className="text-xs font-bold text-ink-900">
                         Localisation requise
@@ -909,14 +909,14 @@ export default function CarteScreen() {
         >
           {modeAffichage === "carte" ? (
             <>
-              <List size={18} color="#111827" />
+              <List size={18} color="theme.ink900" />
               <Text className="text-sm font-bold text-ink-900">
                 Liste ({displayedEtablissements.length})
               </Text>
             </>
           ) : (
             <>
-              <Map size={18} color="#111827" />
+              <Map size={18} color="theme.ink900" />
               <Text className="text-sm font-bold text-ink-900">Carte</Text>
             </>
           )}
