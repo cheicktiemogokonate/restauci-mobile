@@ -21,6 +21,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { theme } from "@/constants/theme";
 
 export default function HistoriqueCommandesScreen() {
   const router = useRouter();
@@ -58,7 +59,7 @@ export default function HistoriqueCommandesScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="theme.green800" />
+        <ActivityIndicator size="large" color={theme.green800} />
       </View>
     );
   }
@@ -118,7 +119,7 @@ export default function HistoriqueCommandesScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="theme.green800"
+            tintColor={theme.green800}
           />
         }
         onEndReached={() => {
@@ -133,7 +134,7 @@ export default function HistoriqueCommandesScreen() {
               className="my-3 items-center py-3"
             >
               {isFetchingNextPage ? (
-                <ActivityIndicator color="theme.green800" />
+                <ActivityIndicator color={theme.green800} />
               ) : (
                 <Text className="font-semibold text-brand-800">
                   Charger plus

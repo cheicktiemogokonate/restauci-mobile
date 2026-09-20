@@ -6,6 +6,7 @@ import {
 } from "lucide-react-native";
 import { FlatList, Text, TouchableOpacity } from "react-native";
 import { Filtre } from "./CommandeCard";
+import { theme } from "@/constants/theme";
 
 export const FILTRES: {
   key: Filtre;
@@ -63,17 +64,17 @@ export function CommandeFiltres({
               borderRadius: 999,
               paddingHorizontal: 16,
               paddingVertical: 10,
-              backgroundColor: estActif ? "theme.green900" : "theme.ink100",
+              backgroundColor: estActif ? theme.green900 : theme.ink100,
             }}
           >
-            <f.Icon size={15} color={estActif ? "#FFFFFF" : "theme.ink600"} />
+            <f.Icon size={15} color={estActif ? "#FFFFFF" : theme.ink600} />
             <Text
               style={{
                 marginLeft: 6,
                 fontWeight: "600",
                 fontSize: 13,
                 lineHeight: 16,
-                color: estActif ? "#FFFFFF" : "theme.ink600",
+                color: estActif ? "#FFFFFF" : theme.ink600,
               }}
             >
               {f.label}

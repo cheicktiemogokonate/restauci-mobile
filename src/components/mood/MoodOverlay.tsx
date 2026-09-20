@@ -42,6 +42,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useReducedMotion } from "react-native-reanimated";
 
 import type { MoodType } from "@/hooks/useEtablissements";
+import { theme } from "@/constants/theme";
 
 type MoodSuggestion = {
   id: MoodType;
@@ -399,8 +400,8 @@ export function MoodOverlay({
                       style={[
                         styles.suggestion,
                         isSelected && {
-                          backgroundColor: "theme.green50",
-                          borderColor: "theme.green900",
+                          backgroundColor: theme.green50,
+                          borderColor: theme.green900,
                           borderWidth: 1.5,
                         },
                       ]}

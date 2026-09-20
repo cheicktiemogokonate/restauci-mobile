@@ -28,6 +28,7 @@ import Animated, {
   useReducedMotion,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { theme } from "@/constants/theme";
 
 interface ProfileStatProps {
   label: string;
@@ -131,7 +132,7 @@ export function ProfileScreen() {
             accessibilityRole="button"
             style={styles.notificationButton}
           >
-            <Bell color="theme.brandDark" size={19} strokeWidth={2} />
+            <Bell color={theme.brandDark} size={19} strokeWidth={2} />
             {unreadCount > 0 && <View style={styles.notificationDot} />}
           </Pressable>
         </Link>
@@ -207,7 +208,7 @@ export function ProfileScreen() {
             onPress={handleLogout}
             style={styles.logoutButton}
           >
-            <LogOut color="theme.danger700" size={17} strokeWidth={2} />
+            <LogOut color={theme.danger700} size={17} strokeWidth={2} />
             <Text style={styles.logoutLabel}>Se déconnecter</Text>
           </Pressable>
         </Animated.View>
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   topBarTitle: {
-    color: "theme.ink900",
+    color: theme.ink900,
     fontSize: 26,
     fontWeight: "800",
     letterSpacing: -0.6,
@@ -281,14 +282,14 @@ const styles = StyleSheet.create({
     boxShadow: "0 2px 6px rgba(24,60,42,0.08)",
   },
   avatarText: {
-    color: "theme.brandDark",
+    color: theme.brandDark,
     fontSize: 28,
     fontWeight: "800",
     letterSpacing: -0.5,
   },
   verifiedBadge: {
     alignItems: "center",
-    backgroundColor: "theme.brandDark",
+    backgroundColor: theme.brandDark,
     borderColor: "#FFFFFF",
     borderRadius: 999,
     borderWidth: 2,
@@ -300,7 +301,7 @@ const styles = StyleSheet.create({
     width: 22,
   },
   name: {
-    color: "theme.ink900",
+    color: theme.ink900,
     fontSize: 22,
     fontWeight: "800",
     letterSpacing: -0.5,
@@ -315,7 +316,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   contactText: {
-    color: "theme.ink600",
+    color: theme.ink600,
     fontSize: 13,
     fontWeight: "600",
     letterSpacing: 0.1,
@@ -340,19 +341,19 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   statValue: {
-    color: "theme.brandDark",
+    color: theme.brandDark,
     fontSize: 20,
     fontVariant: ["tabular-nums"],
     fontWeight: "800",
     letterSpacing: -0.3,
   },
   statLabel: {
-    color: "theme.ink500",
+    color: theme.ink500,
     fontSize: 12,
     fontWeight: "500",
   },
   statSeparator: {
-    backgroundColor: "theme.ink100",
+    backgroundColor: theme.ink100,
     height: 26,
     width: 1,
   },
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   logoutLabel: {
-    color: "theme.danger700",
+    color: theme.danger700,
     fontSize: 14,
     fontWeight: "600",
   },

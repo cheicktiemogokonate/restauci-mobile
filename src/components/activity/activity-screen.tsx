@@ -29,6 +29,7 @@ import Animated, {
   useReducedMotion,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { theme } from "@/constants/theme";
 
 const UPCOMING_PREVIEW_LIMIT = 2;
 const RECENT_PREVIEW_LIMIT = 3;
@@ -125,7 +126,7 @@ function HistoryAccess({
         style={styles.historyCard}
       >
         <View style={styles.historyIcon}>
-          <History color="theme.brandDark" size={20} strokeWidth={2} />
+          <History color={theme.brandDark} size={20} strokeWidth={2} />
         </View>
         <View style={styles.historyCopy}>
           <Text style={styles.historyTitle}>Toutes les activités</Text>
@@ -144,7 +145,7 @@ function ActivityEmpty({ onExplore }: { onExplore: () => void }) {
   return (
     <View style={styles.emptyState}>
       <View style={styles.emptyIcon}>
-        <Clock3 color="theme.green900" size={30} strokeWidth={1.8} />
+        <Clock3 color={theme.green900} size={30} strokeWidth={1.8} />
       </View>
       <Text style={styles.emptyTitle}>Aucune activité pour le moment</Text>
       <Text style={styles.emptyMessage}>
@@ -166,7 +167,7 @@ function ActivityLogin({ onLogin }: { onLogin: () => void }) {
   return (
     <View style={styles.emptyState}>
       <View style={styles.emptyIcon}>
-        <Clock3 color="theme.green900" size={30} strokeWidth={1.8} />
+        <Clock3 color={theme.green900} size={30} strokeWidth={1.8} />
       </View>
       <Text style={styles.emptyTitle}>Retrouvez toute votre activité</Text>
       <Text style={styles.emptyMessage}>
@@ -250,7 +251,7 @@ export function ActivityScreen() {
       <View style={styles.page}>
         <StatusBar barStyle="dark-content" />
         <View style={styles.centerState}>
-          <ActivityIndicator color="theme.green900" size="large" />
+          <ActivityIndicator color={theme.green900} size="large" />
           <Text style={styles.stateMessage}>Chargement de votre activité…</Text>
         </View>
       </View>
@@ -301,7 +302,7 @@ export function ActivityScreen() {
           <RefreshControl
             onRefresh={() => void handleRefresh()}
             refreshing={refreshing}
-            tintColor="theme.brandDark"
+            tintColor={theme.brandDark}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -384,7 +385,7 @@ const styles = StyleSheet.create({
   },
   emptyIcon: {
     alignItems: "center",
-    backgroundColor: "theme.green50",
+    backgroundColor: theme.green50,
     borderCurve: "continuous",
     borderRadius: 22,
     height: 68,
@@ -392,7 +393,7 @@ const styles = StyleSheet.create({
     width: 68,
   },
   emptyMessage: {
-    color: "theme.slate500",
+    color: theme.slate500,
     fontSize: 14.5,
     lineHeight: 21,
     maxWidth: 310,
@@ -438,7 +439,7 @@ const styles = StyleSheet.create({
   },
   historyIcon: {
     alignItems: "center",
-    backgroundColor: "theme.green50",
+    backgroundColor: theme.green50,
     borderCurve: "continuous",
     borderRadius: 14,
     height: 44,
@@ -446,7 +447,7 @@ const styles = StyleSheet.create({
     width: 44,
   },
   historySubtitle: {
-    color: "theme.slate500",
+    color: theme.slate500,
     fontSize: 13,
     fontWeight: "500",
   },
@@ -461,7 +462,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     alignItems: "center",
-    backgroundColor: "theme.brandDark",
+    backgroundColor: theme.brandDark,
     borderCurve: "continuous",
     borderRadius: 999,
     flexDirection: "row",
@@ -487,7 +488,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   screenSummary: {
-    color: "theme.slate500",
+    color: theme.slate500,
     fontSize: 14,
     fontVariant: ["tabular-nums"],
     fontWeight: "500",
@@ -525,7 +526,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   stateMessage: {
-    color: "theme.slate500",
+    color: theme.slate500,
     fontSize: 14,
     fontWeight: "500",
   },

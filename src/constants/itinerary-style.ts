@@ -1,3 +1,4 @@
+import { theme } from "@/constants/theme";
 export type ItineraryStrokeStyle = "solid" | "dashed";
 
 interface ItineraryVisualConfig {

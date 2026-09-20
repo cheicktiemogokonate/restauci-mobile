@@ -23,6 +23,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { z } from "zod";
+import { theme } from "@/constants/theme";
 
 const loginSchema = z.object({
   telephone: z
@@ -164,14 +165,14 @@ export default function LoginScreen() {
                 <Text className="text-black font-medium ml-1">+225</Text>
                 <ChevronDown
                   size={16}
-                  color="theme.ink400"
+                  color={theme.ink400}
                   style={{ marginLeft: 4 }}
                 />
                 <View className="w-px h-6 bg-gray-200 mx-3" />
                 <TextInput
                   className="flex-1 text-black text-base"
                   placeholder="07 51 23 45 67"
-                  placeholderTextColor="theme.ink400"
+                  placeholderTextColor={theme.ink400}
                   keyboardType="phone-pad"
                   autoCapitalize="none"
                   onBlur={onBlur}
@@ -200,7 +201,7 @@ export default function LoginScreen() {
                   errors.password ? "border-red-500" : "border-gray-200"
                 }`}
               >
-                <Lock size={18} color="theme.green900" />
+                <Lock size={18} color={theme.green900} />
                 <TextInput
                   className="flex-1 text-black text-base ml-3"
                   placeholder="Entrez votre mot de passe"
@@ -214,9 +215,9 @@ export default function LoginScreen() {
                   hitSlop={10}
                 >
                   {showPassword ? (
-                    <EyeOff size={18} color="theme.green900" />
+                    <EyeOff size={18} color={theme.green900} />
                   ) : (
-                    <Eye size={18} color="theme.green900" />
+                    <Eye size={18} color={theme.green900} />
                   )}
                 </Pressable>
               </View>

@@ -36,6 +36,7 @@ import {
 import type { Etablissement } from "@/types/etablissement";
 
 import { getVerticalDefinition, VERTICALS } from "@/constants/verticals";
+import { theme } from "@/constants/theme";
 
 const INITIAL_VIEW_STATE = {
   zoom: DEFAULT_ZOOM,
@@ -393,7 +394,7 @@ export const CarteView = React.forwardRef<CarteViewRef, CarteViewProps>(
             accessibilityLabel="Zoomer"
             className="h-10 w-10 items-center justify-center"
           >
-            <Plus size={19} color="theme.ink900" strokeWidth={2} />
+            <Plus size={19} color={theme.ink900} strokeWidth={2} />
           </Pressable>
           <View className="h-px w-6 self-center bg-ink-200" />
           <Pressable
@@ -406,7 +407,7 @@ export const CarteView = React.forwardRef<CarteViewRef, CarteViewProps>(
             accessibilityLabel="Dézoomer"
             className="h-10 w-10 items-center justify-center"
           >
-            <Minus size={19} color="theme.ink900" strokeWidth={2} />
+            <Minus size={19} color={theme.ink900} strokeWidth={2} />
           </Pressable>
           {onRecenter && (
             <>
@@ -417,7 +418,7 @@ export const CarteView = React.forwardRef<CarteViewRef, CarteViewProps>(
                 accessibilityLabel="Recentrer sur ma position"
                 className="h-10 w-10 items-center justify-center"
               >
-                <LocateFixed size={18} color="theme.ink900" strokeWidth={2} />
+                <LocateFixed size={18} color={theme.ink900} strokeWidth={2} />
               </Pressable>
             </>
           )}

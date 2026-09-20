@@ -47,6 +47,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { theme } from "@/constants/theme";
 
 const BLUR_HASH = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
 const FALLBACK_IMAGE = require("@/assets/images/default_hero_bg.jpg");
@@ -365,7 +366,7 @@ export default function ResidenceDetailScreen() {
   if (residence.isPending) {
     return (
       <View style={[styles.centerLoading, { paddingTop: insets.top }]}>
-        <ActivityIndicator size="large" color="theme.green900" />
+        <ActivityIndicator size="large" color={theme.green900} />
       </View>
     );
   }
@@ -552,7 +553,7 @@ export default function ResidenceDetailScreen() {
               ).map(([label, value, change]) => (
                 <View key={label} style={styles.stayConfigRow}>
                   <View style={styles.stayConfigInfo}>
-                    <CalendarDays size={20} color="theme.green900" />
+                    <CalendarDays size={20} color={theme.green900} />
                     <View>
                       <Text style={styles.stayConfigLabel}>{label}</Text>
                       <Text style={styles.stayConfigValue}>
@@ -567,7 +568,7 @@ export default function ResidenceDetailScreen() {
                       onPress={() => change(-1)}
                       style={styles.stepperButtonSecondary}
                     >
-                      <Minus size={17} color="theme.green900" />
+                      <Minus size={17} color={theme.green900} />
                     </Pressable>
                     <Pressable
                       accessibilityRole="button"
@@ -583,7 +584,7 @@ export default function ResidenceDetailScreen() {
 
               <View style={styles.stayConfigRow}>
                 <View style={styles.stayConfigInfo}>
-                  <Users size={20} color="theme.green900" />
+                  <Users size={20} color={theme.green900} />
                   <View>
                     <Text style={styles.stayConfigLabel}>Voyageurs</Text>
                     <Text style={styles.stayConfigValue}>
@@ -603,7 +604,7 @@ export default function ResidenceDetailScreen() {
                     }
                     style={styles.stepperButtonSecondary}
                   >
-                    <Minus size={17} color="theme.green900" />
+                    <Minus size={17} color={theme.green900} />
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"
@@ -666,7 +667,7 @@ export default function ResidenceDetailScreen() {
                       isSelected && styles.paymentMethodCardSelected,
                     ]}
                   >
-                    <ShieldCheck size={20} color="theme.green900" />
+                    <ShieldCheck size={20} color={theme.green900} />
                     <Text style={styles.paymentMethodTitle}>
                       {method === "mobile_money"
                         ? "Mobile money"
@@ -701,7 +702,7 @@ export default function ResidenceDetailScreen() {
               <Text style={styles.bottomBarSubtitle}>{nightsLabel}</Text>
             </View>
             {quote.isFetching ? (
-              <ActivityIndicator color="theme.green900" />
+              <ActivityIndicator color={theme.green900} />
             ) : quote.isError ? (
               <Pressable onPress={() => void quote.refetch()}>
                 <Text style={styles.bottomBarError}>
@@ -913,12 +914,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
     textTransform: "uppercase",
-    color: "theme.ink400",
+    color: theme.ink400,
   },
   stayConfigValue: {
     fontSize: 15,
     fontWeight: "700",
-    color: "theme.ink900",
+    color: theme.ink900,
     marginTop: 2,
   },
   stayStepper: {
@@ -931,7 +932,7 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "theme.ink100",
+    backgroundColor: theme.ink100,
   },
   stepperButtonPrimary: {
     height: 38,
@@ -939,7 +940,7 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "theme.green900",
+    backgroundColor: theme.green900,
   },
   unavailableList: {
     gap: 8,
@@ -949,16 +950,16 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: "#F9FAFB",
     borderWidth: 1,
-    borderColor: "theme.ink100",
+    borderColor: theme.ink100,
   },
   unavailableDates: {
     fontSize: 14,
     fontWeight: "600",
-    color: "theme.ink700",
+    color: theme.ink700,
   },
   unavailableSource: {
     fontSize: 12,
-    color: "theme.ink400",
+    color: theme.ink400,
     marginTop: 2,
   },
   paymentMethodsRow: {
@@ -975,17 +976,17 @@ const styles = StyleSheet.create({
   },
   paymentMethodCardSelected: {
     borderColor: "#15803D",
-    backgroundColor: "theme.green50",
+    backgroundColor: theme.green50,
   },
   paymentMethodTitle: {
     fontSize: 14,
     fontWeight: "700",
-    color: "theme.ink900",
+    color: theme.ink900,
     marginTop: 8,
   },
   paymentMethodSubtitle: {
     fontSize: 12,
-    color: "theme.ink500",
+    color: theme.ink500,
     marginTop: 2,
   },
   bottomBar: {
@@ -1009,17 +1010,17 @@ const styles = StyleSheet.create({
   bottomBarPrice: {
     fontSize: 22,
     fontWeight: "800",
-    color: "theme.green900",
+    color: theme.green900,
     lineHeight: 28,
   },
   bottomBarSubtitle: {
     fontSize: 13,
-    color: "theme.ink500",
+    color: theme.ink500,
     marginTop: 2,
   },
   bottomBarError: {
     fontSize: 13,
     fontWeight: "600",
-    color: "theme.danger700",
+    color: theme.danger700,
   },
 });

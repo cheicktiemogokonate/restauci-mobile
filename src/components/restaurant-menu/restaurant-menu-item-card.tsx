@@ -9,6 +9,7 @@ import regular from "expo-symbols/androidWeights/regular";
 import { memo, useCallback, useMemo } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import { theme } from "@/constants/theme";
 
 interface RestaurantMenuItemCardProps {
   commandesDisponibles: boolean;
@@ -200,7 +201,7 @@ const styles = StyleSheet.create({
     minHeight: 38,
   },
   price: {
-    color: "theme.green900",
+    color: theme.green900,
     flexShrink: 1,
     fontSize: 14,
     fontVariant: ["tabular-nums"],
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
   },
   addButton: {
     alignItems: "center",
-    backgroundColor: "theme.green900",
+    backgroundColor: theme.green900,
     borderCurve: "continuous",
     borderRadius: 999,
     height: 38,
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
   },
   quantityButton: {
     alignItems: "center",
-    backgroundColor: "theme.green900",
+    backgroundColor: theme.green900,
     borderCurve: "continuous",
     borderRadius: 999,
     height: 32,

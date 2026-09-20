@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Pressable,
   StatusBar,
   StyleSheet,
@@ -21,6 +22,7 @@ import {
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { theme } from "@/constants/theme";
 
 function CheckoutHeader({
   onBack,
@@ -74,18 +76,20 @@ export default function CheckoutScreen() {
   const handleSuccess = (commandeId: string, paymentUrl: string | null) => {
     viderPanier();
 
+    const destination = commandeId
+      ? (`/(tabs)/commandes/${commandeId}` as const)
+      : ("/(tabs)/activite" as const);
+
     if (paymentUrl) {
-      Alert.alert(
-        "Commande enregistrée",
-        "Le paiement en ligne pourra être repris depuis le détail de la commande.",
-      );
+      void Linking.openURL(paymentUrl).catch(() => {
+        Alert.alert(
+          "Paiement à reprendre",
+          "La commande est enregistrée. Reprenez le paiement Paystack depuis le suivi.",
+        );
+      });
     }
 
-    router.replace(
-      commandeId
-        ? `/(tabs)/commandes/${commandeId}`
-        : "/(tabs)/activite",
-    );
+    router.replace(destination);
   };
 
   if (!restaurantSlug || items.length === 0) return null;
@@ -97,7 +101,7 @@ export default function CheckoutScreen() {
 
       {restaurantQuery.isPending ? (
         <View style={styles.centerState}>
-          <ActivityIndicator color="theme.green900" size="large" />
+          <ActivityIndicator color={theme.green900} size="large" />
           <Text style={styles.stateMessage}>Préparation du paiement…</Text>
         </View>
       ) : restaurantQuery.isError || !restaurant ? (
@@ -164,7 +168,7 @@ const styles = StyleSheet.create({
   },
   returnButton: {
     alignItems: "center",
-    backgroundColor: "theme.green900",
+    backgroundColor: theme.green900,
     borderCurve: "continuous",
     borderRadius: 999,
     justifyContent: "center",

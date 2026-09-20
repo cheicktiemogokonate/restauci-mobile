@@ -69,6 +69,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { theme } from "@/constants/theme";
 
 // ============================================
 // Écran Carte — assemblage principal unifié
@@ -650,7 +651,7 @@ export default function CarteScreen() {
             accessibilityRole="button"
             accessibilityLabel="Explorer Abidjan sans utiliser la localisation"
           >
-            <MapPinOff size={16} color="theme.warning600" />
+            <MapPinOff size={16} color={theme.warning600} />
             <Text className="text-xs font-bold text-ink-900">
               Position indisponible
             </Text>
@@ -779,7 +780,7 @@ export default function CarteScreen() {
 
         {isLoading && (
           <View className="absolute inset-0 items-center justify-center bg-white/50">
-            <ActivityIndicator size="large" color="theme.green900" />
+            <ActivityIndicator size="large" color={theme.green900} />
           </View>
         )}
       </BlurTargetView>
@@ -865,7 +866,7 @@ export default function CarteScreen() {
                     accessibilityLabel="Explorer Abidjan sans utiliser la localisation"
                     className="mt-3 flex-row items-center gap-3 rounded-2xl border border-warning/30 bg-white px-3 py-3"
                   >
-                    <MapPinOff size={18} color="theme.warning600" />
+                    <MapPinOff size={18} color={theme.warning600} />
                     <View className="min-w-0 flex-1">
                       <Text className="text-xs font-bold text-ink-900">
                         Localisation requise
@@ -909,14 +910,14 @@ export default function CarteScreen() {
         >
           {modeAffichage === "carte" ? (
             <>
-              <List size={18} color="theme.ink900" />
+              <List size={18} color={theme.ink900} />
               <Text className="text-sm font-bold text-ink-900">
                 Liste ({displayedEtablissements.length})
               </Text>
             </>
           ) : (
             <>
-              <Map size={18} color="theme.ink900" />
+              <Map size={18} color={theme.ink900} />
               <Text className="text-sm font-bold text-ink-900">Carte</Text>
             </>
           )}

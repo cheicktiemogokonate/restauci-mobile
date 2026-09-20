@@ -21,6 +21,7 @@ import {
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { theme } from "@/constants/theme";
 
 function PanierToolbar({
   articleCount,
@@ -188,7 +189,7 @@ export default function PanierScreen() {
 
         <Animated.View entering={FadeIn.duration(220)} style={styles.emptyState}>
           <View style={styles.emptyIconFrame}>
-            <ShoppingBag color="theme.green900" size={34} strokeWidth={1.8} />
+            <ShoppingBag color={theme.green900} size={34} strokeWidth={1.8} />
           </View>
           <Text style={styles.emptyTitle}>Votre panier est vide</Text>
           <Text style={styles.emptyMessage}>
@@ -378,7 +379,7 @@ const styles = StyleSheet.create({
   },
   checkoutButton: {
     alignItems: "center",
-    backgroundColor: "theme.green900",
+    backgroundColor: theme.green900,
     borderCurve: "continuous",
     borderRadius: 999,
     flexDirection: "row",
@@ -397,7 +398,7 @@ const styles = StyleSheet.create({
   },
   emptyAction: {
     alignItems: "center",
-    backgroundColor: "theme.green900",
+    backgroundColor: theme.green900,
     borderCurve: "continuous",
     borderRadius: 999,
     justifyContent: "center",
@@ -534,7 +535,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   totalValue: {
-    color: "theme.green900",
+    color: theme.green900,
     fontSize: 18,
     fontVariant: ["tabular-nums"],
     fontWeight: "800",

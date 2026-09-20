@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import { getLegalPageUrl, WEB_APP_URL } from "../src/constants/urls.ts";
 import {
   CLIENT_PASSWORD_MAX_LENGTH,
   CLIENT_PASSWORD_MIN_LENGTH,
@@ -19,13 +20,14 @@ import {
   renderGeneratedApiDocument,
 } from "../scripts/openapi-contract.mjs";
 
-function registrationWith(password) {
+function registrationWith(password, acceptedLegal = true) {
   return {
     nom: "Awa Koné",
     telephone: "07 01 02 03 04",
     email: "",
     password,
     confirmPassword: password,
+    acceptedLegal,
   };
 }
 
@@ -53,6 +55,26 @@ test("l'inscription applique exactement la borne backend 12 à 128", () => {
       registrationWith("a".repeat(CLIENT_PASSWORD_MAX_LENGTH + 1)),
     ).success,
     false,
+  );
+});
+
+test("l'inscription exige l'acceptation des documents légaux", () => {
+  assert.equal(
+    clientRegisterSchema.safeParse(
+      registrationWith("a".repeat(CLIENT_PASSWORD_MIN_LENGTH), false),
+    ).success,
+    false,
+  );
+});
+
+test("les pages légales pointent vers le site web, pas un texte embarqué", () => {
+  assert.equal(
+    getLegalPageUrl("cgu"),
+    `${WEB_APP_URL}/conditions-generales`,
+  );
+  assert.equal(
+    getLegalPageUrl("mentions"),
+    `${WEB_APP_URL}/mentions-legales`,
   );
 });
 

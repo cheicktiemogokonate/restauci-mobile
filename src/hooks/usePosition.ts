@@ -19,7 +19,7 @@ interface UsePositionReturn {
   recentrer: () => Promise<Coords | null>;
 }
 
-const DEFAULT_DEVELOPMENT_LOCATION = getDevelopmentLocation("abidjan");
+const DEFAULT_DEVELOPMENT_LOCATION = getDevelopmentLocation("bouake");
 
 export const DEFAULT_COORDS: Coords = {
   latitude: DEFAULT_DEVELOPMENT_LOCATION.latitude,

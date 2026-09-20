@@ -27,6 +27,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { theme } from "@/constants/theme";
 
 interface RestaurantMenuSheetProps {
   slug: string;
@@ -258,7 +259,7 @@ export const RestaurantMenuSheet = forwardRef<
 
       {isLoading ? (
         <View style={styles.loadingState}>
-          <ActivityIndicator color="theme.green900" size="large" />
+          <ActivityIndicator color={theme.green900} size="large" />
           <Text style={styles.loadingLabel}>Le menu se prépare…</Text>
         </View>
       ) : error ? (
@@ -430,7 +431,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   stateAction: {
-    backgroundColor: "theme.green900",
+    backgroundColor: theme.green900,
     borderCurve: "continuous",
     borderRadius: 999,
     marginTop: 20,

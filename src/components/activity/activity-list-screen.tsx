@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { theme } from "@/constants/theme";
 
 type ActivityListView = "history" | "upcoming";
 
@@ -133,7 +134,7 @@ function EmptyList({ view }: { view: ActivityListView }) {
   return (
     <View style={styles.emptyState}>
       <View style={styles.emptyIcon}>
-        <CalendarDays color="theme.green900" size={27} strokeWidth={1.9} />
+        <CalendarDays color={theme.green900} size={27} strokeWidth={1.9} />
       </View>
       <Text style={styles.emptyTitle}>
         {view === "upcoming"
@@ -223,7 +224,7 @@ export function ActivityListScreen() {
 
         {loading ? (
           <View style={styles.loadingState}>
-            <ActivityIndicator color="theme.green900" />
+            <ActivityIndicator color={theme.green900} />
           </View>
         ) : view === "upcoming" ? (
           feed.upcoming.length > 0 ? (
@@ -407,7 +408,7 @@ const styles = StyleSheet.create({
     boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
   },
   selectorLabel: {
-    color: "theme.slate500",
+    color: theme.slate500,
     fontSize: 14,
     fontWeight: "600",
   },

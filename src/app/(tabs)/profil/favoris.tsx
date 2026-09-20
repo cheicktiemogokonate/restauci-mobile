@@ -3,6 +3,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Heart, Trash2 } from "lucide-react-native";
 import { Alert, FlatList, Pressable, Text, View } from "react-native";
+import { theme } from "@/constants/theme";
 
 export default function FavorisScreen() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function FavorisScreen() {
               />
             ) : (
               <View className="flex-1 items-center justify-center">
-                <Heart size={24} color="theme.green900" />
+                <Heart size={24} color={theme.green900} />
               </View>
             )}
           </View>
@@ -67,13 +68,13 @@ export default function FavorisScreen() {
             accessibilityLabel={`Retirer ${item.nom} des favoris`}
             className="h-11 w-11 items-center justify-center rounded-full bg-danger-50"
           >
-            <Trash2 size={18} color="theme.danger700" />
+            <Trash2 size={18} color={theme.danger700} />
           </Pressable>
         </Pressable>
       )}
       ListEmptyComponent={
         <View className="flex-1 items-center justify-center px-8">
-          <Heart size={48} color="theme.ink400" />
+          <Heart size={48} color={theme.ink400} />
           <Text className="mt-4 text-xl font-bold text-ink-900">
             Aucun favori
           </Text>

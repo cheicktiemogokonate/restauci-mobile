@@ -3,6 +3,7 @@ import { Image } from "expo-image";
 import { ChefHat, ChevronRight, Clock3 } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import { theme } from "@/constants/theme";
 
 const ORDER_FALLBACK = require("../../../assets/images/food2.jpeg");
 const STAY_FALLBACK = require("../../../assets/images/default_hero_bg.jpg");
@@ -110,7 +111,7 @@ export function ActivityNowCard({
               {isOrder ? (
                 <ChefHat color="#F04B2F" size={17} strokeWidth={2} />
               ) : (
-                <Clock3 color="theme.brandDark" size={17} strokeWidth={2} />
+                <Clock3 color={theme.brandDark} size={17} strokeWidth={2} />
               )}
               <Text
                 numberOfLines={1}
@@ -134,7 +135,7 @@ export function ActivityNowCard({
           </Text>
           <View style={styles.actionRow}>
             <Text style={styles.actionLabel}>{isOrder ? "Suivre" : "Voir"}</Text>
-            <ChevronRight color="theme.brandDark" size={18} strokeWidth={2.4} />
+            <ChevronRight color={theme.brandDark} size={18} strokeWidth={2.4} />
           </View>
         </View>
       </Pressable>
@@ -144,7 +145,7 @@ export function ActivityNowCard({
 
 const styles = StyleSheet.create({
   actionLabel: {
-    color: "theme.brandDark",
+    color: theme.brandDark,
     fontSize: 15,
     fontWeight: "700",
   },
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   stayStatus: {
-    color: "theme.green900",
+    color: theme.green900,
   },
   title: {
     color: "#111111",

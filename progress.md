@@ -1,5 +1,44 @@
 # Journal d’exécution — Stabilisation de ToutCi
 
+## Session 20 septembre 2026 — Phase 1 cash + Paystack
+
+Décision produit : V1 = **espèces + Paystack** (mobile money et carte), pas cash-only.
+
+Fait :
+
+- Checkout restaurant : sélection cash / mobile money / carte ; `paymentReturnChannel: mobile` inchangé ; ouverture de `authorizationUrl` Paystack après POST, reprise depuis le détail si le lien échoue.
+- Légal : constantes `LEGAL_PAGES` ; À propos ouvre les 4 URLs web ; inscription bloquée sans case d’acceptation (CGU + confidentialité).
+- Fallback GPS : `DEFAULT_COORDS` = Bouaké.
+- Tests Node : acceptation légale, URL CGU, payload `mobile_money`.
+- `npm run check` : typecheck, lint (2 warnings préexistants hors périmètre), 34 tests Node verts. Les `*.test.tsx` Jest restent exclus de `tsc`.
+
+Pas fait : commit du lot UI/Jest (non demandé) ; login simulateur ; mise à jour du texte CGU sur le site web (hors repo mobile).
+
+Prochaine action : ranger Git (commit ou stash du lot UI/Jest) si demandé, puis login simulateur avec le compte recette.
+
+---
+
+## Session 20 septembre 2026 — plan production
+
+Objectif : remplacer la feuille de route éclatée par un plan exécutable jusqu’au gate A, en intégrant le compte test et les pages légales.
+
+Fait :
+
+- Réécrit `task_plan.md` (phases 1–8, gates A/B, matrice de preuves).
+- Enrichi `findings.md` (écart CGU/Paystack, annulation, mentions gabarit, GPS, prevalidate).
+- Vérifié les 4 URLs légales (HTTP contenu réel ; mentions encore incomplètes).
+
+Pas fait (volontaire) : aucun changement applicatif dans cette session.
+
+Prochaine action concrète (Phase 1) :
+
+1. Constantes d’URLs légales + liens À propos + acceptation inscription.
+2. Fallback GPS Bouaké.
+3. Ranger le lot UI/Jest (commit ou stash) et relancer `npm run check`.
+4. Login simulateur avec `0777945714` (mot de passe hors git).
+
+---
+
 ## Sprint 0 — base protégée — 19 septembre 2026
 
 Exécution de la Passe 0 du plan (Sprint 0 de la feuille de route production).

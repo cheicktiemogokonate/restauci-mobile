@@ -1,5 +1,27 @@
 # Constats et décisions — Stabilisation de ToutCi
 
+## Plan production — 20 septembre 2026
+
+- Le plan actif est `task_plan.md` (8 phases, gates A local puis B stores). L’ancienne feuille à 14 passes / 7 sprints reste un historique dans git, plus la source du « next step ».
+- Compte de recette : `+2250777945714`. Mot de passe fourni hors bande ; interdit dans le dépôt.
+- Login mobile : le schéma n’impose qu’un mot de passe non vide. L’inscription impose 12 caractères (`CLIENT_PASSWORD_MIN_LENGTH`). Un mot de passe de recette plus court peut donc ouvrir la session sans passer l’inscription.
+- Pages légales live (26 juillet 2026), ouvertes depuis À propos et l’inscription via `WEB_APP_URL` :
+  - https://restauci.vercel.app/conditions-generales
+  - https://restauci.vercel.app/mentions-legales
+  - https://restauci.vercel.app/confidentialite
+  - https://restauci.vercel.app/cookies
+- **Décision V1 paiement** : cash + Paystack (`mobile_money`, `card`). Le checkout ouvre `authorizationUrl` ; le deep link `toutci://payments/callback` n’est pas une preuve, le détail relit l’API. Reprise depuis `en_attente_paiement`.
+- **Écart CGU vs produit** : les CGU web du 26/07/2026 parlent encore d’un règlement au restaurant ou au livreur. L’app V1 expose Paystack. À corriger sur le site (hors ce repo), pas en cachant Paystack.
+- **Écart CGU vs code** : le consommateur peut annuler tant que le statut est « reçue ». L’annulation commande n’est pas implémentée côté mobile ; OpenAPI `PATCH /client/commandes/{id}` sans corps documenté.
+- **Mentions légales incomplètes** : RCCM, NCC, siège, hébergeur, contact DPO sont des gabarits « à renseigner avant ouverture commerciale ». Bloquant **gate B**, pas le pilote interne si on le dit clairement.
+- Confidentialité : loi 2013-450 / ARTCI ; droits d’effacement → suppression de compte (Phase 4) obligatoire avant stores.
+- Cookies : panier et session = traceurs nécessaires ; pas d’analytics sans consentement. N’activer Sentry/analytics qu’avec minimisation et, si non strictement nécessaire, un choix utilisateur.
+- Fallback `DEFAULT_COORDS` = Bouaké via `getDevelopmentLocation("bouake")`. Abidjan reste un sélecteur `__DEV__`.
+- `prevalidate` existe dans OpenAPI, aucun appel dans `src/` hors types générés.
+- Working tree 20 sept. : `main` ahead, nombreux fichiers UI + Jest non commités. Les `*.test.tsx` Jest sont exclus de `tsc` (Phase 6 les brancher dans `npm test`).
+
+---
+
 ## Règles confirmées
 
 - L’interface visuelle reste inchangée, sauf correction d’un comportement cassé ou trompeur.

@@ -4,6 +4,7 @@ import { Image } from "expo-image";
 import { ChevronRight, UserRound } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import { theme } from "@/constants/theme";
 
 const ORDER_FALLBACK = require("../../../assets/images/food2.jpeg");
 const STAY_FALLBACK = require("../../../assets/images/default_hero_bg.jpg");
@@ -146,7 +147,7 @@ const styles = StyleSheet.create({
     width: 68,
   },
   meta: {
-    color: "theme.slate500",
+    color: theme.slate500,
     fontSize: 13,
     fontVariant: ["tabular-nums"],
     fontWeight: "500",
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   secondary: {
-    color: "theme.slate500",
+    color: theme.slate500,
     flex: 1,
     fontSize: 13,
     fontWeight: "500",

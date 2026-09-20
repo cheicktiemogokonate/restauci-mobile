@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { theme } from "@/constants/theme";
 
 const CARD_GAP = 12;
 
@@ -95,7 +96,7 @@ const styles = StyleSheet.create({
     width: 6,
   },
   indicatorDotActive: {
-    backgroundColor: "theme.brandDark",
+    backgroundColor: theme.brandDark,
     borderRadius: 3,
     width: 18,
   },

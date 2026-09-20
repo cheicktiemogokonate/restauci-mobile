@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { z } from "zod";
+import { theme } from "@/constants/theme";
 
 const adresseSchema = z.object({
   libelle: z
@@ -142,7 +143,7 @@ export function AdresseFormModal({
               accessibilityRole="button"
               accessibilityLabel="Fermer"
             >
-              <X size={21} color="theme.ink700" />
+              <X size={21} color={theme.ink700} />
             </Pressable>
           </View>
 

@@ -3,6 +3,7 @@ import { useCallback, type ComponentProps } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import Animated, { LinearTransition } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { theme } from "@/constants/theme";
 
 type TabsProps = ComponentProps<typeof Tabs>;
 export type FloatingTabBarProps = Parameters<
@@ -71,7 +72,7 @@ export function FloatingTabBar({
           const isFocused =
             isCurrentRoute ||
             (route.name === "activite" && activeRouteName === "commandes");
-          const color = isFocused ? "theme.ink900" : "#5F6368";
+          const color = isFocused ? theme.ink900 : "#5F6368";
 
           return (
             <TouchableOpacity

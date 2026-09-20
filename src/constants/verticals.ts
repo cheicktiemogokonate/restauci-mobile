@@ -1,4 +1,5 @@
 import type { TypeEtablissement } from "@/types/etablissement";
+import { theme } from "@/constants/theme";
 
 export type VerticalId = TypeEtablissement;
 

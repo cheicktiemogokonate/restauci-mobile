@@ -23,10 +23,15 @@ export const clientRegisterSchema = z
     email: z.string().email("Email invalide").optional().or(z.literal("")),
     password: clientPasswordSchema,
     confirmPassword: z.string().max(CLIENT_PASSWORD_MAX_LENGTH),
+    acceptedLegal: z.boolean(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Les mots de passe ne correspondent pas",
     path: ["confirmPassword"],
+  })
+  .refine((data) => data.acceptedLegal, {
+    message: "Veuillez accepter les conditions générales",
+    path: ["acceptedLegal"],
   });
 
 export type ClientRegisterInput = z.infer<typeof clientRegisterSchema>;

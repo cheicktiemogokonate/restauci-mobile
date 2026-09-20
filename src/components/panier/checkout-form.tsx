@@ -23,10 +23,12 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  CreditCard,
   LocateFixed,
   MapPin,
   MessageSquareText,
   ShoppingBag,
+  Smartphone,
   Truck,
 } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -44,10 +46,34 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { z } from "zod";
+import { theme } from "@/constants/theme";
 
-// Le détail restaurant ne publie pas encore ses moyens de paiement activés.
-// Ne proposer que l'espèce évite d'afficher une option que l'API peut refuser.
-const supportedPaymentMethodSchema = z.literal("cash");
+const supportedPaymentMethodSchema = z.enum([
+  "cash",
+  "mobile_money",
+  "card",
+]);
+
+const CHECKOUT_PAYMENT_OPTIONS = [
+  {
+    value: "cash" as const,
+    title: "Paiement à la réception",
+    description: "En espèces auprès du restaurant ou du livreur",
+    Icon: Banknote,
+  },
+  {
+    value: "mobile_money" as const,
+    title: "Mobile money",
+    description: "Wave, Orange, MTN via Paystack",
+    Icon: Smartphone,
+  },
+  {
+    value: "card" as const,
+    title: "Carte bancaire",
+    description: "Visa ou Mastercard via Paystack",
+    Icon: CreditCard,
+  },
+];
 
 const livraisonSchema = z.object({
   mode: z.literal("livraison"),
@@ -157,6 +183,7 @@ export function CheckoutForm({
 
   const watchMode = useWatch({ control, name: "mode" });
   const watchAdresse = useWatch({ control, name: "adresse" });
+  const watchPaymentMethod = useWatch({ control, name: "paymentMethod" });
   const [showSuggestions, setShowSuggestions] = useState(false);
   const { data: geoSuggestions, isLoading: geoLoading } = useGeoSearch(
     showSuggestions ? watchAdresse || "" : "",
@@ -385,7 +412,7 @@ export function CheckoutForm({
                     ]}
                   >
                     <Icon
-                      color={selected ? "theme.green900" : "#6B6B66"}
+                      color={selected ? theme.green900 : "#6B6B66"}
                       size={17}
                       strokeWidth={2}
                     />
@@ -446,7 +473,7 @@ export function CheckoutForm({
                         style={[styles.addressChip, selected && styles.addressChipSelected]}
                       >
                         {selected && (
-                          <Check color="theme.green900" size={14} strokeWidth={2.4} />
+                          <Check color={theme.green900} size={14} strokeWidth={2.4} />
                         )}
                         <Text
                           numberOfLines={1}
@@ -501,9 +528,9 @@ export function CheckoutForm({
                   style={[styles.locateButton, isLocating && styles.controlDisabled]}
                 >
                   {isLocating ? (
-                    <ActivityIndicator color="theme.green900" size="small" />
+                    <ActivityIndicator color={theme.green900} size="small" />
                   ) : (
-                    <LocateFixed color="theme.green900" size={20} strokeWidth={2} />
+                    <LocateFixed color={theme.green900} size={20} strokeWidth={2} />
                   )}
                 </Pressable>
               </View>
@@ -516,7 +543,7 @@ export function CheckoutForm({
                       onPress={() => handleSelectSuggestion(item)}
                       style={styles.suggestionRow}
                     >
-                      <MapPin color="theme.inkMuted" size={15} strokeWidth={1.9} />
+                      <MapPin color={theme.inkMuted} size={15} strokeWidth={1.9} />
                       <Text numberOfLines={1} style={styles.suggestionLabel}>
                         {item.label}
                       </Text>
@@ -541,19 +568,52 @@ export function CheckoutForm({
 
           <View style={styles.section}>
             <Text style={styles.paymentSectionTitle}>Moyen de paiement</Text>
-            <View style={styles.paymentRow}>
-              <View style={styles.paymentIcon}>
-                <Banknote color="theme.green900" size={20} strokeWidth={2} />
-              </View>
-              <View style={styles.paymentCopy}>
-                <Text style={styles.paymentTitle}>Paiement à la réception</Text>
-                <Text numberOfLines={1} style={styles.paymentDescription}>
-                  En espèces auprès du restaurant ou du livreur
-                </Text>
-              </View>
-              <View style={styles.selectedIndicator}>
-                <Check color="#FFFFFF" size={14} strokeWidth={2.7} />
-              </View>
+            <View style={styles.paymentOptions}>
+              {CHECKOUT_PAYMENT_OPTIONS.map((option) => {
+                const selected = watchPaymentMethod === option.value;
+                const Icon = option.Icon;
+                return (
+                  <Pressable
+                    key={option.value}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: selected }}
+                    onPress={() =>
+                      setValue("paymentMethod", option.value, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                    style={[
+                      styles.paymentRow,
+                      selected && styles.paymentRowSelected,
+                    ]}
+                  >
+                    <View style={styles.paymentIcon}>
+                      <Icon
+                        color={theme.green900}
+                        size={20}
+                        strokeWidth={2}
+                      />
+                    </View>
+                    <View style={styles.paymentCopy}>
+                      <Text style={styles.paymentTitle}>{option.title}</Text>
+                      <Text numberOfLines={1} style={styles.paymentDescription}>
+                        {option.description}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.selectedIndicator,
+                        !selected && styles.selectedIndicatorIdle,
+                      ]}
+                    >
+                      {selected ? (
+                        <Check color="#FFFFFF" size={14} strokeWidth={2.7} />
+                      ) : null}
+                    </View>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
 
@@ -597,9 +657,9 @@ export function CheckoutForm({
                 </Text>
               </View>
               {notesExpanded ? (
-                <ChevronUp color="theme.inkMuted" size={18} />
+                <ChevronUp color={theme.inkMuted} size={18} />
               ) : (
-                <ChevronDown color="theme.inkMuted" size={18} />
+                <ChevronDown color={theme.inkMuted} size={18} />
               )}
             </Pressable>
 
@@ -650,7 +710,11 @@ export function CheckoutForm({
             {isPending ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.submitButtonLabel}>Confirmer la commande</Text>
+              <Text style={styles.submitButtonLabel}>
+                {watchPaymentMethod === "cash"
+                  ? "Confirmer la commande"
+                  : "Payer et confirmer"}
+              </Text>
             )}
           </Pressable>
         </View>
@@ -678,7 +742,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   addressChipLabelSelected: {
-    color: "theme.green900",
+    color: theme.green900,
   },
   addressChipSelected: {
     backgroundColor: "#EEF6F0",
@@ -706,7 +770,7 @@ const styles = StyleSheet.create({
     gap: 9,
   },
   contactHint: {
-    color: "theme.inkMuted",
+    color: theme.inkMuted,
     fontSize: 12,
     lineHeight: 17,
     paddingHorizontal: 4,
@@ -716,7 +780,7 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   emptySuggestion: {
-    color: "theme.inkMuted",
+    color: theme.inkMuted,
     fontSize: 13,
     paddingTop: 10,
     textAlign: "center",
@@ -772,7 +836,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   modeLabelSelected: {
-    color: "theme.green900",
+    color: theme.green900,
   },
   modeSelector: {
     backgroundColor: "#EDEDE9",
@@ -784,7 +848,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   noteHint: {
-    color: "theme.inkMuted",
+    color: theme.inkMuted,
     fontSize: 12,
     marginTop: 2,
   },
@@ -814,7 +878,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   paymentDescription: {
-    color: "theme.inkMuted",
+    color: theme.inkMuted,
     fontSize: 12,
     marginTop: 2,
   },
@@ -827,10 +891,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: 42,
   },
+  paymentOptions: {
+    gap: 8,
+  },
   paymentRow: {
     alignItems: "center",
+    borderColor: "#EAEAE5",
+    borderCurve: "continuous",
+    borderRadius: 16,
+    borderWidth: 1,
     flexDirection: "row",
     gap: 11,
+    padding: 10,
+  },
+  paymentRowSelected: {
+    backgroundColor: "#EEF6F0",
+    borderColor: "#B9D5C1",
   },
   paymentSectionTitle: {
     color: "#111111",
@@ -871,18 +947,23 @@ const styles = StyleSheet.create({
   },
   selectedIndicator: {
     alignItems: "center",
-    backgroundColor: "theme.green900",
+    backgroundColor: theme.green900,
     borderRadius: 999,
     height: 23,
     justifyContent: "center",
     width: 23,
+  },
+  selectedIndicatorIdle: {
+    backgroundColor: "transparent",
+    borderColor: "#D8D8D3",
+    borderWidth: 1,
   },
   sheet: {
     flex: 1,
   },
   submitButton: {
     alignItems: "center",
-    backgroundColor: "theme.green900",
+    backgroundColor: theme.green900,
     borderCurve: "continuous",
     borderRadius: 999,
     justifyContent: "center",
@@ -918,7 +999,7 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   summaryLabel: {
-    color: "theme.inkMuted",
+    color: theme.inkMuted,
     fontSize: 13,
   },
   summaryLines: {
@@ -935,7 +1016,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   summaryTotalValue: {
-    color: "theme.green900",
+    color: theme.green900,
     fontSize: 17,
     fontVariant: ["tabular-nums"],
     fontWeight: "800",

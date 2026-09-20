@@ -100,6 +100,18 @@ test("le mode emporter n'envoie ni adresse ni coordonnées", () => {
   );
 });
 
+test("Paystack mobile money conserve le canal de retour mobile", () => {
+  assert.equal(
+    buildLogicalOrder({
+      restaurantSlug: "chez-nous",
+      mode: "emporter",
+      items: [{ platId: "a", quantite: 1 }],
+      paymentMethod: "mobile_money",
+    }).paymentMethod,
+    "mobile_money",
+  );
+});
+
 test("un retry du même payload conserve la clé d'idempotence", () => {
   const logicalOrder = buildLogicalOrder({
     restaurantSlug: "chez-nous",

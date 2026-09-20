@@ -1,4 +1,5 @@
 import { ENDPOINTS } from "@/constants/api";
+import { getLegalPageUrl, type LegalPageId } from "@/constants/urls";
 import { resolveAuthRedirect } from "@/domain/authRedirect";
 import {
   CLIENT_PASSWORD_MAX_LENGTH,
@@ -13,6 +14,7 @@ import type { AuthResponse } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import {
+  Check,
   ChevronDown,
   Eye,
   EyeOff,
@@ -24,8 +26,10 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -35,6 +39,16 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { theme } from "@/constants/theme";
+
+function openLegalPage(id: LegalPageId) {
+  void Linking.openURL(getLegalPageUrl(id)).catch(() => {
+    Alert.alert(
+      "Lien indisponible",
+      "Impossible d’ouvrir ce document pour le moment.",
+    );
+  });
+}
 
 export default function RegisterScreen() {
   const {
@@ -49,6 +63,7 @@ export default function RegisterScreen() {
       email: "",
       password: "",
       confirmPassword: "",
+      acceptedLegal: false,
     },
   });
 
@@ -172,11 +187,11 @@ export default function RegisterScreen() {
                   errors.nom ? "border-red-500" : "border-gray-200"
                 }`}
               >
-                <User size={18} color="theme.green900" />
+                <User size={18} color={theme.green900} />
                 <TextInput
                   className="flex-1 text-black text-base ml-3"
                   placeholder="Entrez votre nom complet"
-                  //   placeholderTextColor="theme.green900"
+                  //   placeholderTextColor={theme.green900}
                   autoCapitalize="words"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -206,14 +221,14 @@ export default function RegisterScreen() {
                 <Text className="text-black font-medium ml-1">+225</Text>
                 <ChevronDown
                   size={16}
-                  color="theme.green900"
+                  color={theme.green900}
                   style={{ marginLeft: 4 }}
                 />
                 <View className="w-px h-6 bg-gray-200 mx-3" />
                 <TextInput
                   className="flex-1 text-black text-base"
                   placeholder="07 51 23 45 67"
-                  //   placeholderTextColor="theme.green900"
+                  //   placeholderTextColor={theme.green900}
                   keyboardType="phone-pad"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -241,11 +256,11 @@ export default function RegisterScreen() {
                   errors.email ? "border-red-500" : "border-gray-200"
                 }`}
               >
-                <Mail size={18} color="theme.green900" />
+                <Mail size={18} color={theme.green900} />
                 <TextInput
                   className="flex-1 text-black text-base ml-3"
                   placeholder="Entrez votre email"
-                  //   placeholderTextColor="theme.green900"
+                  //   placeholderTextColor={theme.green900}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   onBlur={onBlur}
@@ -274,11 +289,11 @@ export default function RegisterScreen() {
                   errors.password ? "border-red-500" : "border-gray-200"
                 }`}
               >
-                <Lock size={18} color="theme.green900" />
+                <Lock size={18} color={theme.green900} />
                 <TextInput
                   className="flex-1 text-black text-base ml-3"
                   placeholder="Créez un mot de passe"
-                  //   placeholderTextColor="theme.green900"
+                  //   placeholderTextColor={theme.green900}
                   secureTextEntry={!showPassword}
                   maxLength={CLIENT_PASSWORD_MAX_LENGTH}
                   onBlur={onBlur}
@@ -290,9 +305,9 @@ export default function RegisterScreen() {
                   hitSlop={10}
                 >
                   {showPassword ? (
-                    <EyeOff size={18} color="theme.green900" />
+                    <EyeOff size={18} color={theme.green900} />
                   ) : (
-                    <Eye size={18} color="theme.green900" />
+                    <Eye size={18} color={theme.green900} />
                   )}
                 </Pressable>
               </View>
@@ -322,11 +337,11 @@ export default function RegisterScreen() {
                   errors.confirmPassword ? "border-red-500" : "border-gray-200"
                 }`}
               >
-                <Lock size={18} color="theme.green900" />
+                <Lock size={18} color={theme.green900} />
                 <TextInput
                   className="flex-1 text-black text-base ml-3"
                   placeholder="Confirmez votre mot de passe"
-                  //     //   placeholderTextColor="theme.green900"
+                  //     //   placeholderTextColor={theme.green900}
                   secureTextEntry={!showConfirmPassword}
                   maxLength={CLIENT_PASSWORD_MAX_LENGTH}
                   onBlur={onBlur}
@@ -338,9 +353,9 @@ export default function RegisterScreen() {
                   hitSlop={10}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff size={18} color="theme.green900" />
+                    <EyeOff size={18} color={theme.green900} />
                   ) : (
-                    <Eye size={18} color="theme.green900" />
+                    <Eye size={18} color={theme.green900} />
                   )}
                 </Pressable>
               </View>
@@ -349,6 +364,53 @@ export default function RegisterScreen() {
           {errors.confirmPassword && (
             <Text className="text-red-500 text-sm mt-1 mb-1">
               {errors.confirmPassword.message}
+            </Text>
+          )}
+
+          <Controller
+            control={control}
+            name="acceptedLegal"
+            render={({ field: { onChange, value } }) => (
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: value }}
+                className="mt-5 flex-row items-start gap-3"
+                onPress={() => onChange(!value)}
+              >
+                <View
+                  className={`mt-0.5 h-5 w-5 items-center justify-center rounded-md border ${
+                    value
+                      ? "border-brand-700 bg-brand-700"
+                      : errors.acceptedLegal
+                        ? "border-red-500 bg-white"
+                        : "border-gray-300 bg-white"
+                  }`}
+                >
+                  {value ? <Check color="#FFFFFF" size={14} strokeWidth={3} /> : null}
+                </View>
+                <Text className="flex-1 text-sm leading-5 text-gray-500">
+                  J’accepte les{" "}
+                  <Text
+                    className="font-semibold text-brand-700"
+                    onPress={() => openLegalPage("cgu")}
+                  >
+                    conditions générales
+                  </Text>
+                  {" "}et la{" "}
+                  <Text
+                    className="font-semibold text-brand-700"
+                    onPress={() => openLegalPage("confidentialite")}
+                  >
+                    politique de confidentialité
+                  </Text>
+                  .
+                </Text>
+              </Pressable>
+            )}
+          />
+          {errors.acceptedLegal && (
+            <Text className="text-red-500 text-sm mt-1 mb-1">
+              {errors.acceptedLegal.message}
             </Text>
           )}
 

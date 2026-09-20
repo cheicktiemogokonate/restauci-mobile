@@ -28,6 +28,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { theme } from "@/constants/theme";
 
 const temporalLabels = {
   a_venir: "Séjour à venir",
@@ -66,7 +67,7 @@ export default function ReservationDetailScreen() {
   if (reservation.isPending) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="theme.green900" />
+        <ActivityIndicator size="large" color={theme.green900} />
       </SafeAreaView>
     );
   }
@@ -142,7 +143,7 @@ export default function ReservationDetailScreen() {
             onPress={() => router.replace("/(tabs)/residences")}
             className="h-10 w-10 items-center justify-center rounded-full bg-white"
           >
-            <ChevronLeft color="theme.ink900" />
+            <ChevronLeft color={theme.ink900} />
           </Pressable>
           <Text className="ml-3 text-xl font-extrabold text-ink-900">
             Détails du séjour
@@ -165,7 +166,7 @@ export default function ReservationDetailScreen() {
                 {item.residenceTitle}
               </Text>
               <View className="mt-2 flex-row items-center gap-2">
-                <MapPin size={16} color="theme.ink500" />
+                <MapPin size={16} color={theme.ink500} />
                 <Text className="text-ink-500">{item.residenceCity}</Text>
               </View>
               <View
@@ -180,7 +181,7 @@ export default function ReservationDetailScreen() {
 
           <View className="mt-4 rounded-3xl border border-ink-100 bg-white p-5">
             <View className="flex-row items-center gap-3">
-              <CalendarDays color="theme.green900" />
+              <CalendarDays color={theme.green900} />
               <View className="flex-1">
                 <Text className="text-xs uppercase text-ink-400">Dates</Text>
                 <Text className="font-bold text-ink-900">
@@ -190,7 +191,7 @@ export default function ReservationDetailScreen() {
               </View>
             </View>
             <View className="mt-5 flex-row items-center gap-3">
-              <Users color="theme.green900" />
+              <Users color={theme.green900} />
               <View>
                 <Text className="text-xs uppercase text-ink-400">
                   Voyageurs
@@ -202,7 +203,7 @@ export default function ReservationDetailScreen() {
               </View>
             </View>
             <View className="mt-5 flex-row items-center gap-3">
-              <CreditCard color="theme.green900" />
+              <CreditCard color={theme.green900} />
               <View>
                 <Text className="text-xs uppercase text-ink-400">
                   Paiement
@@ -219,7 +220,7 @@ export default function ReservationDetailScreen() {
 
           <View className="mt-4 rounded-3xl border border-ink-100 bg-white p-5">
             <View className="mb-4 flex-row items-center gap-2">
-              <ReceiptText size={20} color="theme.green900" />
+              <ReceiptText size={20} color={theme.green900} />
               <Text className="text-lg font-bold text-ink-900">
                 Récapitulatif serveur
               </Text>
@@ -287,7 +288,7 @@ export default function ReservationDetailScreen() {
               className="mt-3"
             >
               {cancel.isPending ? (
-                <ActivityIndicator color="theme.green900" />
+                <ActivityIndicator color={theme.green900} />
               ) : (
                 <ButtonText className="text-brand-800">
                   Annuler la réservation

@@ -16,6 +16,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../global.css";
 import { useStore } from "../store";
+import { theme } from "@/constants/theme";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,15 +58,15 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
     >
       <AppBackdrop />
       <Text style={{ fontSize: 48, marginBottom: 8 }}>⚠️</Text>
-      <Text style={{ fontSize: 20, fontWeight: "bold", color: "theme.ink900", marginBottom: 8 }}>
+      <Text style={{ fontSize: 20, fontWeight: "bold", color: theme.ink900, marginBottom: 8 }}>
         Quelque chose s&apos;est mal passé
       </Text>
-      <Text style={{ fontSize: 13, color: "theme.ink500", textAlign: "center", marginBottom: 24, lineHeight: 18 }}>
+      <Text style={{ fontSize: 13, color: theme.ink500, textAlign: "center", marginBottom: 24, lineHeight: 18 }}>
         {__DEV__ ? error.message : "Une erreur inattendue s'est produite. Veuillez réessayer."}
       </Text>
       <TouchableOpacity
         onPress={retry}
-        style={{ backgroundColor: "theme.green900", paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, minHeight: 44, justifyContent: "center" }}
+        style={{ backgroundColor: theme.green900, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, minHeight: 44, justifyContent: "center" }}
         accessibilityRole="button"
         accessibilityLabel="Réessayer"
       >

@@ -19,6 +19,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { theme } from "@/constants/theme";
 
 export default function CommandesScreen() {
   const router = useRouter();
@@ -53,7 +54,7 @@ export default function CommandesScreen() {
   if (!client) {
     return (
       <SafeAreaView className="flex-1 justify-center items-center px-8">
-        <ClipboardList size={36} color="theme.ink400" />
+        <ClipboardList size={36} color={theme.ink400} />
         <Text className="text-lg font-bold text-black mt-3 mb-2">
           Vos commandes
         </Text>
@@ -78,7 +79,7 @@ export default function CommandesScreen() {
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color="theme.green800" />
+        <ActivityIndicator size="large" color={theme.green800} />
       </SafeAreaView>
     );
   }
@@ -86,7 +87,7 @@ export default function CommandesScreen() {
   if (error && commandes.length === 0) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center px-8">
-        <AlertCircle size={42} color="theme.danger700" />
+        <AlertCircle size={42} color={theme.danger700} />
         <Text className="mt-4 text-lg font-bold text-black">
           Chargement impossible
         </Text>
@@ -147,7 +148,7 @@ export default function CommandesScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="theme.green800"
+            tintColor={theme.green800}
           />
         }
         onEndReached={() => {
@@ -162,7 +163,7 @@ export default function CommandesScreen() {
               className="my-3 items-center py-3"
             >
               {isFetchingNextPage ? (
-                <ActivityIndicator color="theme.green800" />
+                <ActivityIndicator color={theme.green800} />
               ) : (
                 <Text className="font-semibold text-brand-800">
                   Charger plus
