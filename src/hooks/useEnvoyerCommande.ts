@@ -1,8 +1,10 @@
 import { ENDPOINTS } from "@/constants/api";
+import { buildOrderPrevalidationRequest } from "@/domain/checkout";
 import { apiFetch } from "@/lib/api";
 import { invalidateCommandeQueries } from "@/lib/commandeQueryCache";
 import {
   commandeCreationDataSchema,
+  orderPrevalidationDataSchema,
   parseApiSuccess,
 } from "@/lib/apiValidation";
 import type {
@@ -17,6 +19,25 @@ export function useEnvoyerCommande() {
 
   return useMutation({
     mutationFn: async (payload: CommandePayload) => {
+      const prevalidateResponse = await apiFetch<unknown>(
+        ENDPOINTS.clientCommandesPrevalidate,
+        {
+          method: "POST",
+          body: JSON.stringify(buildOrderPrevalidationRequest(payload)),
+        },
+      );
+      const prevalidation = parseApiSuccess<{ valid: boolean }>(
+        prevalidateResponse,
+        orderPrevalidationDataSchema,
+        "commandes/prevalidate",
+      );
+
+      if (!prevalidation.data.valid) {
+        throw new Error(
+          "Cette commande n’est pas possible depuis votre position actuelle.",
+        );
+      }
+
       const payloadResponse = await apiFetch<unknown>(ENDPOINTS.clientCommandes, {
         method: "POST",
         body: JSON.stringify(payload),

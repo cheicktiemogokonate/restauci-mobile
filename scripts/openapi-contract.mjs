@@ -1,5 +1,7 @@
 const REQUIRED_OPERATIONS = [
   ["/client/auth/register", "post", "clientRegister"],
+  ["/client/commandes/prevalidate", "post", "prevalidateClientOrder"],
+  ["/client/commandes/{id}", "patch", "cancelClientOrder"],
   ["/client/commandes/{id}/livraison", "get", "getClientDelivery"],
   [
     "/client/commandes/{id}/livraison/confirmation",

@@ -235,6 +235,12 @@ export interface CommandePayload {
   idempotencyKey: string;
   paymentMethod: "cash" | "mobile_money" | "card";
   paymentReturnChannel: "mobile";
+  currentLocation: {
+    lat: number;
+    lng: number;
+    accuracyMeters: number;
+    capturedAt: string;
+  };
   adresseLivraison?: string;
   latitudeLivraison?: number;
   longitudeLivraison?: number;

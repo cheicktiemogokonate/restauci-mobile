@@ -39,6 +39,11 @@ export function isTerminalOrderStatus(value: string): boolean {
   return isKnownOrderStatus(value) && TERMINAL_STATUSES.has(value);
 }
 
+/** CGU : le consommateur peut annuler tant que la commande est « reçue ». */
+export function canCancelClientOrder(value: string): boolean {
+  return value === "recue";
+}
+
 export function getOrderStatusLabel(
   value: string,
   variant: "short" | "detail" = "short",

@@ -12,7 +12,9 @@ import { buildRestaurantSearchRequest } from "../src/domain/restaurantSearch.ts"
 import {
   clientDeliveryConfirmationSchema,
   clientDeliverySchema,
+  commandeCancellationDataSchema,
   commandeDetailSchema,
+  orderPrevalidationDataSchema,
 } from "../src/lib/apiValidation.ts";
 import { COMMANDE_QUERY_ROOTS } from "../src/lib/commandeQueryCache.ts";
 import {
@@ -75,6 +77,28 @@ test("les pages légales pointent vers le site web, pas un texte embarqué", () 
   assert.equal(
     getLegalPageUrl("mentions"),
     `${WEB_APP_URL}/mentions-legales`,
+  );
+});
+
+test("la prévalidation exige un booléen valid", () => {
+  assert.equal(
+    orderPrevalidationDataSchema.safeParse({
+      valid: true,
+      serviceMarketId: "bouake",
+      geoPolicyVersion: "2026-09",
+    }).success,
+    true,
+  );
+  assert.equal(
+    orderPrevalidationDataSchema.safeParse({ valid: "oui" }).success,
+    false,
+  );
+});
+
+test("l'annulation mobile accepte une réponse minimale", () => {
+  assert.equal(
+    commandeCancellationDataSchema.safeParse({ statut: "annulee" }).success,
+    true,
   );
 });
 

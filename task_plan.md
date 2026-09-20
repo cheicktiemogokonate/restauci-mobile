@@ -8,7 +8,7 @@ Amener l’application mobile client ToutCi à un service opérable à Bouaké :
 
 ## Current Phase
 
-Phase 1 — Figer V1, légal, baseline Git
+Phase 3 — Recette native avec le compte test
 
 ## Deux gates (ne pas les confondre)
 
@@ -31,16 +31,16 @@ Le chemin critique actuel s’arrête au **gate A**. Le gate B est un chantier s
 - [x] Décisions V1 écrites (tableau ci-dessous) et appliquées dans l’UI
 - [x] Liens CGU / confidentialité / mentions / cookies dans À propos + case à l’inscription
 - [x] Fallback GPS = Bouaké (pas Abidjan)
-- [ ] Lot UI/Jest courant commité ou reverté ; `git status` explicite
+- [x] Lot UI/Jest courant commité (`b9f48b7`)
 - [x] `npm run check` vert
-- **Status:** in_progress
+- **Status:** complete
 
 ### Phase 2: Fermer les écarts fonctionnels du parcours commande
-- [ ] Appeler `POST /client/commandes/prevalidate` avant création
-- [ ] Annulation mobile tant que statut `recue` (exigence CGU)
-- [ ] Masquer ou documenter `sur_place` selon le backend réel
-- [ ] Aucun écran « Bientôt » ; aucun POST sans issue
-- **Status:** pending
+- [x] Appeler `POST /client/commandes/prevalidate` avant création
+- [x] Annulation mobile tant que statut `recue` (exigence CGU)
+- [x] Masquer ou documenter `sur_place` selon le backend réel
+- [x] Aucun écran « Bientôt » ; aucun POST sans issue
+- **Status:** complete
 
 ### Phase 3: Recette native avec le compte test
 - [ ] Builds Debug iOS Simulator + Android Emulator sur le code figé

@@ -46,21 +46,64 @@ async function withLocationTimeout<T>(promise: Promise<T>): Promise<T> {
   }
 }
 
+export async function readForegroundLocation(): Promise<Coords> {
+  const providerStatus = await withLocationTimeout(
+    ExpoLocation.getProviderStatusAsync(),
+  );
+
+  if (!providerStatus.locationServicesEnabled) {
+    throw new Error(
+      "Activez la localisation de votre appareil pour continuer.",
+    );
+  }
+
+  const { status: existingStatus } =
+    await ExpoLocation.getForegroundPermissionsAsync();
+  const permission =
+    existingStatus === "granted"
+      ? existingStatus
+      : (await ExpoLocation.requestForegroundPermissionsAsync()).status;
+
+  if (permission !== "granted") {
+    throw new Error(
+      "Autorisez ToutCi à accéder à votre position dans les réglages de l’appareil.",
+    );
+  }
+
+  let location: ExpoLocation.LocationObject | null = null;
+
+  try {
+    location = await withLocationTimeout(
+      ExpoLocation.getCurrentPositionAsync({
+        accuracy: ExpoLocation.Accuracy.Balanced,
+      }),
+    );
+  } catch {
+    location = await ExpoLocation.getLastKnownPositionAsync({
+      maxAge: 5 * 60_000,
+      requiredAccuracy: 5_000,
+    });
+  }
+
+  if (!location?.coords) {
+    throw new Error(
+      "Votre position est indisponible pour le moment. Réessayez dans quelques instants.",
+    );
+  }
+
+  return {
+    latitude: location.coords.latitude,
+    longitude: location.coords.longitude,
+    accuracyMeters: Math.max(0, location.coords.accuracy ?? 100_000),
+    capturedAt: new Date(location.timestamp).toISOString(),
+  };
+}
+
 export function usePosition(): UsePositionReturn {
   const [coords, setCoords] = useState<Coords>(DEFAULT_COORDS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const requestIdRef = useRef(0);
-
-  const requestPermission = useCallback(async () => {
-    const { status: existingStatus } =
-      await ExpoLocation.getForegroundPermissionsAsync();
-    if (existingStatus !== "granted") {
-      const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
-      return status;
-    }
-    return existingStatus;
-  }, []);
 
   const fetchPosition = useCallback(async (): Promise<Coords | null> => {
     const requestId = ++requestIdRef.current;
@@ -68,52 +111,7 @@ export function usePosition(): UsePositionReturn {
     setError(null);
 
     try {
-      const providerStatus = await withLocationTimeout(
-        ExpoLocation.getProviderStatusAsync(),
-      );
-
-      if (!providerStatus.locationServicesEnabled) {
-        throw new Error(
-          "Activez la localisation de votre appareil pour voir les établissements autour de vous.",
-        );
-      }
-
-      const permissionResult = await requestPermission();
-
-      if (permissionResult !== "granted") {
-        throw new Error(
-          "Autorisez ToutCi à accéder à votre position dans les réglages de l’appareil.",
-        );
-      }
-
-      let location: ExpoLocation.LocationObject | null = null;
-
-      try {
-        location = await withLocationTimeout(
-          ExpoLocation.getCurrentPositionAsync({
-            accuracy: ExpoLocation.Accuracy.Balanced,
-          }),
-        );
-      } catch {
-        // Une position récente en cache garde l'app utilisable sur réseau/GPS lent.
-        location = await ExpoLocation.getLastKnownPositionAsync({
-          maxAge: 5 * 60_000,
-          requiredAccuracy: 5_000,
-        });
-      }
-
-      if (!location?.coords) {
-        throw new Error(
-          "Votre position est indisponible pour le moment. Réessayez dans quelques instants.",
-        );
-      }
-
-      const nextCoords = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        accuracyMeters: Math.max(0, location.coords.accuracy ?? 100_000),
-        capturedAt: new Date(location.timestamp).toISOString(),
-      };
+      const nextCoords = await readForegroundLocation();
 
       if (requestId === requestIdRef.current) {
         setCoords(nextCoords);
@@ -133,7 +131,7 @@ export function usePosition(): UsePositionReturn {
         setLoading(false);
       }
     }
-  }, [requestPermission]);
+  }, []);
 
   // Initial fetch on mount
   useEffect(() => {

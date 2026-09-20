@@ -29,6 +29,7 @@ export const ENDPOINTS = {
     `/client/restaurants/${encodeURIComponent(slug)}`,
   geoGeocode: "/client/geo/geocode",
   clientCommandes: "/client/commandes",
+  clientCommandesPrevalidate: "/client/commandes/prevalidate",
   clientCommande: (id: string) =>
     `/client/commandes/${encodeURIComponent(id)}`,
   clientCommandeStream: (id: string) =>

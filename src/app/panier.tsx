@@ -115,7 +115,7 @@ export default function PanierScreen() {
     if (supportedModes.length === 0) {
       Alert.alert(
         "Mode indisponible",
-        "Aucun mode de commande compatible n’est disponible pour cet établissement.",
+        "Cet établissement n’accepte que la commande sur place, non proposée dans l’application.",
       );
       return;
     }

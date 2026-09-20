@@ -218,6 +218,30 @@ export const commandeCreationDataSchema = z
   })
   .passthrough();
 
+export const orderPrevalidationDataSchema = z
+  .object({
+    valid: z.boolean(),
+    serviceMarketId: z.string().min(1).nullable().optional(),
+    geoPolicyVersion: z.string().min(1).nullable().optional(),
+  })
+  .passthrough();
+
+export const commandeCancellationDataSchema = z
+  .object({
+    id: z.string().min(1).optional(),
+    statut: z
+      .enum([
+        "en_attente_paiement",
+        "recue",
+        "en_preparation",
+        "prete",
+        "servie",
+        "annulee",
+      ])
+      .optional(),
+  })
+  .passthrough();
+
 export const commandeSummarySchema = commandeBaseSchema.extend({
   restaurantId: z.string().min(1),
   restaurant: z

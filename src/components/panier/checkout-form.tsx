@@ -1,11 +1,13 @@
 import { useEnvoyerCommande } from "@/hooks/useEnvoyerCommande";
 import { useGeoSearch } from "@/hooks/useGeoSearch";
+import { readForegroundLocation } from "@/hooks/usePosition";
 import {
   aggregateCartItems,
   buildLogicalOrder,
   getSupportedCheckoutModes,
   hasInvalidItemQuantity,
   prepareIdempotentOrder,
+  toLocationSample,
   type CheckoutMode,
   type PendingOrder,
 } from "@/domain/checkout";
@@ -137,10 +139,13 @@ export function CheckoutForm({
   const items = useStore((s) => s.items);
   const adresses = useStore((s) => s.adresses);
   const { mutate: envoyerCommande, isPending } = useEnvoyerCommande();
+  const [isPreparingSubmit, setIsPreparingSubmit] = useState(false);
+  const isSubmitting = isPending || isPreparingSubmit;
   const availableModes = useMemo(
     () => getSupportedCheckoutModes(modesCommande),
     [modesCommande],
   );
+  const checkoutUnavailable = availableModes.length === 0;
 
   const adresseParDefaut = useMemo(
     () =>
@@ -273,6 +278,14 @@ export function CheckoutForm({
   const onSubmit = (data: CommandeFormData) => {
     if (submissionInFlightRef.current) return;
 
+    if (availableModes.length === 0) {
+      Alert.alert(
+        "Mode indisponible",
+        "La commande sur place n’est pas proposée depuis l’application.",
+      );
+      return;
+    }
+
     if (!client) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       router.push("/auth/login");
@@ -355,37 +368,63 @@ export function CheckoutForm({
     );
     pendingOrderRef.current = preparedOrder.pendingOrder;
     submissionInFlightRef.current = true;
+    setIsPreparingSubmit(true);
     Keyboard.dismiss();
 
-    envoyerCommande(preparedOrder.payload, {
-      onSuccess: async (result) => {
-        try {
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } catch {}
+    void readForegroundLocation()
+      .then((location) => {
+        envoyerCommande(
+          {
+            ...preparedOrder.payload,
+            currentLocation: toLocationSample(location),
+          },
+          {
+            onSuccess: async (result) => {
+              try {
+                await Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Success,
+                );
+              } catch {}
 
-        const id = result?.id ?? "";
-        if (!id && __DEV__) {
-          console.warn("[CheckoutForm] commande sans id, redirection liste");
-        }
-        pendingOrderRef.current = null;
+              const id = result?.id ?? "";
+              if (!id && __DEV__) {
+                console.warn("[CheckoutForm] commande sans id, redirection liste");
+              }
+              pendingOrderRef.current = null;
+              submissionInFlightRef.current = false;
+              onSuccess(id, result.payment.authorizationUrl);
+            },
+            onError: async (error) => {
+              submissionInFlightRef.current = false;
+              try {
+                await Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Error,
+                );
+              } catch {}
+
+              Alert.alert(
+                "Commande impossible",
+                error instanceof Error
+                  ? error.message
+                  : "Une erreur est survenue lors de la création de votre commande.",
+              );
+            },
+          },
+        );
+      })
+      .catch((error) => {
         submissionInFlightRef.current = false;
-        onSuccess(id, result.payment.authorizationUrl);
-      },
-
-      onError: async (error) => {
-        submissionInFlightRef.current = false;
-        try {
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        } catch {}
-
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         Alert.alert(
-          "Commande impossible",
+          "Position requise",
           error instanceof Error
             ? error.message
-            : "Une erreur est survenue lors de la création de votre commande.",
+            : "Votre position est nécessaire pour vérifier la zone de commande.",
         );
-      },
-    });
+      })
+      .finally(() => {
+        setIsPreparingSubmit(false);
+      });
   };
 
   return (
@@ -687,6 +726,12 @@ export function CheckoutForm({
             )}
           </View>
 
+          {checkoutUnavailable ? (
+            <Text style={styles.errorText}>
+              Cet établissement n’accepte que la commande sur place, non proposée dans l’application.
+            </Text>
+          ) : null}
+
           {client?.telephone && (
             <Text style={styles.contactHint}>
               Le restaurant pourra vous joindre au {client.telephone}.
@@ -702,12 +747,15 @@ export function CheckoutForm({
         >
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: isPending }}
-            disabled={isPending}
+            accessibilityState={{ disabled: isSubmitting || checkoutUnavailable }}
+            disabled={isSubmitting || checkoutUnavailable}
             onPress={() => void handleSubmit(onSubmit)()}
-            style={[styles.submitButton, isPending && styles.controlDisabled]}
+            style={[
+              styles.submitButton,
+              (isSubmitting || checkoutUnavailable) && styles.controlDisabled,
+            ]}
           >
-            {isPending ? (
+            {isSubmitting ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
               <Text style={styles.submitButtonLabel}>

@@ -5,9 +5,11 @@ import {
   useClientDelivery,
   useConfirmClientDelivery,
 } from "@/hooks/useClientDelivery";
+import { useAnnulerCommande } from "@/hooks/useAnnulerCommande";
 import { useCommandeTracking } from "@/hooks/useCommandeTracking";
 import { useRetryCommandePayment } from "@/hooks/useRetryCommandePayment";
-import { getOrderStatusLabel } from "@/domain/orderStatus";
+import { getOrderModeLabel } from "@/domain/checkout";
+import { canCancelClientOrder, getOrderStatusLabel } from "@/domain/orderStatus";
 import { formatPrix } from "@/lib/format";
 import { useStore } from "@/store";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -54,6 +56,7 @@ export default function CommandeDetailScreen() {
   );
   const confirmDelivery = useConfirmClientDelivery();
   const retryPayment = useRetryCommandePayment();
+  const cancelOrder = useAnnulerCommande();
 
   if (isLoading) {
     return (
@@ -320,9 +323,7 @@ export default function CommandeDetailScreen() {
             <View className="flex-row justify-between items-center mb-3">
               <Text className="text-gray-500">Mode</Text>
               <Text className="font-medium text-black">
-                {commande.modeCommande === "livraison"
-                  ? "Livraison"
-                  : "À emporter"}
+                {getOrderModeLabel(commande.modeCommande)}
               </Text>
             </View>
             {commande.modeCommande === "livraison" &&
@@ -392,6 +393,42 @@ export default function CommandeDetailScreen() {
 
           {/* Actions */}
           <View className="mt-6 gap-3">
+            {canCancelClientOrder(commande.statut) ? (
+              <Button
+                variant="outline"
+                className="py-4 items-center"
+                disabled={cancelOrder.isPending}
+                onPress={() =>
+                  Alert.alert(
+                    "Annuler la commande ?",
+                    "Vous pouvez encore l’annuler tant qu’elle n’est pas en préparation.",
+                    [
+                      { text: "Garder", style: "cancel" },
+                      {
+                        text: "Annuler la commande",
+                        style: "destructive",
+                        onPress: () =>
+                          cancelOrder.mutate(commande.id, {
+                            onError: (cancelError) =>
+                              Alert.alert(
+                                "Annulation impossible",
+                                cancelError.message,
+                              ),
+                          }),
+                      },
+                    ],
+                  )
+                }
+              >
+                {cancelOrder.isPending ? (
+                  <ActivityIndicator color={theme.green900} />
+                ) : (
+                  <ButtonText className="text-brand-800 font-bold text-base">
+                    Annuler la commande
+                  </ButtonText>
+                )}
+              </Button>
+            ) : null}
             <Button
               className="py-4 items-center"
               onPress={() => router.push("/(tabs)")}

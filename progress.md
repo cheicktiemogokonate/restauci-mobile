@@ -12,9 +12,27 @@ Fait :
 - Tests Node : acceptation légale, URL CGU, payload `mobile_money`.
 - `npm run check` : typecheck, lint (2 warnings préexistants hors périmètre), 34 tests Node verts. Les `*.test.tsx` Jest restent exclus de `tsc`.
 
-Pas fait : commit du lot UI/Jest (non demandé) ; login simulateur ; mise à jour du texte CGU sur le site web (hors repo mobile).
+Commit utilisateur : `b9f48b7` (cash + Paystack, légal, Jest). Phase 1 close.
 
-Prochaine action : ranger Git (commit ou stash du lot UI/Jest) si demandé, puis login simulateur avec le compte recette.
+Pas fait : login simulateur ; mise à jour du texte CGU sur le site web (hors repo mobile).
+
+---
+
+## Session 20 septembre 2026 — Phase 2 parcours commande
+
+Objectif : prevalidate avant POST, annulation si `recue`, `sur_place` hors checkout V1, pas de POST/écran sans issue.
+
+Fait :
+
+- `useEnvoyerCommande` appelle `POST /client/commandes/prevalidate` puis la création ; GPS réel obligatoire (`readForegroundLocation`).
+- Détail commande : bouton d’annulation si statut `recue` (`PATCH /client/commandes/{id}`).
+- `sur_place` filtré du checkout ; restaurant uniquement sur place bloqué au panier ; libellé historique conservé.
+- Aucun écran « Bientôt » restant dans `src/`.
+- `npm run check` : typecheck, lint (2 warnings préexistants), 37 tests Node verts.
+
+Pas fait : recette native simulateur (Phase 3) ; login avec le compte test.
+
+Prochaine action : Phase 3 — builds Debug + matrice manuelle avec le compte recette.
 
 ---
 

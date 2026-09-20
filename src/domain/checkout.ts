@@ -3,8 +3,16 @@ import type {
   ModeCommande,
   PanierItem,
 } from "../types";
+import type { DiscoveryLocation } from "../types/etablissement";
 
 export type CheckoutMode = Extract<ModeCommande, "livraison" | "emporter">;
+
+export interface LocationSample {
+  lat: number;
+  lng: number;
+  accuracyMeters: number;
+  capturedAt: string;
+}
 
 const CHECKOUT_MODES: readonly CheckoutMode[] = ["livraison", "emporter"];
 export const MAX_ITEM_QUANTITY = 20;
@@ -23,6 +31,65 @@ export function getSupportedCheckoutModes(
   modes: readonly ModeCommande[],
 ): CheckoutMode[] {
   return CHECKOUT_MODES.filter((mode) => modes.includes(mode));
+}
+
+export function getOrderModeLabel(mode: ModeCommande): string {
+  if (mode === "livraison") return "Livraison";
+  if (mode === "emporter") return "À emporter";
+  return "Sur place";
+}
+
+export function toLocationSample(
+  location: DiscoveryLocation,
+): LocationSample {
+  return {
+    lat: location.latitude,
+    lng: location.longitude,
+    accuracyMeters: location.accuracyMeters,
+    capturedAt: location.capturedAt,
+  };
+}
+
+export function buildOrderPrevalidationRequest(
+  payload: Pick<
+    CommandePayload,
+    | "restaurantSlug"
+    | "modeCommande"
+    | "currentLocation"
+    | "adresseLivraison"
+    | "latitudeLivraison"
+    | "longitudeLivraison"
+  >,
+): {
+  restaurantSlug: string;
+  modeCommande: CheckoutMode;
+  currentLocation: LocationSample;
+  adresseLivraison?: string;
+  latitudeLivraison?: number;
+  longitudeLivraison?: number;
+} {
+  if (
+    payload.modeCommande !== "livraison" &&
+    payload.modeCommande !== "emporter"
+  ) {
+    throw new Error(
+      "La commande sur place n’est pas proposée depuis l’application.",
+    );
+  }
+
+  const isDelivery = payload.modeCommande === "livraison";
+  return {
+    restaurantSlug: payload.restaurantSlug,
+    modeCommande: payload.modeCommande,
+    currentLocation: payload.currentLocation,
+    ...(isDelivery
+      ? {
+          adresseLivraison: payload.adresseLivraison,
+          latitudeLivraison: payload.latitudeLivraison,
+          longitudeLivraison: payload.longitudeLivraison,
+        }
+      : {}),
+  };
 }
 
 export function aggregateCartItems(
@@ -50,6 +117,11 @@ export function clampItemQuantity(value: number): number {
   return Math.min(MAX_ITEM_QUANTITY, Math.max(1, Math.trunc(value)));
 }
 
+export type LogicalOrder = Omit<
+  CommandePayload,
+  "idempotencyKey" | "currentLocation"
+>;
+
 export function buildLogicalOrder({
   restaurantSlug,
   mode,
@@ -66,7 +138,7 @@ export function buildLogicalOrder({
   coordinates?: DeliveryCoordinates | null;
   notes?: string;
   paymentMethod: CommandePayload["paymentMethod"];
-}): Omit<CommandePayload, "idempotencyKey"> {
+}): LogicalOrder {
   const isDelivery = mode === "livraison";
   return {
     restaurantSlug,
@@ -82,10 +154,10 @@ export function buildLogicalOrder({
 }
 
 export function prepareIdempotentOrder(
-  logicalOrder: Omit<CommandePayload, "idempotencyKey">,
+  logicalOrder: LogicalOrder,
   pendingOrder: PendingOrder | null,
   createKey: () => string,
-): { pendingOrder: PendingOrder; payload: CommandePayload } {
+): { pendingOrder: PendingOrder; payload: LogicalOrder & { idempotencyKey: string } } {
   const fingerprint = JSON.stringify(logicalOrder);
   const nextPendingOrder =
     pendingOrder?.fingerprint === fingerprint

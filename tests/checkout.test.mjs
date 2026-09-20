@@ -5,13 +5,16 @@ import test from "node:test";
 import {
   aggregateCartItems,
   buildLogicalOrder,
+  buildOrderPrevalidationRequest,
   clampItemQuantity,
+  getOrderModeLabel,
   getSupportedCheckoutModes,
   hasInvalidItemQuantity,
   prepareIdempotentOrder,
 } from "../src/domain/checkout.ts";
 import { calculerDetailPanier } from "../src/lib/tarification.ts";
 import {
+  canCancelClientOrder,
   categorizeOrderStatus,
   getOrderStatusLabel,
   isTerminalOrderStatus,
@@ -72,6 +75,52 @@ test("n'autorise que les modes pris en charge par le checkout mobile", () => {
   assert.deepEqual(
     getSupportedCheckoutModes(["livraison", "emporter"]),
     ["livraison", "emporter"],
+  );
+  assert.deepEqual(getSupportedCheckoutModes(["sur_place"]), []);
+  assert.equal(getOrderModeLabel("sur_place"), "Sur place");
+});
+
+test("la prévalidation n'envoie ni articles ni paiement, et refuse sur_place", () => {
+  const currentLocation = {
+    lat: 7.69,
+    lng: -5.03,
+    accuracyMeters: 20,
+    capturedAt: "2026-09-20T06:00:00.000Z",
+  };
+  assert.deepEqual(
+    buildOrderPrevalidationRequest({
+      restaurantSlug: "chez-nous",
+      modeCommande: "emporter",
+      currentLocation,
+      adresseLivraison: "Bouaké",
+      latitudeLivraison: 7.69,
+      longitudeLivraison: -5.03,
+    }),
+    {
+      restaurantSlug: "chez-nous",
+      modeCommande: "emporter",
+      currentLocation,
+    },
+  );
+  assert.equal(
+    buildOrderPrevalidationRequest({
+      restaurantSlug: "chez-nous",
+      modeCommande: "livraison",
+      currentLocation,
+      adresseLivraison: "Quartier Commerce",
+      latitudeLivraison: 7.69,
+      longitudeLivraison: -5.03,
+    }).adresseLivraison,
+    "Quartier Commerce",
+  );
+  assert.throws(
+    () =>
+      buildOrderPrevalidationRequest({
+        restaurantSlug: "chez-nous",
+        modeCommande: "sur_place",
+        currentLocation,
+      }),
+    /sur place/i,
   );
 });
 
@@ -186,6 +235,9 @@ test("centralise les statuts terminaux et leurs catégories", () => {
   assert.equal(categorizeOrderStatus("servie"), "livrees");
   assert.equal(categorizeOrderStatus("inconnu"), "en_cours");
   assert.equal(getOrderStatusLabel("inconnu"), "Statut à confirmer");
+  assert.equal(canCancelClientOrder("recue"), true);
+  assert.equal(canCancelClientOrder("en_preparation"), false);
+  assert.equal(canCancelClientOrder("en_attente_paiement"), false);
 });
 
 test("la persistance locale rejette les enregistrements corrompus", () => {
@@ -335,6 +387,7 @@ test("l’artefact OpenAPI mobile contient les parcours consommateurs requis", (
   );
   for (const path of [
     "/client/auth/refresh",
+    "/client/commandes/prevalidate",
     "/client/commandes/{id}/paiement",
     "/client/notifications",
     "/client/push/expo",

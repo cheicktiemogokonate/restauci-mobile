@@ -1,4 +1,5 @@
 import type { CommandeSummary } from "@/types";
+import { getOrderModeLabel } from "@/domain/checkout";
 import {
   categorizeOrderStatus,
   getOngoingOrderMessage,
@@ -148,9 +149,7 @@ export function CommandeCard({
             <Text className="text-gray-500 text-sm mt-1">
               {nombreArticles > 0
                 ? `${nombreArticles} article${nombreArticles > 1 ? "s" : ""}`
-                : item.modeCommande === "livraison"
-                  ? "Livraison"
-                  : "À emporter"}
+                : getOrderModeLabel(item.modeCommande)}
             </Text>
 
             <View className="flex-row items-center mt-1">
